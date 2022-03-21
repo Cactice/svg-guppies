@@ -4,15 +4,16 @@ Using gpu to generate dynamic vector graphics for GUI purpose
 
 # Design Goals
 
+Low-level with maximum convenience
+
 ### Vector Graphics as View
 
-Typically, vector graphics designed on figma cannot be used directly as a GUI. 
-Often, a developer reimplments the design in langugages like HTML so the interface can take interactions like click and text input. 
+Typically, vector graphics designed on figma cannot be used directly as a GUI.
+Often, a developer reimplments the design in langugages like HTML so the interface can take interactions like click and text input.
 
 This two step process can be reduced if the View of MVC was strictly focused on showing and had no focus on interactions.
-In such MVC, the View could be a .svg file. 
+In such MVC, the View could be a .svg file.
 Combined with gpu-gui program which adds dynamic programability to svg files, features like click, text input, and responsiveness would be available.
- 
 
 ### Algorithmic Layout
 
@@ -23,13 +24,19 @@ CSS requires studying these concepts, rather than exposing the math behind it.
 If concepts like `flexbox` and `block` are convinient, it should be provided similar to `std` libraries, just as a convience abstraction.
 There'd be the benefit of allowing competitions among convinience abstractions, which would make inconvinient abstractions obsolete earlier than if it was provided as primary methods like CSS does.
 
-
 ### NICE TO HAVE: DDT (Design Driven Tests)
 
 Designs created on figma can be considered a test case for a specific state.
 
+### NICE TO HAVE: Codegen
+
+Generate code from ID
+
+- ID list
+- directives
 
 # Architecture
+
 ```mermaid
 flowchart TB;
     subgraph presenter
@@ -49,26 +56,25 @@ flowchart TB;
           gpu-gui-controller-->callback;
           callback-finished-->gpu-gui-view
 
-          
+
           gpu-gui-view --> layout;
     end
-    
+
 
 
     presenter --x gpu-gui
     presenter --x usecase
     user_uses[[user interaction]]-->gpu-gui-controller;
     gpu-gui-view-->user_sees[[user sees]];
-      
+
 ```
 
 # Minimal Test Cases
 
 ### GPU-GUI-VIEW
 
-1. Center a rectangle 
+1. Center a rectangle
 1. Resize a rounded rectangle
 1. Resize a text field with word break
 
 ### GPU-GUI-CONTROLLER
-
