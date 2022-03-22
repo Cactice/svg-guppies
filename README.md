@@ -4,7 +4,7 @@ Using gpu to generate dynamic vector graphics for GUI purpose
 
 # Design Goals
 
-Low-level with maximum convenience
+Low-level with maximum convenience and minimum ownership.
 
 ### Vector Graphics as View
 
@@ -33,7 +33,7 @@ Designs created on figma can be considered a test case for a specific state.
 Generate code from ID
 
 - ID list
-- directives
+- Directives
 
 # Architecture
 
@@ -75,6 +75,14 @@ flowchart TB;
 
 1. Center a rectangle
 1. Resize a rounded rectangle
-1. Resize a text field with word break
 
 ### GPU-GUI-CONTROLLER
+
+1. Checkbox
+1. Modify array
+1. Reorder array
+
+### GPU-GUI-Text
+
+1. Resize a text field with word break
+1. Delete multi-line text
