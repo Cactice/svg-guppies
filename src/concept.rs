@@ -1,7 +1,6 @@
 use std::{collections::HashMap, hash::Hash};
 
 use enumflags2::bitflags;
-use usvg::Svg;
 
 #[derive(Default)]
 pub struct Rect {
