@@ -18,7 +18,7 @@ pub struct Point {
 pub type Points = Vec<Point>;
 
 pub type Layout<'a, D, SvgIDs, Labels = Area> = (D, SvgIDs, &'a dyn FnMut(Point, Labels) -> Point);
-pub type Memo<'a, D> = (D, &'a dyn FnMut() -> ());
+pub type Memo<'a, D> = (D, &'a dyn FnMut());
 pub type Callback<'a, D> = &'a dyn FnMut() -> D;
 // S: State, D: Diff
 #[derive(Default)]

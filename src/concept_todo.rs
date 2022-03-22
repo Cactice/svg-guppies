@@ -1,4 +1,4 @@
-use crate::concept::{Area, Layout, Point, Points, Presenter, Rect};
+use crate::concept::{Layout, Point, Presenter};
 use enumflags2::bitflags;
 
 #[bitflags]
@@ -25,8 +25,8 @@ fn app() {
         TodoE::done
     };
     let goal_change: Layout<TodoE, SvgID> =
-        (TodoE::goal, SvgID::check, &|point, Area| -> Point { point });
-    let presenter: Presenter<TodoE, SvgID> = Presenter {
+        (TodoE::goal, SvgID::check, &|point, _Area| -> Point { point });
+    let _presenter: Presenter<TodoE, SvgID> = Presenter {
         layouts: &[goal_change],
         callbacks: &[&on_check_box_click],
         memo: &[],
