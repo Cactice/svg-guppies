@@ -18,11 +18,14 @@ pub struct Point {
 pub type Points = Vec<Point>;
 
 pub type Layout<'a, D, SvgIDs, Labels = Area> = (D, SvgIDs, &'a dyn FnMut(Point, Labels) -> Point);
+pub type Memo<'a, D> = (D, &'a dyn FnMut() -> ());
+pub type Callback<'a, D> = &'a dyn FnMut() -> D;
 // S: State, D: Diff
 #[derive(Default)]
 pub struct Presenter<'a, D, SvgIDs, Labels = Area> {
     pub layouts: &'a [Layout<'a, D, SvgIDs, Labels>],
-    pub callbacks: &'a [&'a dyn FnMut() -> D],
+    pub callbacks: &'a [Callback<'a, D>],
+    pub memo: &'a [Memo<'a, D>],
 }
 
 pub type CharPoints = Points;
@@ -40,6 +43,7 @@ struct Initialization<'a, D, SvgIDs, Labels = Area> {
     svg: String,
     labeller: &'a [fn(Points, SvgIDs) -> [(Points, Labels)]],
 }
+impl<'a, D, SvgIDs> Initialization<'a, D, SvgIDs> {}
 
 #[bitflags]
 #[repr(u8)]

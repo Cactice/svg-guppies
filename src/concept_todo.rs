@@ -29,5 +29,6 @@ fn app() {
     let presenter: Presenter<TodoE, SvgID> = Presenter {
         layouts: &[goal_change],
         callbacks: &[&on_check_box_click],
+        memo: &[],
     };
 }
