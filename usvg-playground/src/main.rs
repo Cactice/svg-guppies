@@ -1,5 +1,5 @@
-use std::f64::NAN;
-use usvg::{self, NodeExt};
+use std::{f64::NAN, fs};
+use usvg::{self, NodeExt, XmlOptions};
 pub const FALLBACK_COLOR: usvg::Color = usvg::Color {
     red: 0,
     green: 0,
@@ -16,8 +16,13 @@ fn main() {
     };
     let filename = "Resting.svg";
     let file_data = std::fs::read(filename).unwrap();
-    let opt = usvg::Options::default();
+    let mut opt = usvg::Options::default();
+
+    opt.fontdb.load_system_fonts();
     let rtree = usvg::Tree::from_data(&file_data, &opt.to_ref()).unwrap();
+    let str = rtree.to_string(&XmlOptions::default());
+    fs::write("./out.svg", str).expect("Unable to write file");
+
     let mut transforms = Vec::new();
     let mut primitives = Vec::new();
     for node in rtree.root().descendants() {
@@ -33,6 +38,7 @@ fn main() {
 
             let transform_idx = transforms.len() as u32 - 1;
 
+            if let Some(ref bbox) = p.text_bbox {}
             if let Some(ref fill) = p.fill {
                 // fall back to always use color fill
                 // no gradients (yet?)
@@ -48,14 +54,14 @@ fn main() {
                 ));
             }
 
-            if let Some(ref stroke) = p.stroke {
-                // let (stroke_color, stroke_opts) = convert_stroke(stroke);
-                // primitives.push(GpuPrimitive::new(
-                //     transform_idx,
-                //     stroke_color,
-                //     stroke.opacity.value() as f32,
-                // ));
-            }
+            // if let Some(ref stroke) = p.stroke {
+            // let (stroke_color, stroke_opts) = convert_stroke(stroke);
+            // primitives.push(GpuPrimitive::new(
+            //     transform_idx,
+            //     stroke_color,
+            //     stroke.opacity.value() as f32,
+            // ));
+            // }
         }
     }
 }
