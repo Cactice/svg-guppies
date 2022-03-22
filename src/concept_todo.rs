@@ -30,6 +30,6 @@ pub fn app() {
     let _presenter: Presenter<TodoE, SvgID> = Presenter {
         layouts: &[goal_change],
         callbacks: &[on_check_box_click],
-        memo: &[],
+        memos: &[],
     };
 }
