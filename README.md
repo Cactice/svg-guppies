@@ -69,20 +69,41 @@ flowchart TB;
 
 ```
 
-# Minimal Test Cases
+# Test Cases
 
-### GPU-GUI-VIEW
+### Minimum
 
-1. Center a rectangle
-1. Resize a rounded rectangle
+- Center a rectangle
+- Resize a rounded rectangle
+- Checkbox
 
-### GPU-GUI-CONTROLLER
+### Full
 
-1. Checkbox
-1. Modify array
-1. Reorder array
+- GPU-GUI-VIEW
 
-### GPU-GUI-Text
+  1. Center a rectangle
+  1. Resize a rounded rectangle
 
-1. Resize a text field with word break
-1. Delete multi-line text
+- GPU-GUI-CONTROLLER
+
+  1. Checkbox
+  1. Modify array
+  1. Reorder array
+
+- Text
+
+  1. Resize a text field with word break
+  1. Delete multi-line text
+  1. Copy/Paste
+
+- Scroll
+
+  1. Scroll
+
+- GPU vs CPU
+  Benchmark?
+
+# Random Resources
+
+SVG performance: https://oreillymedia.github.io/Using_SVG/extras/ch19-performance.html
+GPU vector rendering: https://developer.nvidia.com/gpugems/gpugems3/part-iv-image-effects/chapter-25-rendering-vector-art-gpu
