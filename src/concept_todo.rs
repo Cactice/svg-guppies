@@ -1,8 +1,8 @@
-use crate::concept::{Area, Point, Points, Presenter, Rect};
+use crate::concept::{Area, Layout, Point, Points, Presenter, Rect};
 use enumflags2::bitflags;
 
 #[bitflags]
-#[repr(u8)]
+#[repr(u32)]
 #[derive(Copy, Clone, Debug, PartialEq)]
 enum TodoE {
     goal,
@@ -14,22 +14,20 @@ struct Todo {
     goal: String,
     done: bool,
 }
-enum SvgIDs {
-    rect(Rect),
+enum SvgID {
+    check,
 }
 
-fn goalChange(todo: &Todo, selection: (SvgIDs, Area)) -> Points {
-    vec![Point::default()]
-}
-
-fn onCheckBoxClick() -> (Todo, TodoE) {
-    let todo = Todo::default();
-    (todo, TodoE::done)
-}
-
-fn func() {
-    const presenter: Presenter<Todo, TodoE, SvgIDs> = Presenter {
-        layouts: &[(TodoE::goal, goalChange)],
-        callbacks: &[onCheckBoxClick],
+fn app() {
+    let mut todo = Todo::default();
+    let on_check_box_click = || -> TodoE {
+        todo.done = true;
+        TodoE::done
+    };
+    let goal_change: Layout<TodoE, SvgID> =
+        (TodoE::goal, SvgID::check, &|point, Area| -> Point { point });
+    let presenter: Presenter<TodoE, SvgID> = Presenter {
+        layouts: &[goal_change],
+        callbacks: &[&on_check_box_click],
     };
 }

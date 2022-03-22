@@ -17,22 +17,26 @@ pub struct Point {
 }
 pub type Points = Vec<Point>;
 
+pub type Layout<'a, D, SvgIDs, Labels = Area> = (D, SvgIDs, &'a dyn FnMut(Point, Labels) -> Point);
 // S: State, D: Diff
 #[derive(Default)]
-pub struct Presenter<'a, S, D, SvgIDs, Labels = Area> {
-    pub layouts: &'a [(D, fn(&S, (SvgIDs, Labels)) -> Points)],
-    pub callbacks: &'a [fn() -> (S, D)],
+pub struct Presenter<'a, D, SvgIDs, Labels = Area> {
+    pub layouts: &'a [Layout<'a, D, SvgIDs, Labels>],
+    pub callbacks: &'a [&'a dyn FnMut() -> D],
 }
 
+pub type CharPoints = Points;
 pub struct TextRenderer {
     pub text: String,
     pub line_height: i32,
     pub bbox: Rect,
     pub texts: Vec<String>,
+    pub selected: bool,
+    pub selected_range: [CharPoints; 2],
 }
 
-struct Initialization<'a, S, D, SvgIDs, Labels = Area> {
-    presenter: Presenter<'a, S, D, SvgIDs, Labels>,
+struct Initialization<'a, D, SvgIDs, Labels = Area> {
+    presenter: Presenter<'a, D, SvgIDs, Labels>,
     svg: String,
     labeller: &'a [fn(Points, SvgIDs) -> [(Points, Labels)]],
 }
