@@ -38,7 +38,9 @@ fn main() {
 
             let transform_idx = transforms.len() as u32 - 1;
 
-            if let Some(ref bbox) = p.text_bbox {}
+            if let Some(ref bbox) = p.cluster_bbox {
+                println!("{:?}", bbox)
+            }
             if let Some(ref fill) = p.fill {
                 // fall back to always use color fill
                 // no gradients (yet?)

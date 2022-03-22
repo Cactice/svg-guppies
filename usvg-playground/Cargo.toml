@@ -4,5 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-usvg = "0.22"
+# git clone from here https://github.com/Cactice/resvg
+usvg = { path = "./resvg/usvg" }
 bytemuck = "1.2.0"

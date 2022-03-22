@@ -1,6 +1,5 @@
-use std::{collections::HashMap, hash::Hash};
-
 use enumflags2::bitflags;
+use std::{collections::HashMap, hash::Hash};
 
 #[derive(Default)]
 pub struct Rect {
@@ -48,7 +47,7 @@ impl PathData {
 pub type Layout<'a, D, SvgID, Label = Area> = (D, SvgID, &'a dyn FnMut(Point, Label) -> Point);
 pub type Memo<'a, D> = (D, &'a dyn FnMut());
 pub type Callback<'a, D> = &'a dyn FnMut() -> D;
-pub type Labeller<'a, SvgID, Label = Area> = &'a fn(Points, SvgID) -> [(Points, Label)];
+pub type Labeller<'a, SvgID, Label = Area> = &'a fn(PathData, SvgID) -> [(PathData, Label)];
 #[derive(Default)]
 // S: State, D: Diff
 pub struct Presenter<'a, D, SvgID, Label = Area> {
