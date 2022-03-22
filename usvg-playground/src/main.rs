@@ -367,7 +367,7 @@ fn main() {
             entry_point: "main",
             targets: &[wgpu::ColorTargetState {
                 format: wgpu::TextureFormat::Bgra8Unorm,
-                blend: None,
+                blend: Some(wgpu::BlendState::PREMULTIPLIED_ALPHA_BLENDING),
                 write_mask: wgpu::ColorWrites::ALL,
             }],
         }),

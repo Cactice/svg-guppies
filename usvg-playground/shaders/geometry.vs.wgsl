@@ -57,7 +57,7 @@ fn main(
         f32(((prim.color >> u32(24)) & mask)),
         f32(((prim.color >> u32(16)) & mask)),
         f32(((prim.color >> u32(8)) & mask)),
-        f32((prim.color & mask))/255.0
+        f32((prim.color & mask))
     ) / vec4<f32>(255.0);
 
     return VertexOutput(color, position);
