@@ -1,0 +1,8 @@
+[package]
+name = "usvg-playground"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+usvg = "0.22"
+bytemuck = "1.2.0"
