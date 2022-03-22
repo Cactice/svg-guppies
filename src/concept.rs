@@ -17,13 +17,13 @@ pub struct Point {
 }
 pub type Points = Vec<Point>;
 
-pub type Layout<'a, D, SvgIDs, Labels = Area> = (D, SvgIDs, &'a dyn FnMut(Point, Labels) -> Point);
+pub type Layout<'a, D, SvgIDs, Label = Area> = (D, SvgIDs, &'a dyn FnMut(Point, Label) -> Point);
 pub type Memo<'a, D> = (D, &'a dyn FnMut());
 pub type Callback<'a, D> = &'a dyn FnMut() -> D;
 // S: State, D: Diff
 #[derive(Default)]
-pub struct Presenter<'a, D, SvgIDs, Labels = Area> {
-    pub layouts: &'a [Layout<'a, D, SvgIDs, Labels>],
+pub struct Presenter<'a, D, SvgIDs, Label = Area> {
+    pub layouts: &'a [Layout<'a, D, SvgIDs, Label>],
     pub callbacks: &'a [Callback<'a, D>],
     pub memo: &'a [Memo<'a, D>],
 }
@@ -38,10 +38,10 @@ pub struct TextRenderer {
     pub selected_range: [CharPoints; 2],
 }
 
-struct Initialization<'a, D, SvgIDs, Labels = Area> {
-    presenter: Presenter<'a, D, SvgIDs, Labels>,
+struct Initialization<'a, D, SvgIDs, Label = Area> {
+    presenter: Presenter<'a, D, SvgIDs, Label>,
     svg: String,
-    labeller: &'a [fn(Points, SvgIDs) -> [(Points, Labels)]],
+    labeller: &'a [fn(Points, SvgIDs) -> [(Points, Label)]],
 }
 impl<'a, D, SvgIDs> Initialization<'a, D, SvgIDs> {}
 

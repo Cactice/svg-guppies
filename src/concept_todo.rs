@@ -5,8 +5,8 @@ use enumflags2::bitflags;
 #[repr(u32)]
 #[derive(Copy, Clone, Debug, PartialEq)]
 enum TodoE {
-    goal,
-    done,
+    Goal,
+    Done,
 }
 
 #[derive(Default)]
@@ -15,20 +15,21 @@ struct Todo {
     done: bool,
 }
 enum SvgID {
-    check,
+    Check,
 }
 
-fn app() {
+pub fn app() {
     let mut todo = Todo::default();
-    let on_check_box_click = || -> TodoE {
+    let on_check_box_click = &|| -> TodoE {
         todo.done = true;
-        TodoE::done
+        TodoE::Done
     };
-    let goal_change: Layout<TodoE, SvgID> =
-        (TodoE::goal, SvgID::check, &|point, _Area| -> Point { point });
+    let goal_change: Layout<TodoE, SvgID> = (TodoE::Goal, SvgID::Check, &|point, _area| -> Point {
+        point
+    });
     let _presenter: Presenter<TodoE, SvgID> = Presenter {
         layouts: &[goal_change],
-        callbacks: &[&on_check_box_click],
+        callbacks: &[on_check_box_click],
         memo: &[],
     };
 }
