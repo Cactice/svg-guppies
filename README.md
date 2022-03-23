@@ -108,3 +108,6 @@ flowchart TB;
 - Rust Web 2D perf Reddit: https://www.reddit.com/r/rust/comments/ni0wgs/2d_web_rendering_with_rust/
 - Web SVG performance: https://oreillymedia.github.io/Using_SVG/extras/ch19-performance.html
 - GPU vector rendering: https://developer.nvidia.com/gpugems/gpugems3/part-iv-image-effects/chapter-25-rendering-vector-art-gpu
+
+- Rust api guidelines: https://rust-lang.github.io/api-guidelines/about.html
+- rust-analyzer guidelines: https://github.com/rust-analyzer/rust-analyzer/blob/master/docs/dev/style.md#getters--setters

@@ -61,6 +61,7 @@ impl<'a, D, SvgID> Presenter<'a, D, SvgID> {}
 #[derive(PartialEq, Eq, Hash, Clone, Copy)]
 enum Attribute {
     ClickableBBox,
+    Text,
 }
 
 type Attributes<SvgID> = HashMap<Attribute, Vec<SvgID>>;
@@ -83,6 +84,14 @@ fn is_point_in_rect(rect: Rect, point: Point) -> bool {
         && point.y < rect.y + rect.height
 }
 impl<'a, D: Copy, SvgID: Hash + Eq + Clone + Copy> Component<'a, D, SvgID> {
+    pub fn rerender(self, diff: D) {
+        self.presenter.layouts.iter().for_each(|layout| {
+            // layout()
+            todo!();
+        });
+        todo!()
+    }
+
     fn click(&self, point: Point) {
         if let Some(clickable) = self.attributes.get(&Attribute::ClickableBBox) {
             clickable.iter().for_each(|id| {
