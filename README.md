@@ -33,7 +33,7 @@ Designs created on figma can be considered a test case for a specific state.
 Generate code from ID
 
 - ID list
-- Directives
+- Directives: @Clickable
 
 # Architecture
 
