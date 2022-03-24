@@ -30,10 +30,10 @@ Designs created on figma can be considered a test case for a specific state.
 
 ### NICE TO HAVE: Codegen
 
-Generate code from ID
+Generate code from SVG
 
 - ID list
-- Directives: @Clickable
+- Directives: @Clickable, @Component, @State, @NoScroll, etc...
 
 # Architecture
 
@@ -55,13 +55,8 @@ flowchart TB;
         %%   gpu-gui-controller--await-effects-->gpu-gui-view;
           gpu-gui-controller-->callback;
           callback-finished-->gpu-gui-view
-
-
           gpu-gui-view --> layout;
     end
-
-
-
     presenter --x gpu-gui
     presenter --x usecase
     user_uses[[user interaction]]-->gpu-gui-controller;
