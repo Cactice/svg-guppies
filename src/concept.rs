@@ -45,7 +45,7 @@ impl PathData {
 }
 
 pub type Layout<'a, D, SvgID, Label = Area> = (D, SvgID, &'a dyn FnMut(Point, Label) -> Point);
-pub type Memo<'a, D> = (D, &'a dyn FnMut());
+pub type Precompute<'a, D> = (D, &'a dyn FnMut());
 pub type Callback<'a, D> = &'a dyn FnMut() -> D;
 pub type Labeller<'a, SvgID, Label = Area> = &'a fn(PathData, SvgID) -> [(PathData, Label)];
 #[derive(Default)]
@@ -53,7 +53,7 @@ pub type Labeller<'a, SvgID, Label = Area> = &'a fn(PathData, SvgID) -> [(PathDa
 pub struct Presenter<'a, D, SvgID, Label = Area> {
     pub layouts: &'a [Layout<'a, D, SvgID, Label>],
     pub callbacks: &'a [Callback<'a, D>],
-    pub precompute: &'a [Memo<'a, D>],
+    pub precompute: &'a [Precompute<'a, D>],
 }
 
 impl<'a, D, SvgID> Presenter<'a, D, SvgID> {}
