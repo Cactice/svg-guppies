@@ -53,7 +53,7 @@ pub type Labeller<'a, SvgID, Label = Area> = &'a fn(PathData, SvgID) -> [(PathDa
 pub struct Presenter<'a, D, SvgID, Label = Area> {
     pub layouts: &'a [Layout<'a, D, SvgID, Label>],
     pub callbacks: &'a [Callback<'a, D>],
-    pub memos: &'a [Memo<'a, D>],
+    pub precompute: &'a [Memo<'a, D>],
 }
 
 impl<'a, D, SvgID> Presenter<'a, D, SvgID> {}

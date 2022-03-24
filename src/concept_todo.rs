@@ -1,8 +1,4 @@
-use std::{
-    marker::PhantomData,
-    ptr::NonNull,
-    sync::{atomic, Arc},
-};
+use std::ops::{Deref, DerefMut};
 
 use crate::concept::{Layout, Point, Presenter};
 use enumflags2::bitflags;
@@ -13,44 +9,6 @@ use enumflags2::bitflags;
 enum TodoE {
     Goal,
     Done,
-}
-
-#[derive(Default)]
-struct TodoS {
-    todo: Todo,
-}
-trait TodoT {
-    fn toTodo(&self) -> Todo;
-    fn done(&self);
-    fn forget(&self);
-}
-// impl TodoT<T> for TodoS<T> {
-//     fn toTodo(&self) -> Todo {
-//         Todo {
-//             goal: self.todo.goal,
-//             done: self.todo.done,
-//         }
-//     }
-//     fn done(self: &TodoS) {
-//         Todo::done(&mut self.todo);
-//     }
-//     fn forget(self: &TodoS) {
-//         Todo::forget(&mut self.todo);
-//     }
-// }
-
-struct TodoV<const T: usize> {
-    goal: String,
-    done: bool,
-}
-
-impl TodoS {
-    fn done(self: &mut Self) {
-        Todo::done(&mut self.todo);
-    }
-    fn forget(self: &mut Self) {
-        Todo::forget(&mut self.todo);
-    }
 }
 
 #[derive(Default)]
@@ -71,55 +29,58 @@ enum SvgID {
     Check,
 }
 
-#[repr(C)]
-struct ArcInner<T: ?Sized> {
-    strong: atomic::AtomicUsize,
-
-    // the value usize::MAX acts as a sentinel for temporarily "locking" the
-    // ability to upgrade weak pointers or downgrade strong ones; this is used
-    // to avoid races in `make_mut` and `get_mut`.
-    weak: atomic::AtomicUsize,
-
-    data: T,
+#[derive(Default)]
+struct TodoP0 {
+    count0: u8,
+    ptr: TodoP1,
 }
-pub struct MyArc<T: ?Sized> {
-    ptr: NonNull<ArcInner<T>>,
-    phantom: PhantomData<ArcInner<T>>,
-}
-impl<T: ?Sized> MyArc<T> {
-    unsafe fn from_inner(ptr: NonNull<ArcInner<T>>) -> Self {
-        Self {
-            ptr,
-            phantom: PhantomData,
-        }
+impl Deref for TodoP0 {
+    type Target = TodoP1;
+    fn deref(&self) -> &Self::Target {
+        &self.ptr
     }
 }
-impl<T> MyArc<T> {
-    #[inline]
-    pub fn new(data: T) -> MyArc<T> {
-        // Start the weak pointer count as 1 which is the weak pointer that's
-        // held by all the strong pointers (kinda), see std/rc.rs for more info
-        let x: Box<_> = Box::new(ArcInner {
-            strong: atomic::AtomicUsize::new(1),
-            weak: atomic::AtomicUsize::new(1),
-            data,
-        });
-        unsafe { Self::from_inner(Box::leak(x).into()) }
+impl DerefMut for TodoP0 {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.count0 += 1;
+        &mut self.ptr
     }
 }
+#[derive(Default)]
+struct TodoP1 {
+    done: bool,
+    count1: u8,
+    ptr: TodoP2,
+}
+#[derive(Default)]
+struct TodoP2 {
+    goal: String,
+}
+
+impl Deref for TodoP1 {
+    type Target = TodoP2;
+    fn deref(&self) -> &Self::Target {
+        &self.ptr
+    }
+}
+impl DerefMut for TodoP1 {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.count1 += 1;
+        &mut self.ptr
+    }
+}
+
 pub fn app() {
-    let todo = Arc::new(Todo::default());
-    let on_check_box_click = &|| -> TodoE {
-        todo.done = true;
-
-        TodoE::Done
-    };
+    let mut p0 = TodoP0::default();
+    p0.done = true;
+    p0.goal = "he".to_string();
+    let on_check_box_click = &|| -> TodoE { TodoE::Done };
     let goal_change: Layout<TodoE, SvgID> = (TodoE::Goal, SvgID::Check, &|point, _area| -> Point {
         point
     });
     let _presenter: Presenter<TodoE, SvgID> = Presenter {
         layouts: &[goal_change],
         callbacks: &[on_check_box_click],
-        memos: &[],
+        precompute: &[],
     };
 }
