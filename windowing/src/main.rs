@@ -140,7 +140,7 @@ fn main() {
     #[cfg(not(target_arch = "wasm32"))]
     {
         // Temporarily avoid srgb formats for the surface on the web
-        run(event_loop, window);
+        pollster::block_on(run(event_loop, window));
     }
     #[cfg(target_arch = "wasm32")]
     {

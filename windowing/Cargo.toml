@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 winit = "0.26.1"
 wgpu = { git = "https://github.com/gfx-rs/wgpu" }
+pollster = "*"
