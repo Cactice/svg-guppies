@@ -1,6 +1,6 @@
 mod setup;
 use setup::Setup;
-use wgpu::util::DeviceExt;
+
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -35,13 +35,13 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
             ..Default::default()
         },
         Vertex {
-            position: [1.0, -1.0, 0.0].into(),
-            color: [0.0, 1.0, 0.0].into(),
+            position: [1.0, -1.0, 0.0],
+            color: [0.0, 1.0, 0.0],
             ..Default::default()
         },
         Vertex {
-            position: [1.0, 1.0, 0.0].into(),
-            color: [0.0, 0.0, 1.0].into(),
+            position: [1.0, 1.0, 0.0],
+            color: [0.0, 0.0, 1.0],
             ..Default::default()
         },
     ];

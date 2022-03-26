@@ -17,10 +17,10 @@ struct Todo {
     done: bool,
 }
 impl Todo {
-    fn done(self: &mut Self) {
+    fn done(&mut self) {
         self.done = true
     }
-    fn forget(self: &mut Self) {
+    fn forget(&mut self) {
         self.done = true;
         self.goal = "Forget it!".to_string();
     }

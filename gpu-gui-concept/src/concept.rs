@@ -84,8 +84,8 @@ fn is_point_in_rect(rect: Rect, point: Point) -> bool {
         && point.y < rect.y + rect.height
 }
 impl<'a, D: Copy, SvgID: Hash + Eq + Clone + Copy> Component<'a, D, SvgID> {
-    pub fn rerender(self, diff: D) {
-        self.presenter.layouts.iter().for_each(|layout| {
+    pub fn rerender(self, _diff: D) {
+        self.presenter.layouts.iter().for_each(|_layout| {
             // layout()
             todo!();
         });

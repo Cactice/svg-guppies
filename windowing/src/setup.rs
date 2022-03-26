@@ -1,16 +1,11 @@
 use std::borrow::Cow;
 use winit::{
-    dpi::{PhysicalSize, Size},
-    event_loop::EventLoop,
+    dpi::{PhysicalSize},
     window::Window,
 };
 
 use crate::Vertex;
 use wgpu::{util::DeviceExt, Device, RenderPipeline, Surface, SurfaceConfiguration};
-use winit::{
-    event::{Event, WindowEvent},
-    event_loop::ControlFlow,
-};
 #[derive(Debug)]
 pub(crate) struct Setup {
     pub(crate) instance: wgpu::Instance,
@@ -34,7 +29,7 @@ impl Setup {
         // Reconfigure the surface with the new size
         config.width = size.width;
         config.height = size.height;
-        surface.configure(&device, &config);
+        surface.configure(device, config);
     }
     pub fn redraw(
         vertices: &Vec<Vertex>,
@@ -69,7 +64,7 @@ impl Setup {
                 }],
                 depth_stencil_attachment: None,
             });
-            rpass.set_pipeline(&render_pipeline);
+            rpass.set_pipeline(render_pipeline);
             rpass.set_vertex_buffer(0, vertex_buffer.slice(..));
             rpass.draw(0..3, 0..1);
         }
