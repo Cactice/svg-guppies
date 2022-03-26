@@ -97,16 +97,18 @@ flowchart TB;
 
   1. Scroll
 
-- Image PNG
+- Media
+
+  - PNG
 
 - GPU vs CPU
   Benchmark?
 
 # TODO
 
+- [ ] GPU renderer
 - [ ] Minimal Test
 - [ ] Diff machine
-- [ ] GPU renderer
 - [ ] SVG code-gen Rust
 
 # Random Resources
