@@ -101,15 +101,17 @@ flowchart TB;
 
   - PNG
 
-- GPU vs CPU
-  Benchmark?
-
 # TODO
 
 - [ ] GPU renderer
 - [ ] Minimal Test
-- [ ] Diff machine
+- [ ] State diff interceptor
 - [ ] SVG code-gen Rust
+
+# Why Gpu
+
+GPU vs CPU comparison with WASM:https://www.reddit.com/r/rust/comments/tm10wi/media_i_made_a_website_to_demonstrate_performance/
+MakePad runs GUI on shader with great performance: https://makepad.dev/
 
 # Random Resources
 
