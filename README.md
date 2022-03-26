@@ -9,20 +9,20 @@ Low-level with maximum convenience and minimum ownership.
 ### Vector Graphics as View
 
 Typically, vector graphics designed on figma cannot be used directly as a GUI.
-Often, a developer reimplments the design in langugages like HTML so the interface can take interactions like click and text input.
+Often, a developer re-implements the design in languages like HTML so the interface can take interactions like click and text input.
 
 This two step process can be reduced if the View of MVC was strictly focused on showing and had no focus on interactions.
 In such MVC, the View could be a .svg file.
-Combined with gpu-gui program which adds dynamic programability to svg files, features like click, text input, and responsiveness would be available.
+Combined with gpu-gui program which adds dynamic programmability to svg files, features like click, text input, and responsiveness would be available.
 
 ### Algorithmic Layout
 
 Layout requires no additional knowledge other than some basic math concepts.
 
-This is in contrast to methods like CSS where arbitary concepts `flexbox` or `block` is cruicial.
+This is in contrast to methods like CSS where arbitrary concepts `flexbox` or `block` is crucial.
 CSS requires studying these concepts, rather than exposing the math behind it.
-If concepts like `flexbox` and `block` are convinient, it should be provided similar to `std` libraries, just as a convience abstraction.
-There'd be the benefit of allowing competitions among convinience abstractions, which would make inconvinient abstractions obsolete earlier than if it was provided as primary methods like CSS does.
+If concepts like `flexbox` and `block` are convenient, it should be provided similar to `std` libraries, just as a convenience abstraction.
+There'd be the benefit of allowing competitions among convenience abstractions, which would make inconvenient abstractions obsolete earlier than if it was provided as primary methods like CSS does.
 
 ### NICE TO HAVE: DDT (Design Driven Tests)
 
@@ -82,12 +82,14 @@ flowchart TB;
 - GPU-GUI-CONTROLLER
 
   1. Checkbox
+  1. Show Array
   1. Modify array
   1. Reorder array
 
 - Text
 
   1. Resize a text field with word break
+  1. Write text
   1. Delete multi-line text
   1. Copy/Paste
 
@@ -95,8 +97,16 @@ flowchart TB;
 
   1. Scroll
 
+- Image PNG
+
 - GPU vs CPU
   Benchmark?
+
+# TODO
+
+- [ ] Diff machine
+- [ ] GPU renderer
+- [ ] SVG code-gen Rust
 
 # Random Resources
 
