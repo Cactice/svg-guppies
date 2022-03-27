@@ -71,7 +71,6 @@ pub type CharPoints = Points;
 #[derive(Default)]
 struct Component<'a, D: Copy, SvgID: Hash + Eq + Clone + Copy, Label = Area> {
     presenter: Presenter<'a, D, SvgID, Label>,
-    svg: String,
     labellers: &'a [Labeller<'a, SvgID, Label>],
     attributes: Attributes<SvgID>,
     svg_paths: SvgPaths<SvgID>,
@@ -84,6 +83,9 @@ fn is_point_in_rect(rect: Rect, point: Point) -> bool {
         && point.y < rect.y + rect.height
 }
 impl<'a, D: Copy, SvgID: Hash + Eq + Clone + Copy> Component<'a, D, SvgID> {
+    pub fn new(svg_file_name: String, svg_id: String) -> Self {
+        todo!()
+    }
     pub fn rerender(self, _diff: D) {
         self.presenter.layouts.iter().for_each(|_layout| {
             // layout()
