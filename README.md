@@ -1,6 +1,6 @@
 # svg-gui
 
-Using gpu to generate dynamic vector graphics for GUI purpose
+Using svg to generate dynamic vector graphics for GUI purpose
 
 # Design Goals
 
@@ -110,10 +110,10 @@ flowchart TB;
 
 # Why Gpu
 
-GPU vs CPU comparison with WASM: 
+GPU vs CPU comparison with WASM:
 https://www.reddit.com/r/rust/comments/tm10wi/media_i_made_a_website_to_demonstrate_performance/
 
-MakePad runs GUI on shader with great performance: 
+MakePad runs GUI on shader with great performance:
 https://makepad.dev/
 
 # Random Resources
