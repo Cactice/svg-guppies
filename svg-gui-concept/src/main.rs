@@ -6,5 +6,4 @@ mod concept_todo;
 
 fn main() {
     app();
-    println!("Hello, world!");
 }

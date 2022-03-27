@@ -1,8 +1,5 @@
 use std::borrow::Cow;
-use winit::{
-    dpi::{PhysicalSize},
-    window::Window,
-};
+use winit::{dpi::PhysicalSize, window::Window};
 
 use crate::Vertex;
 use wgpu::{util::DeviceExt, Device, RenderPipeline, Surface, SurfaceConfiguration};
@@ -39,7 +36,7 @@ impl Setup {
         queue: &wgpu::Queue,
     ) {
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("GPU-GUI Vertex Buffer"),
+            label: Some("SVG-GUI Vertex Buffer"),
             contents: (bytemuck::cast_slice(vertices)),
             usage: wgpu::BufferUsages::VERTEX,
         });
@@ -90,7 +87,7 @@ impl Setup {
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
-                    label: Some("GPU-GUI DeviceDescriptor"),
+                    label: Some("SVG-GUI DeviceDescriptor"),
                     features: wgpu::Features::empty(),
                     // Make sure we use the texture resolution limits from the adapter, so we can support images the size of the surface.
                     limits: wgpu::Limits::downlevel_webgl2_defaults()

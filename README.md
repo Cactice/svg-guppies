@@ -1,4 +1,4 @@
-# gpu-gui
+# svg-gui
 
 Using gpu to generate dynamic vector graphics for GUI purpose
 
@@ -13,7 +13,7 @@ Often, a developer re-implements the design in languages like HTML so the interf
 
 This two step process can be reduced if the View of MVC was strictly focused on showing and had no focus on interactions.
 In such MVC, the View could be a .svg file.
-Combined with gpu-gui program which adds dynamic programmability to svg files, features like click, text input, and responsiveness would be available.
+Combined with svg-gui program which adds dynamic programmability to svg files, features like click, text input, and responsiveness would be available.
 
 ### Algorithmic Layout
 
@@ -50,17 +50,17 @@ flowchart TB;
         layout -.references.->SVG([SVG])
         layout -.references.-> STATE;
     end
-    subgraph gpu-gui
+    subgraph svg-gui
     direction LR
-        %%   gpu-gui-controller--await-effects-->gpu-gui-view;
-          gpu-gui-controller-->callback;
-          callback-finished-->gpu-gui-view
-          gpu-gui-view --> layout;
+        %%   svg-gui-controller--await-effects-->svg-gui-view;
+          svg-gui-controller-->callback;
+          callback-finished-->svg-gui-view
+          svg-gui-view --> layout;
     end
-    presenter --x gpu-gui
+    presenter --x svg-gui
     presenter --x usecase
-    user_uses[[user interaction]]-->gpu-gui-controller;
-    gpu-gui-view-->user_sees[[user sees]];
+    user_uses[[user interaction]]-->svg-gui-controller;
+    svg-gui-view-->user_sees[[user sees]];
 
 ```
 
@@ -74,12 +74,12 @@ flowchart TB;
 
 ### Full
 
-- GPU-GUI-VIEW
+- SVG-GUI-VIEW
 
   1. Center a rectangle
   1. Resize a rounded rectangle
 
-- GPU-GUI-CONTROLLER
+- SVG-GUI-CONTROLLER
 
   1. Checkbox
   1. Show Array
@@ -103,10 +103,10 @@ flowchart TB;
 
 # TODO
 
-- [ ] GPU renderer
 - [ ] Minimal Test
 - [ ] State diff interceptor
 - [ ] SVG code-gen Rust
+- [ ] GPU layout
 
 # Why Gpu
 

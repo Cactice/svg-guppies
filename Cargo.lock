@@ -441,13 +441,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "gpu-gui-concept"
-version = "0.1.0"
-dependencies = [
- "enumflags2",
-]
-
-[[package]]
 name = "hashbrown"
 version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -974,6 +967,13 @@ name = "strsim"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
+
+[[package]]
+name = "svg-gui-concept"
+version = "0.1.0"
+dependencies = [
+ "enumflags2",
+]
 
 [[package]]
 name = "syn"
