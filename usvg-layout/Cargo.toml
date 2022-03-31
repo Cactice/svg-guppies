@@ -14,6 +14,7 @@ clap = "2.32.0"
 winit = "0.26"
 futures = "0.3.5"
 env_logger = "0.9.0"
+glam = "0.20.2"
 
 [patch.crates-io]
 usvg = { path = "./resvg/usvg" }
