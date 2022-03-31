@@ -61,7 +61,6 @@ flowchart TB;
     presenter --x usecase
     user_uses[[user interaction]]-->svg-gui-controller;
     svg-gui-view-->user_sees[[user sees]];
-
 ```
 
 # Test Cases
@@ -99,7 +98,11 @@ flowchart TB;
 
 - Media
 
-  - PNG
+  1. PNG
+
+- Filter
+
+  1. Blur
 
 # TODO
 
