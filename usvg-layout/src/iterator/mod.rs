@@ -38,7 +38,23 @@ pub fn iterate(path: PathData, width: f64) -> (Vec<Vertex>, Vec<Index>) {
             y2,
             x,
             y,
-        } => {}
+        } => {
+            let next_vec2 = DVec2::new(*x, *y);
+            let ((p0, p1), (p2, p3)) = line_to_parallel_lines((current_vec2, next_vec2), width);
+            let new_vertices: Vec<Vertex> = [p0, p1, p2, p3]
+                .iter()
+                .map(|p| Vertex::from_vec2(p))
+                .collect();
+            let len = vertices.len() as u32;
+            // indices pattern to create two triangles that make a rectangle
+            let new_indices: Vec<Index> = [4, 3, 2, 3, 2, 1]
+                .iter()
+                .map(|index_diff| len - index_diff)
+                .collect();
+            vertices.extend(new_vertices);
+            indices.extend(new_indices);
+            current_vec2 = next_vec2;
+        }
         PathSegment::ClosePath => todo!(),
     });
     return (vertices, indices);
