@@ -105,9 +105,7 @@ impl Setup {
         });
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: None,
-            bind_group_layouts: &[],
-            push_constant_ranges: &[],
+            ..Default::default()
         });
 
         let surface_format = surface.get_preferred_format(&adapter).unwrap();
