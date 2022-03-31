@@ -131,7 +131,10 @@ impl Setup {
             }),
             primitive: wgpu::PrimitiveState::default(),
             depth_stencil: None,
-            multisample: wgpu::MultisampleState::default(),
+            multisample: wgpu::MultisampleState {
+                count: 4,
+                ..Default::default()
+            },
             multiview: None,
         });
 
@@ -157,4 +160,15 @@ impl Setup {
             pipeline_layout,
         }
     }
+}
+
+// Default scene has all values set to zero
+#[derive(Copy, Clone, Debug)]
+pub struct SceneGlobals {
+    pub zoom: f32,
+    pub pan: [f32; 2],
+    pub window_size: PhysicalSize<u32>,
+    pub wireframe: bool,
+    pub size_changed: bool,
+    pub render: bool,
 }
