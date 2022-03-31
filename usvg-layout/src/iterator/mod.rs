@@ -7,17 +7,16 @@ type Index = u32;
 pub fn iterate(path: PathData, width: f64) -> (Vec<Vertex>, Vec<Index>) {
     let mut vertices: Vec<Vertex> = vec![];
     let mut indices: Vec<Index> = vec![];
-    let mut current_xy: DVec2 = DVec2::new(0.0, 0.0);
-
+    let mut current_vec2: DVec2 = DVec2::new(0.0, 0.0);
     path.iter().for_each(|path| match path {
         PathSegment::MoveTo { x, y } => {
-            current_xy = DVec2::new(*x, *y);
+            current_vec2 = DVec2::new(*x, *y);
         }
         PathSegment::LineTo { x, y } => {
             // Below wiki is a reference to what is being done here
             // https://github.com/nical/lyon/wiki/Stroke-tessellation
-            let next_xy = DVec2::new(*x, *y);
-            let ((p0, p1), (p2, p3)) = line_to_parallel_lines((current_xy, next_xy), width);
+            let next_vec2 = DVec2::new(*x, *y);
+            let ((p0, p1), (p2, p3)) = line_to_parallel_lines((current_vec2, next_vec2), width);
             let new_vertices: Vec<Vertex> = [p0, p1, p2, p3]
                 .iter()
                 .map(|p| Vertex::from_vec2(p))
@@ -30,6 +29,7 @@ pub fn iterate(path: PathData, width: f64) -> (Vec<Vertex>, Vec<Index>) {
                 .collect();
             vertices.extend(new_vertices);
             indices.extend(new_indices);
+            current_vec2 = next_vec2;
         }
         PathSegment::CurveTo {
             x1,
@@ -41,7 +41,7 @@ pub fn iterate(path: PathData, width: f64) -> (Vec<Vertex>, Vec<Index>) {
         } => {}
         PathSegment::ClosePath => todo!(),
     });
-    return (todo!(), todo!());
+    return (vertices, indices);
 }
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Default)]
