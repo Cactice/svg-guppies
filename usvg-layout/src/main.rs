@@ -1,3 +1,5 @@
+mod iterator;
+
 use lyon::math::Point;
 use lyon::path::PathEvent;
 use lyon::tessellation::geometry_builder::*;
