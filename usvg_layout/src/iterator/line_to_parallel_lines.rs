@@ -3,6 +3,7 @@ use glam::DVec2;
 type Line = (DVec2, DVec2);
 
 // Offsets line by width/2 in both perpendicular direction to create parallel lines
+// Technically it should be perpendicular to vector with the last one added but this is a poor man's implementation
 pub fn line_to_parallel_lines(line: Line, width: f64) -> (Line, Line) {
     let perp_unit = (line.1 - line.0).perp().normalize();
     let perp = perp_unit * width / 2.0;

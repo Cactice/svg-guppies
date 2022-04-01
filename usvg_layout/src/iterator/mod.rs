@@ -13,7 +13,7 @@ pub fn iterate(path: PathData, width: f64) -> (Vec<Vertex>, Vec<Index>) {
             current_vec2 = DVec2::new(*x, *y);
         }
         PathSegment::LineTo { x, y } => {
-            // Below wiki is a reference to what is being done here
+            // Below wiki is a reference of what is being done here
             // https://github.com/nical/lyon/wiki/Stroke-tessellation
             let next_vec2 = DVec2::new(*x, *y);
             let ((p0, p1), (p2, p3)) = line_to_parallel_lines((current_vec2, next_vec2), width);
@@ -39,6 +39,7 @@ pub fn iterate(path: PathData, width: f64) -> (Vec<Vertex>, Vec<Index>) {
             x,
             y,
         } => {
+            // TODO: This is not curving at all
             let next_vec2 = DVec2::new(*x, *y);
             let ((p0, p1), (p2, p3)) = line_to_parallel_lines((current_vec2, next_vec2), width);
             let new_vertices: Vec<Vertex> = [p0, p1, p2, p3]
@@ -60,10 +61,12 @@ pub fn iterate(path: PathData, width: f64) -> (Vec<Vertex>, Vec<Index>) {
     return (vertices, indices);
 }
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug, Default, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vertex {
     position: [f32; 3],
+    _padding1: f32,
     color: [f32; 3],
+    _padding2: f32,
 }
 impl Vertex {
     fn from_vec2(v: &DVec2) -> Self {
