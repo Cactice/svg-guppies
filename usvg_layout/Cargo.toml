@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-# git clone from here https://github.com/Cactice/resvg
 usvg = { git = "https://github.com/Cactice/resvg" }
 tiny-skia = "0.6.1"
 bytemuck = "1.2.0"
@@ -16,4 +15,4 @@ env_logger = "0.9.0"
 glam = "0.20.2"
 
 [patch.crates-io]
-usvg = { path = "./resvg/usvg" }
+usvg = { git = "https://github.com/Cactice/resvg" }
