@@ -1,6 +1,6 @@
 mod setup;
 use setup::Setup;
-
+use usvg_layout::init;
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},

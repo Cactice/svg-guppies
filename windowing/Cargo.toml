@@ -8,3 +8,4 @@ winit = "0.26.1"
 wgpu = { git = "https://github.com/gfx-rs/wgpu" }     #0.13
 pollster = "0.2"
 bytemuck = { version = "1.8", features = ["derive"] }
+usvg_layout = { path = "../usvg_layout" }
