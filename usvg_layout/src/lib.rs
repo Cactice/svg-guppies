@@ -6,6 +6,7 @@ use lyon::tessellation::geometry_builder::*;
 use lyon::tessellation::{self, FillOptions, FillTessellator, StrokeOptions, StrokeTessellator};
 use std::f64::NAN;
 use std::fs;
+use std::sync::mpsc;
 use usvg::{NodeExt, XmlOptions};
 
 const WINDOW_SIZE: f32 = 800.0;
@@ -27,7 +28,7 @@ pub const FALLBACK_COLOR: usvg::Color = usvg::Color {
 //
 // Most of the code in this example is related to working with the GPU.
 
-fn main() {
+pub fn init() {
     // Grab some parameters from the command line.
 
     env_logger::init();
