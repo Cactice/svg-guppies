@@ -3,8 +3,8 @@ use glam::DVec2;
 use line_to_parallel_lines::line_to_parallel_lines;
 use usvg::{self, Color, NodeExt, PathData, PathSegment, XmlOptions};
 
-type Index = u32;
-pub fn iterate(path: PathData, width: f64) -> (Vec<Vertex>, Vec<Index>) {
+pub type Index = u32;
+pub fn iterate(path: &PathData, width: f64) -> (Vec<Vertex>, Vec<Index>) {
     let mut vertices: Vec<Vertex> = vec![];
     let mut indices: Vec<Index> = vec![];
     let mut current_vec2: DVec2 = DVec2::new(0.0, 0.0);
@@ -21,13 +21,14 @@ pub fn iterate(path: PathData, width: f64) -> (Vec<Vertex>, Vec<Index>) {
                 .iter()
                 .map(|p| Vertex::from_vec2(p))
                 .collect();
+            vertices.extend(new_vertices);
             let len = vertices.len() as u32;
+            println!("{}", len);
             // indices pattern to create two triangles that make a rectangle
             let new_indices: Vec<Index> = [4, 3, 2, 3, 2, 1]
                 .iter()
                 .map(|index_diff| len - index_diff)
                 .collect();
-            vertices.extend(new_vertices);
             indices.extend(new_indices);
             current_vec2 = next_vec2;
         }
@@ -46,32 +47,33 @@ pub fn iterate(path: PathData, width: f64) -> (Vec<Vertex>, Vec<Index>) {
                 .iter()
                 .map(|p| Vertex::from_vec2(p))
                 .collect();
+            vertices.extend(new_vertices);
             let len = vertices.len() as u32;
+            println!("{}", len);
             // indices pattern to create two triangles that make a rectangle
             let new_indices: Vec<Index> = [4, 3, 2, 3, 2, 1]
                 .iter()
                 .map(|index_diff| len - index_diff)
                 .collect();
-            vertices.extend(new_vertices);
             indices.extend(new_indices);
             current_vec2 = next_vec2;
         }
-        PathSegment::ClosePath => todo!(),
+        PathSegment::ClosePath => {}
     });
     return (vertices, indices);
 }
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Default, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vertex {
-    position: [f32; 3],
-    _padding1: f32,
-    color: [f32; 3],
-    _padding2: f32,
+    pub position: [f32; 3],
+    pub _padding1: f32,
+    pub color: [f32; 3],
+    pub _padding2: f32,
 }
 impl Vertex {
     fn from_vec2(v: &DVec2) -> Self {
         Self {
-            position: [v.x as f32, v.y as f32, 0.0],
+            position: [(v.x / 1000.0) as f32, (-v.y / 1000.0) as f32, 0.0],
             ..Default::default()
         }
     }

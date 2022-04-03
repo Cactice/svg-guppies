@@ -1,7 +1,7 @@
 use std::borrow::Cow;
+use usvg_layout::{iterator::Vertex, Indices, Vertices};
 use winit::{dpi::PhysicalSize, window::Window};
 
-use crate::Vertex;
 use wgpu::{util::DeviceExt, Device, RenderPipeline, Surface, SurfaceConfiguration};
 #[derive(Debug)]
 pub(crate) struct Setup {
@@ -29,12 +29,20 @@ impl Setup {
         surface.configure(device, config);
     }
     pub fn redraw(
-        vertices: &Vec<Vertex>,
+        vertices: &Vertices,
         device: &Device,
         surface: &Surface,
         render_pipeline: &RenderPipeline,
         queue: &wgpu::Queue,
+        indices: &Indices,
     ) {
+        let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Index Buffer"),
+            contents: bytemuck::cast_slice(indices),
+            usage: wgpu::BufferUsages::INDEX,
+        });
+
+        let num_indices = indices.len() as u32;
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("SVG-GUI Vertex Buffer"),
             contents: (bytemuck::cast_slice(vertices)),
@@ -63,7 +71,8 @@ impl Setup {
             });
             rpass.set_pipeline(render_pipeline);
             rpass.set_vertex_buffer(0, vertex_buffer.slice(..));
-            rpass.draw(0..3, 0..1);
+            rpass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+            rpass.draw_indexed(0..num_indices, 0, 0..1);
         }
 
         queue.submit(Some(encoder.finish()));
@@ -130,7 +139,6 @@ impl Setup {
             primitive: wgpu::PrimitiveState::default(),
             depth_stencil: None,
             multisample: wgpu::MultisampleState {
-                count: 4,
                 ..Default::default()
             },
             multiview: None,

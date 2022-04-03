@@ -1,20 +1,13 @@
 mod setup;
 use setup::Setup;
+use std::sync::mpsc::{self, channel};
 use usvg_layout::init;
+use usvg_layout::iterator::{Index, Vertex};
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
     window::Window,
 };
-
-#[repr(C)]
-#[derive(Copy, Clone, Debug, Default, bytemuck::Pod, bytemuck::Zeroable)]
-struct Vertex {
-    position: [f32; 3],
-    _padding1: f32,
-    color: [f32; 3],
-    _padding2: f32,
-}
 
 async fn run(event_loop: EventLoop<()>, window: Window) {
     let Setup {
@@ -45,6 +38,8 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
             ..Default::default()
         },
     ];
+    let svg_draw_primitives = init();
+
     event_loop.run(move |event, _, control_flow| {
         // Have the closure take ownership of the resources.
         // `event_loop.run` never returns, therefore we must do this to ensure
@@ -59,11 +54,12 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
             } => Setup::resize(size, &device, &surface, &mut config),
             Event::RedrawRequested(_) => {
                 Setup::redraw(
-                    vertices.as_ref(),
+                    svg_draw_primitives.0.as_ref(),
                     &device,
                     &surface,
                     &render_pipeline,
                     &queue,
+                    svg_draw_primitives.1.as_ref(),
                 );
                 window.request_redraw();
             }
