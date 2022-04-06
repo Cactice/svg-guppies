@@ -1,6 +1,5 @@
 pub mod iterator;
 
-use futures::channel::mpsc::Sender;
 use iterator::{iterate, Index, Vertex};
 use std::fs;
 use std::{f64::NAN, path::Path};
@@ -22,12 +21,6 @@ pub type DrawPrimitves = (Vertices, Indices);
 // Most of the code in this example is related to working with the GPU.
 
 pub fn init() -> DrawPrimitves {
-    // Grab some parameters from the command line.
-
-    env_logger::init();
-
-    let msaa_samples = 4;
-
     // Parse and tessellate the geometry
 
     let filename = Path::new("/Users/yuya/git/gpu-gui/svg/Resting.svg");

@@ -6,10 +6,6 @@ edition = "2021"
 [dependencies]
 usvg = { git = "https://github.com/Cactice/resvg" }
 bytemuck = "1.2.0"
-lyon = { version = "0.17.10", features = ["extra"] }
-clap = "2.32.0"
-futures = "0.3.5"
-env_logger = "0.9.0"
 glam = "0.20.2"
 
 [patch.crates-io]
