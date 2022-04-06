@@ -1,7 +1,7 @@
 mod line_to_parallel_lines;
 use glam::DVec2;
 use line_to_parallel_lines::line_to_parallel_lines;
-use usvg::{self, Color, NodeExt, PathData, PathSegment, XmlOptions};
+use usvg::{self, PathData, PathSegment};
 
 pub type Index = u32;
 pub fn iterate(path: &PathData, width: f64) -> (Vec<Vertex>, Vec<Index>) {
@@ -23,7 +23,6 @@ pub fn iterate(path: &PathData, width: f64) -> (Vec<Vertex>, Vec<Index>) {
                 .collect();
             vertices.extend(new_vertices);
             let len = vertices.len() as u32;
-            println!("{}", len);
             // indices pattern to create two triangles that make a rectangle
             let new_indices: Vec<Index> = [4, 3, 2, 3, 2, 1]
                 .iter()
@@ -49,7 +48,6 @@ pub fn iterate(path: &PathData, width: f64) -> (Vec<Vertex>, Vec<Index>) {
                 .collect();
             vertices.extend(new_vertices);
             let len = vertices.len() as u32;
-            println!("{}", len);
             // indices pattern to create two triangles that make a rectangle
             let new_indices: Vec<Index> = [4, 3, 2, 3, 2, 1]
                 .iter()
