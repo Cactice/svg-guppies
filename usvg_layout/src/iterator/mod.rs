@@ -71,7 +71,7 @@ pub struct Vertex {
 impl Vertex {
     fn from_vec2(v: &DVec2) -> Self {
         Self {
-            position: [(v.x / 1000.0) as f32, (-v.y / 1000.0) as f32, 0.0],
+            position: [(v.x / 500.0) as f32, (-v.y / 500.0) as f32, 0.0],
             ..Default::default()
         }
     }
