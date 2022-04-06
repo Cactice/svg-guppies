@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use usvg_layout::{iterator::Vertex, Indices, Vertices};
 use winit::{dpi::PhysicalSize, window::Window};
 
-use wgpu::{util::DeviceExt, Device, RenderPipeline, Surface, SurfaceConfiguration};
+use wgpu::{util::DeviceExt, Device, RenderPipeline, Surface, SurfaceConfiguration, TextureView};
 #[derive(Debug)]
 pub(crate) struct Setup {
     pub(crate) instance: wgpu::Instance,
@@ -35,6 +35,7 @@ impl Setup {
         render_pipeline: &RenderPipeline,
         queue: &wgpu::Queue,
         indices: &Indices,
+        config: &SurfaceConfiguration,
     ) {
         let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Index Buffer"),
@@ -56,12 +57,27 @@ impl Setup {
             .create_view(&wgpu::TextureViewDescriptor::default());
         let mut encoder =
             device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+        let msaa_texture = device
+            .create_texture(&wgpu::TextureDescriptor {
+                label: Some("Multisampled frame descriptor"),
+                size: wgpu::Extent3d {
+                    width: config.width,
+                    height: config.height,
+                    depth_or_array_layers: 1,
+                },
+                mip_level_count: 1,
+                sample_count: 4,
+                dimension: wgpu::TextureDimension::D2,
+                format: config.format,
+                usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+            })
+            .create_view(&wgpu::TextureViewDescriptor::default());
         {
             let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: None,
                 color_attachments: &[wgpu::RenderPassColorAttachment {
-                    view: &view,
-                    resolve_target: None,
+                    view: &msaa_texture,
+                    resolve_target: Some(&view),
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color::WHITE),
                         store: true,
@@ -139,7 +155,9 @@ impl Setup {
             primitive: wgpu::PrimitiveState::default(),
             depth_stencil: None,
             multisample: wgpu::MultisampleState {
-                ..Default::default()
+                count: 4,
+                mask: !0,
+                alpha_to_coverage_enabled: false,
             },
             multiview: None,
         });
