@@ -1,9 +1,7 @@
 pub mod iterator;
 
 use iterator::{iterate, Index, Vertex};
-use std::fs;
-use std::{f64::NAN, path::Path};
-use usvg::{NodeExt, XmlOptions};
+use std::path::Path;
 
 pub type Vertices = Vec<Vertex>;
 pub type Indices = Vec<Index>;
@@ -29,32 +27,12 @@ pub fn init() -> DrawPrimitves {
     opt.fontdb.load_system_fonts();
     let file_data = std::fs::read(filename).unwrap();
     let rtree = usvg::Tree::from_data(&file_data, &opt.to_ref()).unwrap();
-    let str = rtree.to_string(&XmlOptions::default());
-    // fs::write("./out2.svg", str).expect("Unable to write file");
 
-    let mut prev_transform = usvg::Transform {
-        a: NAN,
-        b: NAN,
-        c: NAN,
-        d: NAN,
-        e: NAN,
-        f: NAN,
-    };
-    let view_box = rtree.svg_node().view_box;
+    let _view_box = rtree.svg_node().view_box;
     let mut vertices: Vec<Vertex> = vec![];
     let mut indices: Vec<Index> = vec![];
     for node in rtree.root().descendants() {
         if let usvg::NodeKind::Path(ref p) = *node.borrow() {
-            // if let Some(ref fill) = p.fill {
-            //     // fall back to always use color fill
-            //     // no gradients (yet?)
-            //     let color = match fill.paint {
-            //         usvg::Paint::Color(c) => c,
-            //         _ => FALLBACK_COLOR,
-            //     };
-            // }
-
-            // if let Some(ref stroke) = p.stroke {}
             let (path_vertices, path_indices) = iterate(&p.data, 2.0);
             vertices.extend(path_vertices);
             indices.extend(path_indices);

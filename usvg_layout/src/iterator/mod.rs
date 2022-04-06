@@ -19,7 +19,7 @@ pub fn iterate(path: &PathData, width: f64) -> (Vec<Vertex>, Vec<Index>) {
             let ((p0, p1), (p2, p3)) = line_to_parallel_lines((current_vec2, next_vec2), width);
             let new_vertices: Vec<Vertex> = [p0, p1, p2, p3]
                 .iter()
-                .map(|p| Vertex::from_vec2(p))
+                .map(Vertex::from_vec2)
                 .collect();
             vertices.extend(new_vertices);
             let len = vertices.len() as u32;
@@ -32,10 +32,10 @@ pub fn iterate(path: &PathData, width: f64) -> (Vec<Vertex>, Vec<Index>) {
             current_vec2 = next_vec2;
         }
         PathSegment::CurveTo {
-            x1,
-            y1,
-            x2,
-            y2,
+            x1: _,
+            y1: _,
+            x2: _,
+            y2: _,
             x,
             y,
         } => {
@@ -44,7 +44,7 @@ pub fn iterate(path: &PathData, width: f64) -> (Vec<Vertex>, Vec<Index>) {
             let ((p0, p1), (p2, p3)) = line_to_parallel_lines((current_vec2, next_vec2), width);
             let new_vertices: Vec<Vertex> = [p0, p1, p2, p3]
                 .iter()
-                .map(|p| Vertex::from_vec2(p))
+                .map(Vertex::from_vec2)
                 .collect();
             vertices.extend(new_vertices);
             let len = vertices.len() as u32;
@@ -58,7 +58,7 @@ pub fn iterate(path: &PathData, width: f64) -> (Vec<Vertex>, Vec<Index>) {
         }
         PathSegment::ClosePath => {}
     });
-    return (vertices, indices);
+    (vertices, indices)
 }
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Default, bytemuck::Pod, bytemuck::Zeroable)]

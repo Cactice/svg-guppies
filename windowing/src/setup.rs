@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use usvg_layout::{iterator::Vertex, Indices, Vertices};
 use winit::{dpi::PhysicalSize, window::Window};
 
-use wgpu::{util::DeviceExt, Device, RenderPipeline, Surface, SurfaceConfiguration, TextureView};
+use wgpu::{util::DeviceExt, Device, RenderPipeline, Surface, SurfaceConfiguration};
 #[derive(Debug)]
 pub(crate) struct Setup {
     pub(crate) instance: wgpu::Instance,

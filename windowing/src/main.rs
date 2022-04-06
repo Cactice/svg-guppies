@@ -1,8 +1,8 @@
 mod setup;
 use setup::Setup;
-use std::sync::mpsc::{self, channel};
+
 use usvg_layout::init;
-use usvg_layout::iterator::{Index, Vertex};
+use usvg_layout::iterator::{Vertex};
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -21,7 +21,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
         shader,
         pipeline_layout,
     } = Setup::new(&window).await;
-    let vertices = vec![
+    let _vertices = vec![
         Vertex {
             position: [-1.0, 1.0, 0.0],
             color: [1.0, 0.0, 0.0],

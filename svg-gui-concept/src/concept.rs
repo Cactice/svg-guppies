@@ -83,7 +83,7 @@ fn is_point_in_rect(rect: Rect, point: Point) -> bool {
         && point.y < rect.y + rect.height
 }
 impl<'a, D: Copy, SvgID: Hash + Eq + Clone + Copy> Component<'a, D, SvgID> {
-    pub fn new(svg_file_name: String, svg_id: String) -> Self {
+    pub fn new(_svg_file_name: String, _svg_id: String) -> Self {
         todo!()
     }
     pub fn rerender(self, _diff: D) {
