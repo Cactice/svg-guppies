@@ -3,6 +3,7 @@ use usvg_layout::{iterator::Vertex, Indices, Vertices};
 use winit::{dpi::PhysicalSize, window::Window};
 
 use wgpu::{util::DeviceExt, Device, RenderPipeline, Surface, SurfaceConfiguration};
+const SAMPLE_COUNT: u32 = 4;
 #[derive(Debug)]
 pub(crate) struct Setup {
     pub(crate) instance: wgpu::Instance,
@@ -66,7 +67,7 @@ impl Setup {
                     depth_or_array_layers: 1,
                 },
                 mip_level_count: 1,
-                sample_count: 4,
+                sample_count: SAMPLE_COUNT,
                 dimension: wgpu::TextureDimension::D2,
                 format: config.format,
                 usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
@@ -155,7 +156,7 @@ impl Setup {
             primitive: wgpu::PrimitiveState::default(),
             depth_stencil: None,
             multisample: wgpu::MultisampleState {
-                count: 4,
+                count: SAMPLE_COUNT,
                 mask: !0,
                 alpha_to_coverage_enabled: false,
             },
