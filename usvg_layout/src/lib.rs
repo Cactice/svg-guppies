@@ -5,7 +5,7 @@ use std::path::Path;
 
 pub type Vertices = Vec<Vertex>;
 pub type Indices = Vec<Index>;
-pub type DrawPrimitves = (Vertices, Indices);
+pub type DrawPrimitives = (Vertices, Indices);
 
 // This example renders a very tiny subset of SVG (only filled and stroke paths with solid color
 // patterns and transforms).
@@ -18,7 +18,7 @@ pub type DrawPrimitves = (Vertices, Indices);
 //
 // Most of the code in this example is related to working with the GPU.
 
-pub fn init() -> DrawPrimitves {
+pub fn init() -> DrawPrimitives {
     // Parse and tessellate the geometry
 
     let filename = Path::new("/Users/yuya/git/gpu-gui/svg/Resting.svg");
@@ -28,14 +28,22 @@ pub fn init() -> DrawPrimitves {
     let file_data = std::fs::read(filename).unwrap();
     let rtree = usvg::Tree::from_data(&file_data, &opt.to_ref()).unwrap();
 
-    let _view_box = rtree.svg_node().view_box;
+    let view_box = rtree.svg_node().view_box;
     let mut vertices: Vec<Vertex> = vec![];
     let mut indices: Vec<Index> = vec![];
+    let mut path_count = 0;
     for node in rtree.root().descendants() {
         if let usvg::NodeKind::Path(ref p) = *node.borrow() {
-            let (path_vertices, path_indices) = iterate(&p.data, 2.0);
+            let (path_vertices, path_indices) = iterate(&p.data, 1.0, &view_box);
             vertices.extend(path_vertices);
             indices.extend(path_indices);
+            println!(
+                "{}: {}, {} .. {}",
+                path_count,
+                vertices.len(),
+                indices.len(),
+                indices.len() as f32 / vertices.len() as f32
+            );
         }
     }
     (vertices, indices)

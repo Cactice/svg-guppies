@@ -2,7 +2,7 @@ mod setup;
 use setup::Setup;
 
 use usvg_layout::init;
-use usvg_layout::iterator::{Vertex};
+use usvg_layout::iterator::Vertex;
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},

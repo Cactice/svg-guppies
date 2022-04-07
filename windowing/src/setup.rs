@@ -89,12 +89,13 @@ impl Setup {
             rpass.set_pipeline(render_pipeline);
             rpass.set_vertex_buffer(0, vertex_buffer.slice(..));
             rpass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
-            rpass.draw_indexed(0..num_indices, 0, 0..1);
+            rpass.draw(0..vertices.len() as u32, 0..1);
         }
 
         queue.submit(Some(encoder.finish()));
         frame.present();
     }
+
     pub async fn new(window: &Window) -> Self {
         let size = window.inner_size();
         let instance = wgpu::Instance::new(wgpu::Backends::all());
