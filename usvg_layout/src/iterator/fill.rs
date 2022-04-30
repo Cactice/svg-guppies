@@ -63,11 +63,9 @@ fn process_axis(a: &f64, flips: &mut i32, sign: &mut i32, first_sign: &mut i32) 
     let next_sign = if *a > 0.0 { 1 } else { -1 };
     *flips += if *sign * next_sign < 0 { 1 } else { 0 };
     *sign = next_sign;
-    *first_sign = if *first_sign == 0 {
-        next_sign
-    } else {
-        *first_sign
-    };
+    if *first_sign == 0 {
+      *first_sign =next_sign
+    }
 }
 
 pub fn is_convex(polygon: &Vec<DVec2>) -> bool {
