@@ -12,12 +12,13 @@ mod tests {
     }
 
     #[test]
-    fn concave_is_not_convex() {
-        let concave: Vec<DVec2> = vec![[0.0, 0.0], [0.0, 1.0], [1.0, 1.0], [0.5, 0.5], [1.0, 0.0]]
+    fn m_is_not_convex() {
+        // the shape resembles the letter M
+        let m: Vec<DVec2> = vec![[0.0, 0.0], [0.0, 1.0], [1.0, 1.0], [0.5, 0.5], [1.0, 0.0]]
             .iter()
             .map(|v| DVec2::from(*v))
             .collect();
-        assert!(!is_convex(concave));
+        assert!(!is_convex(m));
     }
 
     #[test]
@@ -98,9 +99,9 @@ pub fn is_convex(polygon: Vec<DVec2>) -> bool {
         let w = bx * ay - ax * by;
         if (w_sign == 0.0) && (w != 0.0) {
             w_sign = w
-        } else if (w_sign > 0.0) && (w < 0.0) {
+        } else if (w_sign > 0.0 && w < 0.0) {
             return false;
-        } else if (w_sign < 0.0) && (w > 0.0) {
+        } else if (w_sign < 0.0 && w > 0.0) {
             return false;
         }
     }
