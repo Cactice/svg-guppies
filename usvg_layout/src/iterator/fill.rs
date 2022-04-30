@@ -1,4 +1,41 @@
 use glam::DVec2;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn rec_is_convex() {
+        let rec: Vec<DVec2> = vec![[0.0, 0.0], [0.0, 1.0], [1.0, 1.0], [1.0, 0.0]]
+            .iter()
+            .map(|v| DVec2::from(*v))
+            .collect();
+        assert!(is_convex(rec))
+    }
+
+    #[test]
+    fn concave_is_not_convex() {
+        let concave: Vec<DVec2> = vec![[0.0, 0.0], [0.0, 1.0], [1.0, 1.0], [0.5, 0.5], [1.0, 0.0]]
+            .iter()
+            .map(|v| DVec2::from(*v))
+            .collect();
+        assert!(!is_convex(concave));
+    }
+
+    #[test]
+    fn star_is_not_convex() {
+        let star: Vec<DVec2> = vec![
+            [1.0, 3.0],
+            [9.0, 7.0],
+            [7.0, 9.0],
+            [7.0, 2.0],
+            [9.0, 6.0],
+            [1.0, 8.0],
+        ]
+        .iter()
+        .map(|v| DVec2::from(*v))
+        .collect();
+        assert!(!is_convex(star))
+    }
+}
 
 pub fn is_convex(polygon: Vec<DVec2>) -> bool {
     if polygon.len() < 3 {
@@ -16,14 +53,14 @@ pub fn is_convex(polygon: Vec<DVec2>) -> bool {
     let mut yFirstSign = 0.0; // Sign of first nonzero edge vector y
     let mut yFlips = 0.0; // Number of sign changes in y
 
-    let curr = polygon[N - 1]; // Second-to-last vertex
-    let next = polygon[N]; // Last vertex
+    let mut curr = polygon[N - 1]; // Second-to-last vertex
+    let mut next = polygon[N]; // Last vertex
 
     for v in polygon {
         // Each vertex, in order
         let prev = curr; // Previous vertex
-        let curr = next; // Current vertex
-        let next = v; // Next vertex
+        curr = next; // Current vertex
+        next = v; // Next vertex
 
         // Previous edge vector ("before"):
         let bx = curr.x - prev.x;
@@ -99,32 +136,4 @@ pub fn is_convex(polygon: Vec<DVec2>) -> bool {
 
     // This is a convex polygon.
     true
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn rec_is_convex() {
-        let rec: Vec<DVec2> = vec![[0.0, 0.0], [0.0, 1.0], [1.0, 1.0], [1.0, 0.0]]
-            .iter()
-            .map(|v| DVec2::from(*v))
-            .collect();
-        assert!(is_convex(rec))
-    }
-    #[test]
-    fn star_is_not_convex() {
-        let star: Vec<DVec2> = vec![
-            [1.0, 3.0],
-            [9.0, 7.0],
-            [7.0, 9.0],
-            [7.0, 2.0],
-            [9.0, 6.0],
-            [1.0, 8.0],
-        ]
-        .iter()
-        .map(|v| DVec2::from(*v))
-        .collect();
-        assert!(!is_convex(star))
-    }
 }
