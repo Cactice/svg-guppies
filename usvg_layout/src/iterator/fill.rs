@@ -1,4 +1,5 @@
 use glam::DVec2;
+// Inspiration: https://math.stackexchange.com/questions/1743995/determine-whether-a-polygon-is-convex-based-on-its-vertices/1745427#1745427
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -38,6 +39,11 @@ mod tests {
     }
 }
 
+fn process_axis(a: &f64, flips: &mut f64, sign: &mut f64) {
+    let next_sign = if *a > 0.0 { 1.0 } else { -1.0 };
+    *flips += if *sign * -next_sign < 0.0 { 1.0 } else { 0.0 };
+    *sign = next_sign;
+}
 pub fn is_convex(polygon: Vec<DVec2>) -> bool {
     if polygon.len() < 3 {
         return false;
@@ -70,27 +76,10 @@ pub fn is_convex(polygon: Vec<DVec2>) -> bool {
         let ax = next.x - curr.x;
         let ay = next.y - curr.y;
 
-        let next_x_sign = if ax > 0.0 { 1.0 } else { -1.0 };
-        x_flips += if x_sign * -next_x_sign < 0.0 {
-            1.0
-        } else {
-            0.0
-        };
-        x_sign = next_x_sign;
+        process_axis(&ax, &mut x_flips, &mut x_sign);
+        process_axis(&ay, &mut y_flips, &mut y_sign);
 
-        if x_flips > 2.0 {
-            return false;
-        }
-
-        let next_y_sign = if ay > 0.0 { 1.0 } else { -1.0 };
-        y_flips += if y_sign * -next_y_sign < 0.0 {
-            1.0
-        } else {
-            0.0
-        };
-        y_sign = next_y_sign;
-
-        if y_flips > 2.0 {
+        if x_flips > 2.0 || y_flips > 2.0 {
             return false;
         }
 
@@ -99,9 +88,7 @@ pub fn is_convex(polygon: Vec<DVec2>) -> bool {
         let w = bx * ay - ax * by;
         if w_sign == 0.0 && w != 0.0 {
             w_sign = w
-        } else if w_sign > 0.0 && w < 0.0 {
-            return false;
-        } else if w_sign < 0.0 && w > 0.0 {
+        } else if (w_sign > 0.0 && w < 0.0) || (w_sign < 0.0 && w > 0.0) {
             return false;
         }
     }
@@ -116,6 +103,5 @@ pub fn is_convex(polygon: Vec<DVec2>) -> bool {
         return false;
     }
 
-    // This is a convex polygon.
     true
 }
