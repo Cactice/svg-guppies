@@ -44,7 +44,7 @@ impl Setup {
             usage: wgpu::BufferUsages::INDEX,
         });
 
-        let num_indices = indices.len() as u32;
+        let _num_indices = indices.len() as u32;
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("SVG-GUI Vertex Buffer"),
             contents: (bytemuck::cast_slice(vertices)),

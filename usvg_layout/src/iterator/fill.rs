@@ -97,11 +97,11 @@ pub fn is_convex(polygon: Vec<DVec2>) -> bool {
         // Find out the orientation of this pair of edges,
         // && ensure it does not differ from previous ones.
         let w = bx * ay - ax * by;
-        if (w_sign == 0.0) && (w != 0.0) {
+        if w_sign == 0.0 && w != 0.0 {
             w_sign = w
-        } else if (w_sign > 0.0 && w < 0.0) {
+        } else if w_sign > 0.0 && w < 0.0 {
             return false;
-        } else if (w_sign < 0.0 && w > 0.0) {
+        } else if w_sign < 0.0 && w > 0.0 {
             return false;
         }
     }

@@ -31,7 +31,7 @@ pub fn init() -> DrawPrimitives {
     let view_box = rtree.svg_node().view_box;
     let mut vertices: Vec<Vertex> = vec![];
     let mut indices: Vec<Index> = vec![];
-    let mut path_count = 0;
+    let path_count = 0;
     for node in rtree.root().descendants() {
         if let usvg::NodeKind::Path(ref p) = *node.borrow() {
             let (path_vertices, path_indices) = iterate(&p.data, 1.0, &view_box);
