@@ -32,7 +32,7 @@ mod tests {
     #[test]
     fn m_is_not_convex() {
         // the shape resembles the letter M
-        let m: Vec<DVec2> = vec![[0.0, 0.0], [0.0, 1.0], [0.5, 0.5],[1.0, 1.0], [1.0, 0.0]]
+        let m: Vec<DVec2> = vec![[0.0, 0.0], [0.0, 1.0], [0.5, 0.5], [1.0, 1.0], [1.0, 0.0]]
             .iter()
             .map(|v| DVec2::from(*v))
             .collect();
@@ -64,7 +64,7 @@ fn process_axis(a: &f64, flips: &mut i32, sign: &mut i32, first_sign: &mut i32) 
     *flips += if *sign * next_sign < 0 { 1 } else { 0 };
     *sign = next_sign;
     if *first_sign == 0 {
-      *first_sign =next_sign
+        *first_sign = next_sign
     }
 }
 
