@@ -9,7 +9,7 @@ mod tests {
             .iter()
             .map(|v| DVec2::from(*v))
             .collect();
-        assert!(is_convex(&triangle))
+        assert_eq!(get_first_convex_index(&triangle), triangle.len())
     }
     #[test]
     fn rec_is_convex() {
@@ -17,30 +17,30 @@ mod tests {
             .iter()
             .map(|v| DVec2::from(*v))
             .collect();
-        assert!(is_convex(&rec))
+        assert_eq!(get_first_convex_index(&rec), rec.len())
     }
 
     #[test]
     fn house_is_convex() {
         // the shape resembles a house
-        let m: Vec<DVec2> = vec![[0.0, 0.0], [0.0, 1.0], [0.5, 1.5], [1.0, 1.0], [1.0, 0.0]]
+        let house: Vec<DVec2> = vec![[0.0, 0.0], [0.0, 1.0], [0.5, 1.5], [1.0, 1.0], [1.0, 0.0]]
             .iter()
             .map(|v| DVec2::from(*v))
             .collect();
-        assert!(is_convex(&m));
+        assert_eq!(get_first_convex_index(&house), house.len())
     }
     #[test]
-    fn m_is_not_convex() {
+    fn m_is_concave() {
         // the shape resembles the letter M
         let m: Vec<DVec2> = vec![[0.0, 0.0], [0.0, 1.0], [0.5, 0.5], [1.0, 1.0], [1.0, 0.0]]
             .iter()
             .map(|v| DVec2::from(*v))
             .collect();
-        assert!(!is_convex(&m));
+        assert_ne!(get_first_convex_index(&m), m.len())
     }
 
     #[test]
-    fn star_is_not_convex() {
+    fn star_is_concave() {
         let star: Vec<DVec2> = vec![
             [1.0, 3.0],
             [9.0, 7.0],
@@ -52,7 +52,7 @@ mod tests {
         .iter()
         .map(|v| DVec2::from(*v))
         .collect();
-        assert!(!is_convex(&star))
+        assert_ne!(get_first_convex_index(&star), star.len())
     }
 }
 
@@ -68,9 +68,9 @@ fn process_axis(a: &f64, flips: &mut i32, sign: &mut i32, first_sign: &mut i32) 
     }
 }
 
-pub fn is_convex(polygon: &Vec<DVec2>) -> bool {
+pub fn get_first_convex_index(polygon: &Vec<DVec2>) -> usize {
     if polygon.len() < 3 {
-        return false;
+        return polygon.len();
     }
     let n = polygon.len() - 1;
 
@@ -87,7 +87,7 @@ pub fn is_convex(polygon: &Vec<DVec2>) -> bool {
     let mut curr = polygon[n - 1]; // Second-to-last vertex
     let mut next = polygon[n]; // Last vertex
 
-    for v in polygon {
+    for (i, v) in polygon.iter().enumerate() {
         // Each vertex, in order
         let prev = curr; // Previous vertex
         curr = next; // Current vertex
@@ -103,13 +103,13 @@ pub fn is_convex(polygon: &Vec<DVec2>) -> bool {
         process_axis(&ax, &mut x_flips, &mut x_sign, &mut x_first_sign);
 
         if x_flips > 2 {
-            return false;
+            return i;
         }
 
         process_axis(&ay, &mut y_flips, &mut y_sign, &mut y_first_sign);
 
         if y_flips > 2 {
-            return false;
+            return i;
         }
 
         // Find out the orientation of this pair of edges,
@@ -118,7 +118,7 @@ pub fn is_convex(polygon: &Vec<DVec2>) -> bool {
         if w_sign == 0.0 && w != 0.0 {
             w_sign = w
         } else if (w_sign > 0.0 && w < 0.0) || (w_sign < 0.0 && w > 0.0) {
-            return false;
+            return i;
         }
     }
     if x_sign != 0 && x_first_sign != 0 && x_sign != x_first_sign {
@@ -129,9 +129,9 @@ pub fn is_convex(polygon: &Vec<DVec2>) -> bool {
     }
     // Concave polygons have two sign flips along each axis.
     if x_flips != 2 || y_flips != 2 {
-        return false;
+        return n;
     }
 
     // This is a convex polygon.
-    true
+    n + 1
 }
