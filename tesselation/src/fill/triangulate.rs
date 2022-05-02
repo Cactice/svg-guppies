@@ -1,22 +1,30 @@
 use glam::{DVec2, Vec3};
 
 use super::convex_breakdown::convex_breakdown;
-use super::{Vertex};
+use super::Vertex;
 
 pub fn triangulate(polygon: &mut Vec<DVec2>, color: &Vec3) -> Vec<Vertex> {
     let mut convexes = convex_breakdown(polygon);
     convexes
         .iter_mut()
         .flat_map(|convex| {
-            let rest = convex.split_off(1);
-            let first = convex;
-            rest.chunks_exact(2)
-                .flat_map(|vertices| {
-                    let triangle = vec![
-                        Vertex::from((&first[0], color)),
-                        Vertex::from((&vertices[0], color)),
-                        Vertex::from((&vertices[1], color)),
-                    ];
+            if convex.is_empty() {
+                return vec![];
+            }
+            let first = convex[0];
+            convex
+                .iter()
+                .enumerate()
+                .skip(1)
+                .flat_map(|(i, this)| {
+                    let triangle = match convex.get(i + 1) {
+                        Some(next) => vec![
+                            Vertex::from((&first, color)),
+                            Vertex::from((this, color)),
+                            Vertex::from((next, color)),
+                        ],
+                        None => vec![],
+                    };
                     triangle
                 })
                 .collect::<Vec<Vertex>>()

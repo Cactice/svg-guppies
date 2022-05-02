@@ -140,12 +140,19 @@ pub fn convex_breakdown(polygon: &mut Vec<DVec2>) -> Vec<Vec<DVec2>> {
     let mut convexes: Vec<Vec<DVec2>> = vec![];
     while polygon.len() >= 3 {
         let rest = polygon.split_off(get_first_convex_index(polygon));
+        if !rest.is_empty() {
+            polygon.push(rest[0]);
+        }
         convexes.push(polygon.to_vec());
         *polygon = rest;
     }
-    if !polygon.is_empty() {
-        //todo
-        return convexes;
+    if !polygon.is_empty() && !convexes.is_empty() {
+        let mut i = 0;
+        while polygon.len() < 3 {
+            polygon.push(convexes[0][i]);
+            i += 1;
+        }
+        convexes.push(polygon.to_vec());
     }
     convexes
 }
