@@ -2234,6 +2234,7 @@ name = "windowing"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
+ "glam",
  "pollster",
  "usvg_layout",
  "wgpu 0.12.0 (git+https://github.com/gfx-rs/wgpu)",

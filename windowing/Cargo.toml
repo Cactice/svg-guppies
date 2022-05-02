@@ -5,7 +5,8 @@ edition = "2021"
 
 [dependencies]
 winit = "0.26.1"
-wgpu = { git = "https://github.com/gfx-rs/wgpu" }     #0.13
+wgpu = { git = "https://github.com/gfx-rs/wgpu" }      #0.13
 pollster = "0.2"
 bytemuck = { version = "1.8", features = ["derive"] }
+glam = { version = "0.20.2", features = ["bytemuck"] }
 usvg_layout = { path = "../usvg_layout" }
