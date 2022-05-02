@@ -1,5 +1,5 @@
 use std::borrow::Cow;
-use usvg_layout::{iterator::Vertex, Indices, Vertices};
+use usvg_layout::{glam::Mat3, iterator::Vertex, Indices, Vertices};
 use winit::{dpi::PhysicalSize, window::Window};
 
 use wgpu::{util::DeviceExt, Device, RenderPipeline, Surface, SurfaceConfiguration};
@@ -96,7 +96,7 @@ impl Setup {
         frame.present();
     }
 
-    pub async fn new(window: &Window) -> Self {
+    pub async fn new(window: &Window, default_transform: Mat3) -> Self {
         let size = window.inner_size();
         let instance = wgpu::Instance::new(wgpu::Backends::all());
         let surface = unsafe { instance.create_surface(&window) };
@@ -171,6 +171,11 @@ impl Setup {
             height: size.height,
             present_mode: wgpu::PresentMode::Mailbox,
         };
+        let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Camera Buffer"),
+            contents: bytemuck::bytes_of(&default_transform),
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        });
 
         surface.configure(&device, &config);
 

@@ -1,13 +1,10 @@
-mod convex_breakdown;
-mod fills;
 mod line_to_parallel_lines;
-mod triangulate;
 use glam::DVec2;
 use line_to_parallel_lines::line_to_parallel_lines;
-use usvg::{self, PathData, PathSegment, ViewBox};
+use usvg::{self, PathData, PathSegment};
 
 pub type Index = u32;
-pub fn iterate_stroke(path: &PathData, width: f64, viewBox: &ViewBox) -> (Vec<Vertex>, Vec<Index>) {
+pub fn iterate_stroke(path: &PathData, width: f64) -> (Vec<Vertex>, Vec<Index>) {
     let mut vertices: Vec<Vertex> = vec![];
     let mut indices: Vec<Index> = vec![];
     let mut current_vec2: DVec2 = DVec2::new(0.0, 0.0);
@@ -18,7 +15,7 @@ pub fn iterate_stroke(path: &PathData, width: f64, viewBox: &ViewBox) -> (Vec<Ve
         let next_vec2 = DVec2::new(*x, *y);
         let ((p0, p1), (p2, p3)) = line_to_parallel_lines((*current_vec2, next_vec2), width);
         let rect = [p0, p1, p2, p1, p2, p3];
-        let new_vertices = rect.iter().map(|vec2| Vertex::from_vec2(vec2, viewBox));
+        let new_vertices = rect.iter().map(|vec2| Vertex::from_vec2(vec2));
         vertices.extend(new_vertices);
         let len = vertices.len() as u32;
         // indices pattern to create two triangles that make a rectangle
@@ -56,13 +53,9 @@ pub struct Vertex {
     pub _padding2: f32,
 }
 impl Vertex {
-    fn from_vec2(v: &DVec2, view_box: &ViewBox) -> Self {
+    fn from_vec2(v: &DVec2) -> Self {
         Self {
-            position: [
-                (v.x / view_box.rect.width()) as f32,
-                (-v.y / view_box.rect.height()) as f32,
-                0.0,
-            ],
+            position: [(v.x) as f32, (-v.y) as f32, 0.0],
             ..Default::default()
         }
     }

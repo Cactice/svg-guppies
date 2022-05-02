@@ -1,6 +1,7 @@
 mod setup;
 use setup::Setup;
 
+use usvg_layout::glam::Mat3;
 use usvg_layout::init;
 use usvg_layout::iterator::Vertex;
 use winit::{
@@ -10,6 +11,8 @@ use winit::{
 };
 
 async fn run(event_loop: EventLoop<()>, window: Window) {
+    let (svg_draw_primitives, rect) = init();
+    let transform: Mat3 = Mat3::from_scale(rect.1) + Mat3::from_translation(rect.0);
     let Setup {
         instance,
         adapter,
@@ -20,7 +23,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
         render_pipeline,
         shader,
         pipeline_layout,
-    } = Setup::new(&window).await;
+    } = Setup::new(&window, transform).await;
     let _vertices = vec![
         Vertex {
             position: [-1.0, 1.0, 0.0],
@@ -38,7 +41,6 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
             ..Default::default()
         },
     ];
-    let svg_draw_primitives = init();
 
     event_loop.run(move |event, _, control_flow| {
         // Have the closure take ownership of the resources.
