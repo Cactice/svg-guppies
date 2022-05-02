@@ -1,6 +1,6 @@
 pub mod iterator;
 
-use iterator::{iterate, Index, Vertex};
+use iterator::{iterate_stroke, Index, Vertex};
 use std::path::Path;
 
 pub type Vertices = Vec<Vertex>;
@@ -34,16 +34,18 @@ pub fn init() -> DrawPrimitives {
     let path_count = 0;
     for node in rtree.root().descendants() {
         if let usvg::NodeKind::Path(ref p) = *node.borrow() {
-            let (path_vertices, path_indices) = iterate(&p.data, 1.0, &view_box);
-            vertices.extend(path_vertices);
-            indices.extend(path_indices);
-            println!(
-                "{}: {}, {} .. {}",
-                path_count,
-                vertices.len(),
-                indices.len(),
-                indices.len() as f32 / vertices.len() as f32
-            );
+            if let Some(ref stroke) = p.stroke {
+                let (path_vertices, path_indices) = iterate_stroke(&p.data, 1.0, &view_box);
+                let (path_vertices, path_indices) = iterate_stroke(&p.data, 1.0, &view_box);
+                vertices.extend(path_vertices);
+                indices.extend(path_indices);
+            }
+            if let Some(ref fill) = p.fill {
+                let (path_vertices, path_indices) = iterate_fill(&p.data, 1.0, &view_box);
+                let (path_vertices, path_indices) = iterate_fill(&p.data, 1.0, &view_box);
+                vertices.extend(path_vertices);
+                indices.extend(path_indices);
+            }
         }
     }
     (vertices, indices)

@@ -1,11 +1,13 @@
-mod fill;
+mod convex_breakdown;
+mod fills;
 mod line_to_parallel_lines;
+mod triangulate;
 use glam::DVec2;
 use line_to_parallel_lines::line_to_parallel_lines;
 use usvg::{self, PathData, PathSegment, ViewBox};
 
 pub type Index = u32;
-pub fn iterate(path: &PathData, width: f64, viewBox: &ViewBox) -> (Vec<Vertex>, Vec<Index>) {
+pub fn iterate_stroke(path: &PathData, width: f64, viewBox: &ViewBox) -> (Vec<Vertex>, Vec<Index>) {
     let mut vertices: Vec<Vertex> = vec![];
     let mut indices: Vec<Index> = vec![];
     let mut current_vec2: DVec2 = DVec2::new(0.0, 0.0);
@@ -44,6 +46,7 @@ pub fn iterate(path: &PathData, width: f64, viewBox: &ViewBox) -> (Vec<Vertex>, 
     });
     (vertices, indices)
 }
+
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Default, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vertex {
