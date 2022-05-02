@@ -49,9 +49,9 @@ using native svg renderer available for each platform would likely end up with l
 
 Using available SVG renderer
 I considered lyon and tried out with their code but considering SVGs are generally unintended to animate, it seemed it would need to tesselate every frame which is heavy work.
-I also considered resvg but it had no example of rendering svgs to a window (only rendering to pngs) and I wasn't too sure how to use it to render to a window, so I decided to not to use it.
+I also considered resvg but it had no example of rendering svgs to a window (only rendering to pngs) and I wasn't too sure how to use it to render to a window nor was I interested enough to research, so I decided to not to use it.
 
-Maybe there were other libraries I could consider, but most are for tesselation. Such tesselation library may not be intended for svgs to be dynamically reshaped, which could require tesselation for every reshape that occurs.
+Maybe there were other libraries I could consider, but most are for tesselation. Such tesselation library are often not intended for svgs to be dynamically reshaped, which means it could require tesselation for every reshape that occurs; Slightly concerning performance wise.
 
 
 ## Consequences
