@@ -1,7 +1,7 @@
 pub mod iterator;
 
 pub use glam;
-use glam::{DVec2, Vec2};
+use glam::Vec2;
 use iterator::{fills::iterate_fill, iterate_stroke, Index, Vertex};
 use std::path::Path;
 
@@ -46,7 +46,6 @@ pub fn init() -> (DrawPrimitives, Rect) {
 
     let mut vertices: Vec<Vertex> = vec![];
     let mut indices: Vec<Index> = vec![];
-    let path_count = 0;
     for node in rtree.root().descendants() {
         if let usvg::NodeKind::Path(ref p) = *node.borrow() {
             if let Some(ref stroke) = p.stroke {

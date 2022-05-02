@@ -1,11 +1,11 @@
 use glam::{DVec2, Vec3};
-use usvg::{self, Color, PathData, PathSegment, ViewBox};
+use usvg::{self, Color, PathData, PathSegment};
 
 use super::{triangulate::triangulate, Index, Vertex};
 
 pub fn iterate_fill(path: &PathData, color: &Color) -> (Vec<Vertex>, Vec<Index>) {
     let mut vertices: Vec<Vertex> = vec![];
-    let mut indices: Vec<Index> = vec![];
+    let indices: Vec<Index> = vec![];
     let mut current_polygon: Vec<DVec2> = vec![];
 
     path.iter().for_each(|path| match path {

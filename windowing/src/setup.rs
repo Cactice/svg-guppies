@@ -178,7 +178,7 @@ impl Setup {
             source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("shader.wgsl"))),
         });
 
-        let (buffer, bind_group, bind_group_layout) = get_uniform_buffer(
+        let (_buffer, bind_group, bind_group_layout) = get_uniform_buffer(
             &device,
             bytemuck::cast_slice(&[Uniform {
                 transform: Mat4::from_mat3(default_transform),
