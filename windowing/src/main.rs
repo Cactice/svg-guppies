@@ -1,7 +1,7 @@
 mod setup;
 use setup::Setup;
 
-use usvg_layout::glam::Mat3;
+use usvg_layout::glam::{Mat3, Vec2};
 use usvg_layout::init;
 use usvg_layout::iterator::Vertex;
 use winit::{
@@ -12,7 +12,8 @@ use winit::{
 
 async fn run(event_loop: EventLoop<()>, window: Window) {
     let (svg_draw_primitives, rect) = init();
-    let transform: Mat3 = Mat3::from_scale(rect.1) + Mat3::from_translation(rect.0);
+    let transform: Mat3 = Mat3::from_scale(Vec2::new(1.0 / rect.1.x, 1.0 / rect.1.y));
+    dbg!(transform, rect.1);
     let Setup {
         instance,
         adapter,
@@ -23,6 +24,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
         render_pipeline,
         shader,
         pipeline_layout,
+        bind_group,
     } = Setup::new(&window, transform).await;
     let _vertices = vec![
         Vertex {
@@ -63,6 +65,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     &queue,
                     svg_draw_primitives.1.as_ref(),
                     &config,
+                    &bind_group,
                 );
                 window.request_redraw();
             }

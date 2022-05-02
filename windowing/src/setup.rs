@@ -1,9 +1,53 @@
 use std::borrow::Cow;
-use usvg_layout::{glam::Mat3, iterator::Vertex, Indices, Vertices};
+use usvg_layout::{
+    glam::{Mat3, Mat4},
+    iterator::Vertex,
+    Indices, Vertices,
+};
 use winit::{dpi::PhysicalSize, window::Window};
 
-use wgpu::{util::DeviceExt, Device, RenderPipeline, Surface, SurfaceConfiguration};
+use wgpu::{util::DeviceExt, BindGroup, Device, RenderPipeline, Surface, SurfaceConfiguration};
+
 const SAMPLE_COUNT: u32 = 4;
+fn get_uniform_buffer(
+    device: &Device,
+    contents: &[u8],
+) -> (wgpu::Buffer, wgpu::BindGroup, wgpu::BindGroupLayout) {
+    let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        label: None,
+        contents,
+        usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+    });
+    let uniform_bind_group_layout =
+        device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            entries: &[wgpu::BindGroupLayoutEntry {
+                binding: 0,
+                visibility: wgpu::ShaderStages::VERTEX,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Uniform,
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
+                count: None,
+            }],
+            label: Some("uniform_bind_group_layout"),
+        });
+
+    let uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        layout: &uniform_bind_group_layout,
+        entries: &[wgpu::BindGroupEntry {
+            binding: 0,
+            resource: uniform_buffer.as_entire_binding(),
+        }],
+        label: Some("uniform_bind_group"),
+    });
+    (
+        uniform_buffer,
+        uniform_bind_group,
+        uniform_bind_group_layout,
+    )
+}
+
 #[derive(Debug)]
 pub(crate) struct Setup {
     pub(crate) instance: wgpu::Instance,
@@ -15,6 +59,7 @@ pub(crate) struct Setup {
     pub(crate) render_pipeline: wgpu::RenderPipeline,
     pub(crate) shader: wgpu::ShaderModule,
     pub(crate) pipeline_layout: wgpu::PipelineLayout,
+    pub(crate) bind_group: wgpu::BindGroup,
 }
 
 impl Setup {
@@ -37,6 +82,7 @@ impl Setup {
         queue: &wgpu::Queue,
         indices: &Indices,
         config: &SurfaceConfiguration,
+        bind_group: &BindGroup,
     ) {
         let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Index Buffer"),
@@ -87,6 +133,7 @@ impl Setup {
                 depth_stencil_attachment: None,
             });
             rpass.set_pipeline(render_pipeline);
+            rpass.set_bind_group(0, bind_group, &[]);
             rpass.set_vertex_buffer(0, vertex_buffer.slice(..));
             rpass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
             rpass.draw(0..vertices.len() as u32, 0..1);
@@ -131,7 +178,14 @@ impl Setup {
             source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("shader.wgsl"))),
         });
 
+        let (buffer, bind_group, bind_group_layout) = get_uniform_buffer(
+            &device,
+            bytemuck::cast_slice(&[Uniform {
+                transform: Mat4::from_mat3(default_transform),
+            }]),
+        );
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            bind_group_layouts: &[&bind_group_layout],
             ..Default::default()
         });
 
@@ -171,11 +225,6 @@ impl Setup {
             height: size.height,
             present_mode: wgpu::PresentMode::Mailbox,
         };
-        let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Camera Buffer"),
-            contents: bytemuck::bytes_of(&default_transform),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        });
 
         surface.configure(&device, &config);
 
@@ -189,17 +238,14 @@ impl Setup {
             render_pipeline,
             shader,
             pipeline_layout,
+            bind_group,
         }
     }
 }
 
 // Default scene has all values set to zero
-#[derive(Copy, Clone, Debug)]
-pub struct SceneGlobals {
-    pub zoom: f32,
-    pub pan: [f32; 2],
-    pub window_size: PhysicalSize<u32>,
-    pub wireframe: bool,
-    pub size_changed: bool,
-    pub render: bool,
+#[repr(C)]
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+pub struct Uniform {
+    pub transform: Mat4,
 }
