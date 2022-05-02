@@ -67,42 +67,42 @@ flowchart TB;
 
 ### Minimum
 
-- Center a rectangle
-- Resize a rounded rectangle
-- Checkbox
+- [ ] Center a rectangle
+- [ ] Resize a rounded rectangle
+- [ ] Checkbox
 
 ### Full
 
 - SVG-GUI-VIEW
 
-  1. Center a rectangle
-  1. Resize a rounded rectangle
+  1. - [ ] Center a rectangle
+  1. - [ ] Resize a rounded rectangle
 
 - SVG-GUI-CONTROLLER
 
-  1. Checkbox
-  1. Show Array
-  1. Modify array
-  1. Reorder array
+  1. - [ ] Checkbox
+  1. - [ ] Show Array
+  1. - [ ] Modify array
+  1. - [ ] Reorder array
 
 - Text
 
-  1. Resize a text field with word break
-  1. Write text
-  1. Delete multi-line text
-  1. Copy/Paste
+  1. - [ ] Resize a text field with word break
+  1. - [ ] Write text
+  1. - [ ] Delete multi-line text
+  1. - [ ] Copy/Paste
 
 - Scroll
 
-  1. Scroll
+  1. - [ ] Scroll
 
 - Media
 
-  1. PNG
+  1. - [ ] PNG
 
 - Filter
 
-  1. Blur
+  1. - [ ] Blur
 
 # TODO
 
