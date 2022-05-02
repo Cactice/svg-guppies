@@ -1,5 +1,4 @@
 use glam::DVec2;
-// Inspiration: https://math.stackexchange.com/questions/1743995/determine-whether-a-polygon-is-convex-based-on-its-vertices/1745427#1745427
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -68,9 +67,10 @@ fn process_axis(a: &f64, flips: &mut i32, sign: &mut i32, first_sign: &mut i32) 
     }
 }
 
-pub fn get_first_convex_index(polygon: &Vec<DVec2>) -> usize {
+// Inspiration: https://math.stackexchange.com/questions/1743995/determine-whether-a-polygon-is-convex-based-on-its-vertices/1745427#1745427
+fn get_first_convex_index(polygon: &Vec<DVec2>) -> usize {
     if polygon.len() < 3 {
-        return polygon.len();
+        return 0;
     }
     let n = polygon.len() - 1;
 
@@ -134,4 +134,17 @@ pub fn get_first_convex_index(polygon: &Vec<DVec2>) -> usize {
 
     // This is a convex polygon.
     n + 1
+}
+
+pub fn convex_breakdown(polygon: Vec<DVec2>) -> Vec<Vec<DVec2>> {
+    let convexes: Vec<Vec<DVec2>> = vec![];
+    while polygon.len() >= 3 {
+        let new_polygon = polygon.split_off(get_first_convex_index(&polygon));
+        convexes.push(polygon);
+        polygon = new_polygon;
+    }
+    if (polygon.len() > 0) {
+        todo!()
+    }
+    convexes
 }
