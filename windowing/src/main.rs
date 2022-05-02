@@ -11,9 +11,8 @@ use winit::{
 };
 
 async fn run(event_loop: EventLoop<()>, window: Window) {
-    let (svg_draw_primitives, rect) = init();
-    let transform: Mat3 = Mat3::from_scale(Vec2::new(1.0 / rect.1.x, 1.0 / rect.1.y));
-    dbg!(transform, rect.1);
+    let (svg_draw_primitives, (translate, scale)) = init();
+    let transform: Mat3 = Mat3::from_scale(Vec2::new(1.0 / (scale.x), 1.0 / (scale.y)));
     let Setup {
         instance,
         adapter,
