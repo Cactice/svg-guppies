@@ -1,5 +1,5 @@
-pub mod fill;
-pub mod stroke;
+mod fill;
+mod stroke;
 
 use fill::iterate_fill;
 pub use glam;

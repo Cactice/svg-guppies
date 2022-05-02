@@ -1,5 +1,5 @@
 mod line_to_parallel_lines;
-use glam::{DVec2, Vec3};
+use glam::{DVec2};
 use line_to_parallel_lines::line_to_parallel_lines;
 use usvg::{self, PathData, PathSegment};
 
