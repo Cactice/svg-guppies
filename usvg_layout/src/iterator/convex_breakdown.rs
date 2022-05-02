@@ -136,15 +136,16 @@ fn get_first_convex_index(polygon: &Vec<DVec2>) -> usize {
     n + 1
 }
 
-pub fn convex_breakdown(polygon: Vec<DVec2>) -> Vec<Vec<DVec2>> {
-    let convexes: Vec<Vec<DVec2>> = vec![];
+pub fn convex_breakdown(polygon: &mut Vec<DVec2>) -> Vec<Vec<DVec2>> {
+    let mut convexes: Vec<Vec<DVec2>> = vec![];
     while polygon.len() >= 3 {
-        let new_polygon = polygon.split_off(get_first_convex_index(&polygon));
-        convexes.push(polygon);
-        polygon = new_polygon;
+        let rest = polygon.split_off(get_first_convex_index(&polygon));
+        convexes.push(polygon.to_vec());
+        *polygon = rest;
+        dbg!(&polygon);
     }
     if (polygon.len() > 0) {
-        todo!()
+        return convexes;
     }
     convexes
 }

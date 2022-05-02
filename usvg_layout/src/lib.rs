@@ -2,7 +2,7 @@ pub mod iterator;
 
 pub use glam;
 use glam::{DVec2, Vec2};
-use iterator::{iterate_stroke, Index, Vertex};
+use iterator::{fills::iterate_fill, iterate_stroke, Index, Vertex};
 use std::path::Path;
 
 pub type Vertices = Vec<Vertex>;
@@ -23,6 +23,11 @@ pub type Rect = (Position, Size);
 //
 // Most of the code in this example is related to working with the GPU.
 
+pub const FALLBACK_COLOR: usvg::Color = usvg::Color {
+    red: 0,
+    green: 0,
+    blue: 0,
+};
 pub fn init() -> (DrawPrimitives, Rect) {
     // Parse and tessellate the geometry
 
@@ -45,14 +50,16 @@ pub fn init() -> (DrawPrimitives, Rect) {
     for node in rtree.root().descendants() {
         if let usvg::NodeKind::Path(ref p) = *node.borrow() {
             if let Some(ref stroke) = p.stroke {
-                let (path_vertices, path_indices) = iterate_stroke(&p.data, 1.0);
-                let (path_vertices, path_indices) = iterate_stroke(&p.data, 1.0);
+                let (path_vertices, path_indices) = iterate_stroke(&p.data, stroke.width.value());
                 vertices.extend(path_vertices);
                 indices.extend(path_indices);
             }
             if let Some(ref fill) = p.fill {
-                let (path_vertices, path_indices) = iterate_stroke(&p.data, 1.0);
-                let (path_vertices, path_indices) = iterate_stroke(&p.data, 1.0);
+                let color = match fill.paint {
+                    usvg::Paint::Color(c) => c,
+                    _ => FALLBACK_COLOR,
+                };
+                let (path_vertices, path_indices) = iterate_fill(&p.data, &color);
                 vertices.extend(path_vertices);
                 indices.extend(path_indices);
             }
