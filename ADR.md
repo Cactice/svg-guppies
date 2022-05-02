@@ -34,3 +34,28 @@ glam has less stars than cgmath or nalgebra.
 I chose this library for the build time and at the moment I didn't need anything beyond vec2.
 
 https://github.com/bitshifter/mathbench-rs
+
+# 2022/04/02 Choosing rendering method
+## Context
+How to render SVG?
+1. Use native svg renderer available for each platform
+1. Use available SVG renderer
+1. Build Custom SVG renderer
+
+## Decision
+Build Custom SVG renderer
+
+using native svg renderer available for each platform would likely end up with less code, however considering multiple platforms may have different apis to update svg paths, each with different optimization, creating a binding for each seemed like a lot of work and also uninteresting from my perspective.
+
+Using available SVG renderer
+I considered lyon and tried out with their code but considering SVGs are generally unintended to animate, it seemed it would need to tesselate every frame which is heavy work.
+I also considered resvg but it had no example of rendering svgs to a window (only rendering to pngs) and I wasn't too sure how to use it to render to a window, so I decided to not to use it.
+
+Maybe there were other libraries I could consider, but most are for tesselation. Such tesselation library may not be intended for svgs to be dynamically reshaped, which could require tesselation for every reshape that occurs.
+
+
+## Consequences
+I will probably not spend too much time to make it a perfect svg renderer. Rather something rudimentary that only supports fills and strokes.
+
+With the use of usvg library, fills and strokes shall be expressive enough for most UIs like text / curved shapes
+The first version would not have any filters so shadows commonly used in Material UI are unavailable at first because shadows require gaussian blur.
