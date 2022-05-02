@@ -1,5 +1,5 @@
 [package]
-name = "usvg_layout"
+name = "tesselation"
 version = "0.1.0"
 edition = "2021"
 

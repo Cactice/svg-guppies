@@ -1659,6 +1659,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "tesselation"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "glam",
+ "usvg 0.22.0 (git+https://github.com/Cactice/resvg)",
+]
+
+[[package]]
 name = "textwrap"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1814,15 +1823,6 @@ dependencies = [
  "unicode-script",
  "unicode-vo",
  "xmlwriter",
-]
-
-[[package]]
-name = "usvg_layout"
-version = "0.1.0"
-dependencies = [
- "bytemuck",
- "glam",
- "usvg 0.22.0 (git+https://github.com/Cactice/resvg)",
 ]
 
 [[package]]
@@ -2235,7 +2235,7 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "pollster",
- "usvg_layout",
+ "tesselation",
  "wgpu 0.12.0 (git+https://github.com/gfx-rs/wgpu)",
  "winit",
 ]

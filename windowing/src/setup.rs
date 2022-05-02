@@ -1,5 +1,5 @@
 use std::borrow::Cow;
-use usvg_layout::{
+use tesselation::{
     glam::{Mat3, Mat4},
     iterator::Vertex,
     Indices, Vertices,

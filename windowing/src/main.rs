@@ -1,9 +1,9 @@
 mod setup;
 use setup::Setup;
 
-use usvg_layout::glam::{Mat3, Vec2};
-use usvg_layout::init;
-use usvg_layout::iterator::Vertex;
+use tesselation::glam::{Mat3, Vec2};
+use tesselation::init;
+use tesselation::iterator::Vertex;
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},

@@ -3,21 +3,21 @@
 
 ---
 
-# 2022/05/02 Windowing & Renderer dependency
+# 2022/05/02 Windowing & tesselation dependency
 ## Context
 
-The dependency direction between windowing and renderer can be configured in many ways
+The dependency direction between windowing and tesselation can be configured in many ways
 
-1. windowing <- renderer
-1. windowing -> renderer
-1. windowing -> contracts, renderer -> contracts
+1. windowing <- tesselation
+1. windowing -> tesselation
+1. windowing -> contracts, tesselation -> contracts
 
 ## Decision
-windowing -> renderer
+windowing -> tesselation
 
 ## Consequences
-Swapping windowing would not be difficult compared to swapping renderer.
-Swapping renderer on the other hand will be difficult because windowing relies directly on renderer for things like vertices.
+Swapping windowing would not be difficult compared to swapping tesselation.
+Swapping tesselation on the other hand will be difficult because windowing relies directly on tesselation for things like vertices.
 This can be made easier by using another file dependency 'contract' which both depends on, but this would be too complicated for such an early phase of this library.
 
 
