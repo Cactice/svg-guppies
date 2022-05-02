@@ -1,9 +1,11 @@
-pub mod iterator;
+pub mod fill;
+pub mod stroke;
 
+use fill::iterate_fill;
 pub use glam;
-use glam::Vec2;
-use iterator::{fills::iterate_fill, iterate_stroke, Index, Vertex};
+use glam::{DVec2, Vec2, Vec3};
 use std::path::Path;
+use stroke::iterate_stroke;
 
 pub type Vertices = Vec<Vertex>;
 pub type Indices = Vec<Index>;
@@ -66,3 +68,32 @@ pub fn init() -> (DrawPrimitives, Rect) {
     }
     ((vertices, indices), rect)
 }
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Default, bytemuck::Pod, bytemuck::Zeroable)]
+pub struct Vertex {
+    pub position: [f32; 3],
+    pub _padding1: f32,
+    pub color: [f32; 3],
+    pub _padding2: f32,
+}
+impl From<&DVec2> for Vertex {
+    fn from(v: &DVec2) -> Self {
+        Self {
+            position: [(v.x) as f32, (-v.y) as f32, 0.0],
+            ..Default::default()
+        }
+    }
+}
+
+impl From<(&DVec2, &Vec3)> for Vertex {
+    fn from((v, c): (&DVec2, &Vec3)) -> Self {
+        Self {
+            position: [(v.x) as f32, (-v.y) as f32, 0.0],
+            color: [c.x, c.y, c.z],
+            ..Default::default()
+        }
+    }
+}
+
+pub type Index = u32;

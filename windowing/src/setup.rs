@@ -1,8 +1,7 @@
 use std::borrow::Cow;
 use tesselation::{
     glam::{Mat3, Mat4},
-    iterator::Vertex,
-    Indices, Vertices,
+    Indices, Vertex, Vertices,
 };
 use winit::{dpi::PhysicalSize, window::Window};
 

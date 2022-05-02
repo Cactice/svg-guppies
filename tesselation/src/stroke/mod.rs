@@ -1,12 +1,10 @@
-mod convex_breakdown;
-pub mod fills;
 mod line_to_parallel_lines;
-mod triangulate;
 use glam::{DVec2, Vec3};
 use line_to_parallel_lines::line_to_parallel_lines;
 use usvg::{self, PathData, PathSegment};
 
-pub type Index = u32;
+use crate::{Index, Vertex};
+
 pub fn iterate_stroke(path: &PathData, width: f64) -> (Vec<Vertex>, Vec<Index>) {
     let mut vertices: Vec<Vertex> = vec![];
     let indices: Vec<Index> = vec![];
@@ -45,31 +43,4 @@ pub fn iterate_stroke(path: &PathData, width: f64) -> (Vec<Vertex>, Vec<Index>) 
         PathSegment::ClosePath => {}
     });
     (vertices, indices)
-}
-
-#[repr(C)]
-#[derive(Copy, Clone, Debug, Default, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct Vertex {
-    pub position: [f32; 3],
-    pub _padding1: f32,
-    pub color: [f32; 3],
-    pub _padding2: f32,
-}
-impl From<&DVec2> for Vertex {
-    fn from(v: &DVec2) -> Self {
-        Self {
-            position: [(v.x) as f32, (-v.y) as f32, 0.0],
-            ..Default::default()
-        }
-    }
-}
-
-impl From<(&DVec2, &Vec3)> for Vertex {
-    fn from((v, c): (&DVec2, &Vec3)) -> Self {
-        Self {
-            position: [(v.x) as f32, (-v.y) as f32, 0.0],
-            color: [c.x, c.y, c.z],
-            ..Default::default()
-        }
-    }
 }

@@ -3,7 +3,7 @@ use setup::Setup;
 
 use tesselation::glam::{Mat3, Vec2};
 use tesselation::init;
-use tesselation::iterator::Vertex;
+use tesselation::Vertex;
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
