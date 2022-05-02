@@ -63,7 +63,7 @@ flowchart TB;
     svg-gui-view-->user_sees[[user sees]];
 ```
 
-# Test Cases
+# Features
 
 ### Minimum
 
