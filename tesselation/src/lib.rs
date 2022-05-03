@@ -30,7 +30,7 @@ pub fn init() -> (DrawPrimitives, Rect) {
     // Parse and tessellate the geometry
 
     // todo: this should be received from init
-    let filename = Path::new("/Users/yuya/git/gpu-gui/svg/Resting.svg");
+    let filename = Path::new("/Users/yuya/git/gpu-gui/svg/text.svg");
 
     let mut opt = usvg::Options::default();
     opt.fontdb.load_system_fonts();
