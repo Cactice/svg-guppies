@@ -118,9 +118,9 @@ pub enum Area {
 #[bitflags]
 #[repr(u8)]
 #[derive(Copy, Clone, Debug, PartialEq)]
-enum windowE {
-    width,
-    height,
+enum WindowE {
+    Width,
+    Height,
 }
 
 pub struct TextRenderer {
