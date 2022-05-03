@@ -8,7 +8,7 @@ mod tests {
             .iter()
             .map(|v| DVec2::from(*v))
             .collect();
-        assert_eq!(get_first_convex_index(&triangle), triangle.len())
+        assert_eq!(get_first_convex_index(&triangle).0, triangle.len() - 1)
     }
     #[test]
     fn rec_is_convex() {
@@ -16,7 +16,7 @@ mod tests {
             .iter()
             .map(|v| DVec2::from(*v))
             .collect();
-        assert_eq!(get_first_convex_index(&rec), rec.len())
+        assert_eq!(get_first_convex_index(&rec).0, rec.len() - 1)
     }
 
     #[test]
@@ -26,7 +26,7 @@ mod tests {
             .iter()
             .map(|v| DVec2::from(*v))
             .collect();
-        assert_eq!(get_first_convex_index(&house), house.len())
+        assert_eq!(get_first_convex_index(&house).0, house.len() - 1)
     }
     #[test]
     fn m_is_concave() {
@@ -35,7 +35,7 @@ mod tests {
             .iter()
             .map(|v| DVec2::from(*v))
             .collect();
-        assert_ne!(get_first_convex_index(&m), m.len())
+        assert_ne!(get_first_convex_index(&m).0, m.len())
     }
 
     #[test]
@@ -51,7 +51,7 @@ mod tests {
         .iter()
         .map(|v| DVec2::from(*v))
         .collect();
-        assert_ne!(get_first_convex_index(&star), star.len())
+        assert_ne!(get_first_convex_index(&star).0, star.len())
     }
 }
 
@@ -68,9 +68,9 @@ fn process_axis(a: &f64, flips: &mut i32, sign: &mut i32, first_sign: &mut i32) 
 }
 
 // Inspiration: https://math.stackexchange.com/questions/1743995/determine-whether-a-polygon-is-convex-based-on-its-vertices/1745427#1745427
-fn get_first_convex_index(polygon: &Vec<DVec2>) -> usize {
+fn get_first_convex_index(polygon: &Vec<DVec2>) -> (usize, f64) {
     if polygon.len() < 3 {
-        return 0;
+        return (0, 0.0);
     }
     let n = polygon.len() - 1;
 
@@ -103,13 +103,13 @@ fn get_first_convex_index(polygon: &Vec<DVec2>) -> usize {
         process_axis(&ax, &mut x_flips, &mut x_sign, &mut x_first_sign);
 
         if x_flips > 2 {
-            return i;
+            return (i, w_sign);
         }
 
         process_axis(&ay, &mut y_flips, &mut y_sign, &mut y_first_sign);
 
         if y_flips > 2 {
-            return i;
+            return (i, w_sign);
         }
 
         // Find out the orientation of this pair of edges,
@@ -118,7 +118,7 @@ fn get_first_convex_index(polygon: &Vec<DVec2>) -> usize {
         if w_sign == 0.0 && w != 0.0 {
             w_sign = w
         } else if (w_sign > 0.0 && w < 0.0) || (w_sign < 0.0 && w > 0.0) {
-            return i;
+            return (i, w_sign);
         }
     }
     if x_sign != 0 && x_first_sign != 0 && x_sign != x_first_sign {
@@ -130,17 +130,17 @@ fn get_first_convex_index(polygon: &Vec<DVec2>) -> usize {
     // Concave polygons have two sign flips along each axis.
     if x_flips != 2 || y_flips != 2 {
         // todo: what to do in this scenario..?
-        return n;
+        return (n, w_sign);
     }
 
     // This is a convex polygon.
-    n
+    (n, w_sign)
 }
 
 pub fn convex_breakdown(polygon: &mut Vec<DVec2>) -> Vec<Vec<DVec2>> {
     let mut convexes: Vec<Vec<DVec2>> = vec![];
     while polygon.len() >= 3 {
-        let rest = polygon.split_off(get_first_convex_index(polygon) + 1);
+        let rest = polygon.split_off(get_first_convex_index(polygon).0 + 1);
         convexes.push(polygon.to_vec());
         let mut rest_with_clipped = vec![
             *polygon.first().expect("Polygon len is insufficient"),
