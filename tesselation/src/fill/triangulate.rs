@@ -1,7 +1,7 @@
 use glam::{DVec2, Vec4};
 
 use super::convex_breakdown::convex_breakdown;
-use super::debug::rand_Vec4;
+use super::debug::rand_vec4;
 use super::Vertex;
 
 pub fn triangulate(polygon: &mut Vec<DVec2>, _color: &Vec4) -> Vec<Vertex> {
@@ -14,7 +14,7 @@ pub fn triangulate(polygon: &mut Vec<DVec2>, _color: &Vec4) -> Vec<Vertex> {
                 return vec![];
             }
             let first = convex[0];
-            let color_rand = &rand_Vec4();
+            let color_rand = &rand_vec4();
             convex
                 .iter()
                 .enumerate()
