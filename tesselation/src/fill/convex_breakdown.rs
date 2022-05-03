@@ -137,11 +137,18 @@ fn get_first_convex_index(polygon: &Vec<DVec2>) -> (usize, f64) {
     (n, w_sign)
 }
 
-pub fn convex_breakdown(polygon: &mut Vec<DVec2>) -> Vec<Vec<DVec2>> {
-    let mut convexes: Vec<Vec<DVec2>> = vec![];
+pub fn convex_breakdown(polygon: &mut Vec<DVec2>) -> (Vec<Vec<DVec2>>, Vec<Vec<DVec2>>) {
+    let mut clockwise_convexes: Vec<Vec<DVec2>> = vec![];
+    let mut counter_clockwise_convexes: Vec<Vec<DVec2>> = vec![];
     while polygon.len() >= 3 {
-        let rest = polygon.split_off(get_first_convex_index(polygon).0 + 1);
-        convexes.push(polygon.to_vec());
+        let (i, sign) = get_first_convex_index(polygon);
+        let rest = polygon.split_off(i + 1);
+        if sign > 0. {
+            clockwise_convexes.push(polygon.to_vec());
+        } else if sign < 0. {
+            counter_clockwise_convexes.push(polygon.to_vec());
+        }
+
         let mut rest_with_clipped = vec![
             *polygon.first().expect("Polygon len is insufficient"),
             *polygon.last().expect("Polygon len is insufficient"),
@@ -149,5 +156,10 @@ pub fn convex_breakdown(polygon: &mut Vec<DVec2>) -> Vec<Vec<DVec2>> {
         rest_with_clipped.extend(rest);
         *polygon = rest_with_clipped;
     }
-    convexes
+    let (fill, mask) = if clockwise_convexes.len() > counter_clockwise_convexes.len() {
+        (clockwise_convexes, counter_clockwise_convexes)
+    } else {
+        (clockwise_convexes, counter_clockwise_convexes)
+    };
+    (fill, mask)
 }
