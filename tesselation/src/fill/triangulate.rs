@@ -5,6 +5,7 @@ use super::Vertex;
 
 pub fn triangulate(polygon: &mut Vec<DVec2>, color: &Vec3) -> Vec<Vertex> {
     let mut convexes = convex_breakdown(polygon);
+    polygon.clear();
     convexes
         .iter_mut()
         .flat_map(|convex| {

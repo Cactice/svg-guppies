@@ -33,6 +33,7 @@ pub const FALLBACK_COLOR: usvg::Color = usvg::Color {
 pub fn init() -> (DrawPrimitives, Rect) {
     // Parse and tessellate the geometry
 
+    // todo: this should be received from init
     let filename = Path::new("/Users/yuya/git/gpu-gui/svg/Resting.svg");
 
     let mut opt = usvg::Options::default();

@@ -129,26 +129,30 @@ fn get_first_convex_index(polygon: &Vec<DVec2>) -> usize {
     }
     // Concave polygons have two sign flips along each axis.
     if x_flips != 2 || y_flips != 2 {
+        // todo: what to do in this scenario..?
         return n;
     }
 
     // This is a convex polygon.
-    n + 1
+    n
 }
 
 pub fn convex_breakdown(polygon: &mut Vec<DVec2>) -> Vec<Vec<DVec2>> {
     let mut convexes: Vec<Vec<DVec2>> = vec![];
     while polygon.len() >= 3 {
-        let rest = polygon.split_off(get_first_convex_index(polygon));
-        if !rest.is_empty() {
-            polygon.push(rest[0]);
-        }
+        let rest = polygon.split_off(get_first_convex_index(polygon) + 1);
         convexes.push(polygon.to_vec());
-        *polygon = rest;
+        let mut rest_with_clipped = vec![
+            *polygon.first().expect("Polygon len is insufficient"),
+            *polygon.last().expect("Polygon len is insufficient"),
+        ];
+        rest_with_clipped.extend(rest);
+        *polygon = rest_with_clipped;
     }
     if !polygon.is_empty() && !convexes.is_empty() {
         let mut i = 0;
         while polygon.len() < 3 {
+            // convexes should not be empty
             polygon.push(convexes[0][i]);
             i += 1;
         }

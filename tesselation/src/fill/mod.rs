@@ -1,4 +1,5 @@
 mod convex_breakdown;
+mod debug;
 mod triangulate;
 use crate::fill::triangulate::triangulate;
 use crate::{Index, Vertex};
