@@ -149,14 +149,5 @@ pub fn convex_breakdown(polygon: &mut Vec<DVec2>) -> Vec<Vec<DVec2>> {
         rest_with_clipped.extend(rest);
         *polygon = rest_with_clipped;
     }
-    // if !polygon.is_empty() && !convexes.is_empty() {
-    //     let mut i = 0;
-    //     while polygon.len() < 3 {
-    //         // convexes should not be empty
-    //         polygon.push(convexes[0][i]);
-    //         i += 1;
-    //     }
-    //     convexes.push(polygon.to_vec());
-    // }
     convexes
 }
