@@ -3,8 +3,8 @@ mod debug;
 mod triangulate;
 use crate::fill::triangulate::triangulate;
 use crate::{Index, Vertex};
-use glam::{DVec2, Vec3, Vec4};
-use usvg::{self, Color, PathData, PathSegment};
+use glam::{DVec2, Vec4};
+use usvg::{self, PathData, PathSegment};
 
 pub fn iterate_fill(path: &PathData, color: &Vec4) -> (Vec<Vertex>, Vec<Index>) {
     let mut vertices: Vec<Vertex> = vec![];

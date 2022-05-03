@@ -3,7 +3,7 @@ mod stroke;
 
 use fill::iterate_fill;
 pub use glam;
-use glam::{DVec2, Vec2, Vec3, Vec4};
+use glam::{DVec2, Vec2, Vec4};
 use std::path::Path;
 use stroke::iterate_stroke;
 

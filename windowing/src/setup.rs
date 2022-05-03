@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 use tesselation::{
-    glam::{Mat3, Mat4},
+    glam::{Mat4},
     Indices, Vertex, Vertices,
 };
 use winit::{dpi::PhysicalSize, window::Window};

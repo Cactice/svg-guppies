@@ -1,10 +1,10 @@
-use glam::{DVec2, Vec3, Vec4};
+use glam::{DVec2, Vec4};
 
 use super::convex_breakdown::convex_breakdown;
 use super::debug::rand_Vec4;
 use super::Vertex;
 
-pub fn triangulate(polygon: &mut Vec<DVec2>, color: &Vec4) -> Vec<Vertex> {
+pub fn triangulate(polygon: &mut Vec<DVec2>, _color: &Vec4) -> Vec<Vertex> {
     let mut convexes = convex_breakdown(polygon);
     polygon.clear();
     convexes

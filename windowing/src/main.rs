@@ -1,9 +1,9 @@
 mod setup;
 use setup::Setup;
 
-use tesselation::glam::{Mat3, Mat4, Vec2, Vec3, Vec4};
+use tesselation::glam::{Mat4};
 use tesselation::init;
-use tesselation::Vertex;
+
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -12,7 +12,7 @@ use winit::{
 
 async fn run(event_loop: EventLoop<()>, window: Window) {
     let (svg_draw_primitives, (_translate, scale)) = init();
-    let mut translate = Mat4::from_translation([-1.0, 1.0, 0.0].into());
+    let translate = Mat4::from_translation([-1.0, 1.0, 0.0].into());
 
     let scale = Mat4::from_scale([2.0 / scale.x, 2.0 / scale.y, 1.0].into());
     let transform: Mat4 = translate * scale;
