@@ -1,4 +1,5 @@
 mod convex_breakdown;
+#[allow(dead_code)]
 mod debug;
 mod triangulate;
 use crate::fill::triangulate::triangulate;

@@ -3,7 +3,7 @@ mod stroke;
 
 use fill::iterate_fill;
 pub use glam;
-use glam::{DVec2, Vec2, Vec3, Vec4};
+use glam::{DVec2, Vec2, Vec4};
 use std::path::Path;
 use stroke::iterate_stroke;
 
@@ -30,7 +30,7 @@ pub fn init() -> (DrawPrimitives, Rect) {
     // Parse and tessellate the geometry
 
     // todo: this should be received from init
-    let filename = Path::new("/Users/yuya/git/gpu-gui/svg/Resting.svg");
+    let filename = Path::new("/Users/yuya/git/gpu-gui/svg/text.svg");
 
     let mut opt = usvg::Options::default();
     opt.fontdb.load_system_fonts();
