@@ -1,7 +1,7 @@
 mod setup;
 use setup::Setup;
 
-use tesselation::glam::{Mat3, Vec2};
+use tesselation::glam::{Mat3, Mat4, Vec2, Vec3, Vec4};
 use tesselation::init;
 use tesselation::Vertex;
 use winit::{
@@ -12,7 +12,11 @@ use winit::{
 
 async fn run(event_loop: EventLoop<()>, window: Window) {
     let (svg_draw_primitives, (_translate, scale)) = init();
-    let transform: Mat3 = Mat3::from_scale(Vec2::new(1.0 / (scale.x), 1.0 / (scale.y)));
+    let mut translate = Mat4::from_translation([-1.0, 1.0, 0.0].into());
+
+    let scale = Mat4::from_scale([2.0 / scale.x, 2.0 / scale.y, 1.0].into());
+    let transform: Mat4 = translate * scale;
+    dbg!(translate, scale, transform);
     let Setup {
         instance,
         adapter,
@@ -25,24 +29,6 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
         pipeline_layout,
         bind_group,
     } = Setup::new(&window, transform).await;
-    let _vertices = vec![
-        Vertex {
-            position: [-1.0, 1.0, 0.0],
-            color: [1.0, 0.0, 0.0],
-            ..Default::default()
-        },
-        Vertex {
-            position: [1.0, -1.0, 0.0],
-            color: [0.0, 1.0, 0.0],
-            ..Default::default()
-        },
-        Vertex {
-            position: [1.0, 1.0, 0.0],
-            color: [0.0, 0.0, 1.0],
-            ..Default::default()
-        },
-    ];
-
     event_loop.run(move |event, _, control_flow| {
         // Have the closure take ownership of the resources.
         // `event_loop.run` never returns, therefore we must do this to ensure

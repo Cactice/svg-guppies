@@ -1,6 +1,6 @@
 struct VertexInput {
     @location(0) position: vec3<f32>,
-    @location(1) color: vec3<f32>
+    @location(1) color: vec4<f32>
 };
 struct Uniform {
     transform: mat4x4<f32>
@@ -8,7 +8,7 @@ struct Uniform {
 
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
-    @location(0) color: vec3<f32>
+    @location(0) color: vec4<f32>
 };
 
 
@@ -21,11 +21,11 @@ fn vs_main(
 ) -> VertexOutput {
     var out: VertexOutput;
     out.color = model.color;
-    out.clip_position = vec4<f32>(model.position, 1.0)*u.transform;
+    out.clip_position = u.transform*vec4<f32>(model.position, 1.0);
     return out;
 }
 
 @stage(fragment)
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    return vec4<f32>(in.color.x, in.color.y, in.color.z, 1.0);
+    return in.color;
 }

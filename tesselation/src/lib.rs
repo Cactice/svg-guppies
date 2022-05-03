@@ -3,7 +3,7 @@ mod stroke;
 
 use fill::iterate_fill;
 pub use glam;
-use glam::{DVec2, Vec2, Vec3};
+use glam::{DVec2, Vec2, Vec3, Vec4};
 use std::path::Path;
 use stroke::iterate_stroke;
 
@@ -25,11 +25,7 @@ pub type Rect = (Position, Size);
 //
 // Most of the code in this example is related to working with the GPU.
 
-pub const FALLBACK_COLOR: usvg::Color = usvg::Color {
-    red: 0,
-    green: 0,
-    blue: 0,
-};
+pub const FALLBACK_COLOR: Vec4 = Vec4::ONE;
 pub fn init() -> (DrawPrimitives, Rect) {
     // Parse and tessellate the geometry
 
@@ -58,9 +54,15 @@ pub fn init() -> (DrawPrimitives, Rect) {
             }
             if let Some(ref fill) = p.fill {
                 let color = match fill.paint {
-                    usvg::Paint::Color(c) => c,
+                    usvg::Paint::Color(c) => Vec4::new(
+                        c.red as f32 / u8::MAX as f32,
+                        c.green as f32 / u8::MAX as f32,
+                        c.blue as f32 / u8::MAX as f32,
+                        fill.opacity.value() as f32,
+                    ),
                     _ => FALLBACK_COLOR,
                 };
+
                 let (path_vertices, path_indices) = iterate_fill(&p.data, &color);
                 vertices.extend(path_vertices);
                 indices.extend(path_indices);
@@ -75,8 +77,7 @@ pub fn init() -> (DrawPrimitives, Rect) {
 pub struct Vertex {
     pub position: [f32; 3],
     pub _padding1: f32,
-    pub color: [f32; 3],
-    pub _padding2: f32,
+    pub color: [f32; 4],
 }
 impl From<&DVec2> for Vertex {
     fn from(v: &DVec2) -> Self {
@@ -87,11 +88,11 @@ impl From<&DVec2> for Vertex {
     }
 }
 
-impl From<(&DVec2, &Vec3)> for Vertex {
-    fn from((v, c): (&DVec2, &Vec3)) -> Self {
+impl From<(&DVec2, &Vec4)> for Vertex {
+    fn from((v, c): (&DVec2, &Vec4)) -> Self {
         Self {
             position: [(v.x) as f32, (-v.y) as f32, 0.0],
-            color: [c.x, c.y, c.z],
+            color: [c.x, c.y, c.z, c.w],
             ..Default::default()
         }
     }

@@ -1,9 +1,10 @@
-use glam::{DVec2, Vec3};
+use glam::{DVec2, Vec3, Vec4};
 
 use super::convex_breakdown::convex_breakdown;
+use super::debug::rand_Vec4;
 use super::Vertex;
 
-pub fn triangulate(polygon: &mut Vec<DVec2>, color: &Vec3) -> Vec<Vertex> {
+pub fn triangulate(polygon: &mut Vec<DVec2>, color: &Vec4) -> Vec<Vertex> {
     let mut convexes = convex_breakdown(polygon);
     polygon.clear();
     convexes
@@ -13,6 +14,7 @@ pub fn triangulate(polygon: &mut Vec<DVec2>, color: &Vec3) -> Vec<Vertex> {
                 return vec![];
             }
             let first = convex[0];
+            let color_rand = &rand_Vec4();
             convex
                 .iter()
                 .enumerate()
@@ -20,9 +22,9 @@ pub fn triangulate(polygon: &mut Vec<DVec2>, color: &Vec3) -> Vec<Vertex> {
                 .flat_map(|(i, this)| {
                     let triangle = match convex.get(i + 1) {
                         Some(next) => vec![
-                            Vertex::from((&first, color)),
-                            Vertex::from((this, color)),
-                            Vertex::from((next, color)),
+                            Vertex::from((&first, color_rand)),
+                            Vertex::from((this, color_rand)),
+                            Vertex::from((next, color_rand)),
                         ],
                         None => vec![],
                     };

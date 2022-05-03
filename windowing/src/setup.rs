@@ -142,7 +142,7 @@ impl Setup {
         frame.present();
     }
 
-    pub async fn new(window: &Window, default_transform: Mat3) -> Self {
+    pub async fn new(window: &Window, default_transform: Mat4) -> Self {
         let size = window.inner_size();
         let instance = wgpu::Instance::new(wgpu::Backends::all());
         let surface = unsafe { instance.create_surface(&window) };
@@ -180,7 +180,7 @@ impl Setup {
         let (_buffer, bind_group, bind_group_layout) = get_uniform_buffer(
             &device,
             bytemuck::cast_slice(&[Uniform {
-                transform: Mat4::from_mat3(default_transform),
+                transform: default_transform,
             }]),
         );
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
@@ -205,7 +205,11 @@ impl Setup {
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
                 entry_point: "fs_main",
-                targets: &[surface_format.into()],
+                targets: &[wgpu::ColorTargetState {
+                    format: surface_format,
+                    blend: Some(wgpu::BlendState::PREMULTIPLIED_ALPHA_BLENDING),
+                    write_mask: wgpu::ColorWrites::ALL,
+                }],
             }),
             primitive: wgpu::PrimitiveState::default(),
             depth_stencil: None,
