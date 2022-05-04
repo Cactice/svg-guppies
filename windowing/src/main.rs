@@ -23,7 +23,6 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
         .into(),
     );
     let transform: Mat4 = translate * scale;
-    dbg!(translate, scale, transform);
     let Setup {
         instance,
         adapter,
