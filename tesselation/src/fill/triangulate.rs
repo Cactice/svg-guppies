@@ -33,11 +33,11 @@ pub fn triangulate(polygon: &mut Vec<DVec2>, color: &Vec4) -> Vec<Vertex> {
     };
     let mut fill_mapped = fill
         .iter_mut()
-        .flat_map(flattener(*color))
+        .flat_map(flattener([0., 0., 0., 0.7].into()))
         .collect::<Vec<Vertex>>();
     fill_mapped.extend(
         mask.iter_mut()
-            .flat_map(flattener([1., 1., 1., 1.].into()))
+            .flat_map(flattener([1., 1., 0., 0.5].into()))
             .collect::<Vec<Vertex>>(),
     );
     fill_mapped

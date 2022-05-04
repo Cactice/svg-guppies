@@ -1,6 +1,7 @@
 mod convex_breakdown;
 #[allow(dead_code)]
 mod debug;
+mod get_first_convex_index;
 mod triangulate;
 use crate::fill::triangulate::triangulate;
 use crate::{Index, Vertex};
