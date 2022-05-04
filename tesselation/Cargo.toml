@@ -7,3 +7,4 @@ edition = "2021"
 usvg = { git = "https://github.com/Cactice/resvg" }
 bytemuck = "1.2.0"
 glam = { version = "0.20.2", features = ["bytemuck"] }
+rgeometry = "0.7.0"
