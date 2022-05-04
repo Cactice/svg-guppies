@@ -119,8 +119,10 @@ https://www.reddit.com/r/rust/comments/tm10wi/media_i_made_a_website_to_demonstr
 MakePad runs GUI on shader with great performance:
 https://makepad.dev/
 
-# Random Resources
+# Random Dev Resources
 
+- Solid.js perf: https://dev.to/ryansolid/thinking-granular-how-is-solidjs-so-performant-4g37?ref=morioh.com&utm_source=morioh.com
+- Ear Clipping: http://www-cgrl.cs.mcgill.ca/~godfried/teaching/cg-projects/97/Ian/cutting_ears.html
 - Rust Web 2D perf Reddit: https://www.reddit.com/r/rust/comments/ni0wgs/2d_web_rendering_with_rust/
 - Web SVG performance: https://oreillymedia.github.io/Using_SVG/extras/ch19-performance.html
 - GPU vector rendering: https://developer.nvidia.com/gpugems/gpugems3/part-iv-image-effects/chapter-25-rendering-vector-art-gpu

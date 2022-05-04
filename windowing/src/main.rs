@@ -50,11 +50,11 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
             Event::RedrawRequested(_) => {
                 Setup::redraw(
                     svg_draw_primitives.0.as_ref(),
+                    svg_draw_primitives.1.as_ref(),
                     &device,
                     &surface,
                     &render_pipeline,
                     &queue,
-                    svg_draw_primitives.1.as_ref(),
                     &config,
                     &bind_group,
                 );

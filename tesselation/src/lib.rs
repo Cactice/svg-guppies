@@ -4,6 +4,7 @@ mod stroke;
 use fill::iterate_fill;
 pub use glam;
 use glam::{DVec2, Vec2, Vec4};
+use lyon::lyon_tessellation::{FillVertex, VertexBuffers};
 use std::path::Path;
 use stroke::iterate_stroke;
 
@@ -30,7 +31,7 @@ pub fn init() -> (DrawPrimitives, Rect) {
     // Parse and tessellate the geometry
 
     // todo: this should be received from init
-    let filename = Path::new("/Users/yuya/git/gpu-gui/svg/text.svg");
+    let filename = Path::new("/Users/yuya/git/gpu-gui/svg/Resting.svg");
 
     let mut opt = usvg::Options::default();
     opt.fontdb.load_system_fonts();
@@ -43,15 +44,14 @@ pub fn init() -> (DrawPrimitives, Rect) {
         Vec2::new(view_box.rect.width() as f32, view_box.rect.height() as f32),
     );
 
-    let mut vertices: Vec<Vertex> = vec![];
-    let mut indices: Vec<Index> = vec![];
+    let mut geometry = VertexBuffers::<Vertex, Index>::new();
     for node in rtree.root().descendants() {
         if let usvg::NodeKind::Path(ref p) = *node.borrow() {
-            if let Some(ref stroke) = p.stroke {
-                let (path_vertices, path_indices) = iterate_stroke(&p.data, stroke.width.value());
-                vertices.extend(path_vertices);
-                indices.extend(path_indices);
-            }
+            // if let Some(ref stroke) = p.stroke {
+            //     let (path_vertices, path_indices) = iterate_stroke(&p.data, stroke.width.value());
+            //     vertices.extend(path_vertices);
+            //     indices.extend(path_indices);
+            // }
             if let Some(ref fill) = p.fill {
                 let color = match fill.paint {
                     usvg::Paint::Color(c) => Vec4::new(
@@ -63,13 +63,11 @@ pub fn init() -> (DrawPrimitives, Rect) {
                     _ => FALLBACK_COLOR,
                 };
 
-                let (path_vertices, path_indices) = iterate_fill(&p.data, &color);
-                vertices.extend(path_vertices);
-                indices.extend(path_indices);
+                let (path_vertices, path_indices) = iterate_fill(&p, &color, &mut geometry);
             }
         }
     }
-    ((vertices, indices), rect)
+    ((geometry.vertices, geometry.indices), rect)
 }
 
 #[repr(C)]
@@ -83,6 +81,15 @@ impl From<&DVec2> for Vertex {
     fn from(v: &DVec2) -> Self {
         Self {
             position: [(v.x) as f32, (-v.y) as f32, 0.0],
+            ..Default::default()
+        }
+    }
+}
+impl From<(&FillVertex<'_>, &Vec4)> for Vertex {
+    fn from((v, c): (&FillVertex, &Vec4)) -> Self {
+        Self {
+            position: [v.position().x, -v.position().y, 0.],
+            color: c.to_array(),
             ..Default::default()
         }
     }

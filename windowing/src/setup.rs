@@ -1,8 +1,5 @@
 use std::borrow::Cow;
-use tesselation::{
-    glam::{Mat4},
-    Indices, Vertex, Vertices,
-};
+use tesselation::{glam::Mat4, Indices, Vertex, Vertices};
 use winit::{dpi::PhysicalSize, window::Window};
 
 use wgpu::{util::DeviceExt, BindGroup, Device, RenderPipeline, Surface, SurfaceConfiguration};
@@ -75,11 +72,11 @@ impl Setup {
     }
     pub fn redraw(
         vertices: &Vertices,
+        indices: &Indices,
         device: &Device,
         surface: &Surface,
         render_pipeline: &RenderPipeline,
         queue: &wgpu::Queue,
-        indices: &Indices,
         config: &SurfaceConfiguration,
         bind_group: &BindGroup,
     ) {
@@ -89,7 +86,6 @@ impl Setup {
             usage: wgpu::BufferUsages::INDEX,
         });
 
-        let _num_indices = indices.len() as u32;
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("SVG-GUI Vertex Buffer"),
             contents: (bytemuck::cast_slice(vertices)),
@@ -135,7 +131,7 @@ impl Setup {
             rpass.set_bind_group(0, bind_group, &[]);
             rpass.set_vertex_buffer(0, vertex_buffer.slice(..));
             rpass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
-            rpass.draw(0..vertices.len() as u32, 0..1);
+            rpass.draw_indexed(0..(indices.len() as u32), 0, 0..1);
         }
 
         queue.submit(Some(encoder.finish()));
