@@ -5,8 +5,8 @@ use fill::iterate_fill;
 pub use glam;
 use glam::{DVec2, Vec2, Vec4};
 use lyon::lyon_tessellation::{FillVertex, VertexBuffers};
-use std::path::Path;
-use stroke::iterate_stroke;
+use std::{fs, path::Path, sync::Arc};
+use usvg::fontdb::Source;
 
 pub type Vertices = Vec<Vertex>;
 pub type Indices = Vec<Index>;
@@ -30,13 +30,13 @@ pub const FALLBACK_COLOR: Vec4 = Vec4::ONE;
 pub fn init() -> (DrawPrimitives, Rect) {
     // Parse and tessellate the geometry
 
-    // todo: this should be received from init
-    let filename = Path::new("/Users/yuya/git/gpu-gui/svg/Resting.svg");
-
     let mut opt = usvg::Options::default();
-    opt.fontdb.load_system_fonts();
-    let file_data = std::fs::read(filename).unwrap();
-    let rtree = usvg::Tree::from_data(&file_data, &opt.to_ref()).unwrap();
+    let contents = include_bytes!("../fallback_font/Roboto-Medium.ttf");
+    opt.fontdb
+        .load_font_source(Source::Binary(Arc::new(contents.as_ref())));
+    opt.font_family = "Roboto Medium".to_string();
+    let rtree =
+        usvg::Tree::from_data(include_bytes!("../../svg/Resting.svg"), &opt.to_ref()).unwrap();
 
     let view_box = rtree.svg_node().view_box;
     let rect: Rect = (
@@ -63,7 +63,7 @@ pub fn init() -> (DrawPrimitives, Rect) {
                     _ => FALLBACK_COLOR,
                 };
 
-                let (path_vertices, path_indices) = iterate_fill(&p, &color, &mut geometry);
+                let (_path_vertices, _path_indices) = iterate_fill(p, &color, &mut geometry);
             }
         }
     }

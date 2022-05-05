@@ -5,13 +5,13 @@ mod debug;
 mod get_first_convex_index;
 mod triangulate;
 use crate::fill::convert_path::convert_path;
-use crate::fill::triangulate::triangulate;
+
 use crate::{Index, Vertex};
-use glam::{DVec2, Vec4};
+use glam::{Vec4};
 use lyon::lyon_tessellation::{
     BuffersBuilder, FillOptions, FillTessellator, FillVertex, VertexBuffers,
 };
-use usvg::{self, Path, PathData, PathSegment};
+use usvg::{self, Path};
 
 pub fn iterate_fill(
     path: &Path,

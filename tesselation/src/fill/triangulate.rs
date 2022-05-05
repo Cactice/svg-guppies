@@ -1,10 +1,10 @@
 use glam::{DVec2, Vec4};
 
 use super::convex_breakdown::convex_breakdown;
-use super::debug::rand_vec4;
+
 use super::Vertex;
 
-pub fn triangulate(polygon: &mut Vec<DVec2>, color: &Vec4) -> Vec<Vertex> {
+pub fn triangulate(polygon: &mut Vec<DVec2>, _color: &Vec4) -> Vec<Vertex> {
     let (mut fill, mut mask) = convex_breakdown(polygon);
     polygon.clear();
     let flattener = |color: Vec4| {

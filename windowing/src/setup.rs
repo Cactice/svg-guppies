@@ -131,7 +131,7 @@ impl Setup {
         }
 
         queue.write_buffer(
-            &uniform_buffer,
+            uniform_buffer,
             0,
             bytemuck::cast_slice(&[Uniform {
                 transform: *transform,
