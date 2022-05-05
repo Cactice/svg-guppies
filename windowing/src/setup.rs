@@ -2,7 +2,9 @@ use std::borrow::Cow;
 use tesselation::{glam::Mat4, Indices, Vertex, Vertices};
 use winit::{dpi::PhysicalSize, window::Window};
 
-use wgpu::{util::DeviceExt, BindGroup, Device, RenderPipeline, Surface, SurfaceConfiguration};
+use wgpu::{
+    util::DeviceExt, BindGroup, Buffer, Device, RenderPipeline, Surface, SurfaceConfiguration,
+};
 
 const SAMPLE_COUNT: u32 = 4;
 fn get_uniform_buffer(
@@ -56,6 +58,7 @@ pub(crate) struct Setup {
     pub(crate) shader: wgpu::ShaderModule,
     pub(crate) pipeline_layout: wgpu::PipelineLayout,
     pub(crate) bind_group: wgpu::BindGroup,
+    pub(crate) buffer: wgpu::Buffer,
 }
 
 impl Setup {
@@ -73,12 +76,14 @@ impl Setup {
     pub fn redraw(
         vertices: &Vertices,
         indices: &Indices,
+        transform: &Mat4,
         device: &Device,
         surface: &Surface,
         render_pipeline: &RenderPipeline,
         queue: &wgpu::Queue,
         config: &SurfaceConfiguration,
         bind_group: &BindGroup,
+        buffer: &Buffer,
     ) {
         let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Index Buffer"),
@@ -134,6 +139,13 @@ impl Setup {
             rpass.draw_indexed(0..(indices.len() as u32), 0, 0..1);
         }
 
+        queue.write_buffer(
+            &buffer,
+            0,
+            bytemuck::cast_slice(&[Uniform {
+                transform: *transform,
+            }]),
+        );
         queue.submit(Some(encoder.finish()));
         frame.present();
     }
@@ -173,7 +185,7 @@ impl Setup {
             source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("shader.wgsl"))),
         });
 
-        let (_buffer, bind_group, bind_group_layout) = get_uniform_buffer(
+        let (buffer, bind_group, bind_group_layout) = get_uniform_buffer(
             &device,
             bytemuck::cast_slice(&[Uniform {
                 transform: default_transform,
@@ -238,6 +250,7 @@ impl Setup {
             shader,
             pipeline_layout,
             bind_group,
+            buffer,
         }
     }
 }

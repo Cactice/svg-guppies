@@ -23,10 +23,6 @@ pub fn convex_breakdown(polygon: &mut Vec<DVec2>) -> (Vec<Vec<DVec2>>, Vec<Vec<D
         rest_with_clipped.extend(rest);
         *polygon = rest_with_clipped;
     }
-    let (fill, mask) = if clockwise_convexes.len() > counter_clockwise_convexes.len() {
-        (clockwise_convexes, counter_clockwise_convexes)
-    } else {
-        (counter_clockwise_convexes, clockwise_convexes)
-    };
+    let (fill, mask) = (clockwise_convexes, counter_clockwise_convexes);
     (fill, mask)
 }

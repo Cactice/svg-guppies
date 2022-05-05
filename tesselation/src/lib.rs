@@ -80,7 +80,7 @@ pub struct Vertex {
 impl From<&DVec2> for Vertex {
     fn from(v: &DVec2) -> Self {
         Self {
-            position: [(v.x) as f32, (-v.y) as f32, 0.0],
+            position: [(v.x) as f32, (v.y) as f32, 0.0],
             ..Default::default()
         }
     }
@@ -88,7 +88,7 @@ impl From<&DVec2> for Vertex {
 impl From<(&FillVertex<'_>, &Vec4)> for Vertex {
     fn from((v, c): (&FillVertex, &Vec4)) -> Self {
         Self {
-            position: [v.position().x, -v.position().y, 0.],
+            position: [v.position().x, v.position().y, 0.],
             color: c.to_array(),
             ..Default::default()
         }
@@ -98,7 +98,7 @@ impl From<(&FillVertex<'_>, &Vec4)> for Vertex {
 impl From<(&DVec2, &Vec4)> for Vertex {
     fn from((v, c): (&DVec2, &Vec4)) -> Self {
         Self {
-            position: [(v.x) as f32, (-v.y) as f32, 0.0],
+            position: [(v.x) as f32, (v.y) as f32, 0.0],
             color: [c.x, c.y, c.z, c.w],
             ..Default::default()
         }
