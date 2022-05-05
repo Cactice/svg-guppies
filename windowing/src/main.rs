@@ -25,7 +25,7 @@ fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
 }
 
 async fn run(event_loop: EventLoop<()>, window: Window) {
-    let (svg_draw_primitives, (_translate, svg_scale)) = init();
+    let ((vertices, indices), (_translate, svg_scale)) = init();
     let win_size = window.inner_size();
     let mut translate = Mat4::from_translation([-1., 1.0, 0.0].into());
     let mut scale = get_scale(win_size, svg_scale);
@@ -41,8 +41,10 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
         shader,
         pipeline_layout,
         bind_group,
-        buffer,
-    } = Setup::new(&window, transform).await;
+        uniform_buffer,
+        index_buffer,
+        vertex_buffer,
+    } = Setup::new(&window, transform, &vertices, &indices).await;
     event_loop.run(move |event, _, control_flow| {
         // Have the closure take ownership of the resources.
         // `event_loop.run` never returns, therefore we must do this to ensure
@@ -73,8 +75,6 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
             Event::RedrawRequested(_) => {
                 let transform = translate * scale;
                 Setup::redraw(
-                    svg_draw_primitives.0.as_ref(),
-                    svg_draw_primitives.1.as_ref(),
                     &transform,
                     &device,
                     &surface,
@@ -82,7 +82,10 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     &queue,
                     &config,
                     &bind_group,
-                    &buffer,
+                    &uniform_buffer,
+                    &vertex_buffer,
+                    &index_buffer,
+                    &indices,
                 );
                 window.request_redraw();
             }

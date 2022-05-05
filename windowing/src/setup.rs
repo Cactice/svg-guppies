@@ -1,12 +1,28 @@
 use std::borrow::Cow;
 use tesselation::{glam::Mat4, Indices, Vertex, Vertices};
-use winit::{dpi::PhysicalSize, window::Window};
-
 use wgpu::{
     util::DeviceExt, BindGroup, Buffer, Device, RenderPipeline, Surface, SurfaceConfiguration,
 };
+use winit::{dpi::PhysicalSize, window::Window};
 
 const SAMPLE_COUNT: u32 = 4;
+#[derive(Debug)]
+pub(crate) struct Setup {
+    pub(crate) instance: wgpu::Instance,
+    pub(crate) surface: wgpu::Surface,
+    pub(crate) adapter: wgpu::Adapter,
+    pub(crate) device: wgpu::Device,
+    pub(crate) queue: wgpu::Queue,
+    pub(crate) config: wgpu::SurfaceConfiguration,
+    pub(crate) render_pipeline: wgpu::RenderPipeline,
+    pub(crate) shader: wgpu::ShaderModule,
+    pub(crate) pipeline_layout: wgpu::PipelineLayout,
+    pub(crate) bind_group: wgpu::BindGroup,
+    pub(crate) uniform_buffer: wgpu::Buffer,
+    pub(crate) index_buffer: wgpu::Buffer,
+    pub(crate) vertex_buffer: wgpu::Buffer,
+}
+
 fn get_uniform_buffer(
     device: &Device,
     contents: &[u8],
@@ -46,21 +62,6 @@ fn get_uniform_buffer(
     )
 }
 
-#[derive(Debug)]
-pub(crate) struct Setup {
-    pub(crate) instance: wgpu::Instance,
-    pub(crate) surface: wgpu::Surface,
-    pub(crate) adapter: wgpu::Adapter,
-    pub(crate) device: wgpu::Device,
-    pub(crate) queue: wgpu::Queue,
-    pub(crate) config: wgpu::SurfaceConfiguration,
-    pub(crate) render_pipeline: wgpu::RenderPipeline,
-    pub(crate) shader: wgpu::ShaderModule,
-    pub(crate) pipeline_layout: wgpu::PipelineLayout,
-    pub(crate) bind_group: wgpu::BindGroup,
-    pub(crate) buffer: wgpu::Buffer,
-}
-
 impl Setup {
     pub fn resize(
         size: PhysicalSize<u32>,
@@ -74,8 +75,6 @@ impl Setup {
         surface.configure(device, config);
     }
     pub fn redraw(
-        vertices: &Vertices,
-        indices: &Indices,
         transform: &Mat4,
         device: &Device,
         surface: &Surface,
@@ -83,19 +82,11 @@ impl Setup {
         queue: &wgpu::Queue,
         config: &SurfaceConfiguration,
         bind_group: &BindGroup,
-        buffer: &Buffer,
+        uniform_buffer: &Buffer,
+        vertex_buffer: &Buffer,
+        index_buffer: &Buffer,
+        indices: &Indices,
     ) {
-        let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Index Buffer"),
-            contents: bytemuck::cast_slice(indices),
-            usage: wgpu::BufferUsages::INDEX,
-        });
-
-        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("SVG-GUI Vertex Buffer"),
-            contents: (bytemuck::cast_slice(vertices)),
-            usage: wgpu::BufferUsages::VERTEX,
-        });
         let frame = surface
             .get_current_texture()
             .expect("Failed to acquire next swap chain texture");
@@ -140,7 +131,7 @@ impl Setup {
         }
 
         queue.write_buffer(
-            &buffer,
+            &uniform_buffer,
             0,
             bytemuck::cast_slice(&[Uniform {
                 transform: *transform,
@@ -150,7 +141,12 @@ impl Setup {
         frame.present();
     }
 
-    pub async fn new(window: &Window, default_transform: Mat4) -> Self {
+    pub async fn new(
+        window: &Window,
+        default_transform: Mat4,
+        vertices: &Vertices,
+        indices: &Indices,
+    ) -> Self {
         let size = window.inner_size();
         let instance = wgpu::Instance::new(wgpu::Backends::all());
         let surface = unsafe { instance.create_surface(&window) };
@@ -185,7 +181,7 @@ impl Setup {
             source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("shader.wgsl"))),
         });
 
-        let (buffer, bind_group, bind_group_layout) = get_uniform_buffer(
+        let (uniform_buffer, bind_group, bind_group_layout) = get_uniform_buffer(
             &device,
             bytemuck::cast_slice(&[Uniform {
                 transform: default_transform,
@@ -238,6 +234,17 @@ impl Setup {
         };
 
         surface.configure(&device, &config);
+        let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Index Buffer"),
+            contents: bytemuck::cast_slice(indices),
+            usage: wgpu::BufferUsages::INDEX,
+        });
+
+        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("SVG-GUI Vertex Buffer"),
+            contents: (bytemuck::cast_slice(vertices)),
+            usage: wgpu::BufferUsages::VERTEX,
+        });
 
         Setup {
             instance,
@@ -250,7 +257,9 @@ impl Setup {
             shader,
             pipeline_layout,
             bind_group,
-            buffer,
+            uniform_buffer,
+            vertex_buffer,
+            index_buffer,
         }
     }
 }
