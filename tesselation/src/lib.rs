@@ -5,7 +5,7 @@ use fill::iterate_fill;
 pub use glam;
 use glam::{DVec2, Vec2, Vec4};
 use lyon::lyon_tessellation::{FillVertex, VertexBuffers};
-use std::{fs, path::Path, sync::Arc};
+use std::sync::Arc;
 use usvg::fontdb::Source;
 
 pub type Vertices = Vec<Vertex>;
