@@ -1,9 +1,7 @@
 mod setup;
 use setup::Setup;
-
 use tesselation::glam::{Mat4, Vec2};
 use tesselation::init;
-
 use winit::dpi::PhysicalSize;
 use winit::window::WindowBuilder;
 use winit::{
@@ -11,6 +9,7 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
     window::Window,
 };
+
 fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
     let ratio = f32::min(1200_f32, 1600_f32) / f32::max(svg_scale.x, svg_scale.y);
 
@@ -113,7 +112,16 @@ pub fn main() {
     {
         std::panic::set_hook(Box::new(console_error_panic_hook::hook));
         use winit::platform::web::WindowExtWebSys;
-        window.canvas();
+        web_sys::window()
+            .and_then(|win| win.document())
+            .and_then(|doc| doc.body())
+            .and_then(|body| {
+                body.remove_child(&body.last_element_child().unwrap())
+                    .unwrap();
+                body.append_child(&web_sys::Element::from(window.canvas()))
+                    .ok()
+            })
+            .expect("couldn't append canvas to document body");
         wasm_bindgen_futures::spawn_local(run(event_loop, window));
     }
 }
