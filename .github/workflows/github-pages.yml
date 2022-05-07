@@ -33,8 +33,10 @@ jobs:
         git checkout gh-pages
         git add .
         if (git diff --shortstat --cached | grep '[0-9]'); then \
+          echo "Diff Present"; \
           git commit -m "Update Pages"; \
           git push; \
         fi
+        echo "Complete"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
