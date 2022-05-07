@@ -34,3 +34,6 @@ jobs:
         git add .
         git commit -m "Update Github Page"
         git push
+        env:
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
