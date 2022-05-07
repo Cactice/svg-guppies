@@ -21,7 +21,9 @@ jobs:
           target
         key: ${{ runner.os }}-cargo-gh-pages-${{ hashFiles('**/Cargo.lock') }}
     - name: Build
-      run: cargo run-wasm windowing --port nan--release
+      run: |
+        rustup target add wasm32-unknown-unknown
+        cargo run-wasm windowing --port nan--release
     - name: Push
       run: |
         git config user.name github-actions
