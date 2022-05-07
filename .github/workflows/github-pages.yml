@@ -28,7 +28,8 @@ jobs:
       run: |
         git remote set-url origin https://github-actions:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}
         git config user.name github-actions
-        git config user.email github-actions@github.com
+        git config user.email 14835424+Cactice@users.noreply.github.com
+        git fetch
         git checkout gh-pages
         git merge main
         git add .
