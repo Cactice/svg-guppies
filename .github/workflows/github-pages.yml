@@ -23,7 +23,7 @@ jobs:
     - name: Build
       run: |
         rustup target add wasm32-unknown-unknown
-        cargo run-wasm windowing --port nan--release || true
+        cargo run-wasm windowing --port nan --release || true
     - name: Push
       run: |
         git remote set-url origin https://github-actions:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}
@@ -31,8 +31,10 @@ jobs:
         git config user.email 14835424+Cactice@users.noreply.github.com
         git fetch
         git checkout gh-pages
-        git add .
-        git commit -m "Update Github Page"
-        git push
+        if (git diff --shortstat | grep '[0-9]'); then \
+          git add .; \
+          git commit -m "Update Github Page"; \
+          git push \
+        fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
