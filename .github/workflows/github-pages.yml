@@ -24,6 +24,12 @@ jobs:
       run: |
         rustup target add wasm32-unknown-unknown
         cargo run-wasm windowing --port nan --release || true
+    - name: Diff
+      id: diff
+      run: |
+        git add -N .
+        git diff --name-only --exit-code
+      continue-on-error: true
     - name: Push
       run: |
         git remote set-url origin https://github-actions:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}
@@ -32,11 +38,8 @@ jobs:
         git fetch
         git checkout gh-pages
         git add .
-        if (git diff --shortstat --cached | grep '[0-9]'); then \
-          echo "Diff Present"; \
-          git commit -m "Update Pages"; \
-          git push; \
-        fi
-        echo "Complete"
+        git commit -m "Update Pages"
+        git push
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: steps.diff.outcome == 'failure'
