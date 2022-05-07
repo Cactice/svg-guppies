@@ -31,9 +31,8 @@ jobs:
         git config user.email 14835424+Cactice@users.noreply.github.com
         git fetch
         git checkout gh-pages
-        git merge origin/main --allow-unrelated-histories
         git add .
         git commit -m "Update Github Page"
-        git push
+        git push --set-upstream origin some
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
