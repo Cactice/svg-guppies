@@ -26,10 +26,11 @@ jobs:
         cargo run-wasm windowing --port nan--release || true
     - name: Push
       run: |
+        git remote set-url origin https://github-actions:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}
         git config user.name github-actions
         git config user.email github-actions@github.com
         git checkout gh-pages
         git merge main
         git add .
-        git commit -m "Update"
+        git commit -m "Update Github Page"
         git push
