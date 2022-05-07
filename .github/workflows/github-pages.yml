@@ -33,8 +33,8 @@ jobs:
         git checkout gh-pages
         if (git diff --shortstat | grep '[0-9]'); then \
           git add .; \
-          git commit -m "Update Github Page"; \
-          git push \
+          git commit -m "Update Pages"; \
+          git push; \
         fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
