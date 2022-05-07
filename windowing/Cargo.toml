@@ -15,4 +15,4 @@ tesselation = { path = "../tesselation" }
 wgpu = { git = "https://github.com/gfx-rs/wgpu", features = ["webgl"] } #0.13
 wasm-bindgen-futures = "0.4.30"
 web-sys = "0.3.57"
-console_error_panic_hook = "*"
+console_error_panic_hook = "0.1.7"
