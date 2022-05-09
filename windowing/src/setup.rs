@@ -4,23 +4,29 @@ use wgpu::{
     util::DeviceExt, BindGroup, Buffer, Device, RenderPipeline, Surface, SurfaceConfiguration,
 };
 use winit::{dpi::PhysicalSize, window::Window};
+#[derive(Debug)]
+pub struct Redraw {
+    pub transform: Mat4,
+    pub device: Device,
+    pub surface: Surface,
+    pub render_pipeline: RenderPipeline,
+    pub queue: wgpu::Queue,
+    pub config: SurfaceConfiguration,
+    pub bind_group: BindGroup,
+    pub uniform_buffer: Buffer,
+    pub vertex_buffer: Buffer,
+    pub index_buffer: Buffer,
+    pub indices: Indices,
+}
 
 const SAMPLE_COUNT: u32 = 4;
 #[derive(Debug)]
 pub(crate) struct Setup {
     pub(crate) instance: wgpu::Instance,
-    pub(crate) surface: wgpu::Surface,
     pub(crate) adapter: wgpu::Adapter,
-    pub(crate) device: wgpu::Device,
-    pub(crate) queue: wgpu::Queue,
-    pub(crate) config: wgpu::SurfaceConfiguration,
-    pub(crate) render_pipeline: wgpu::RenderPipeline,
     pub(crate) shader: wgpu::ShaderModule,
     pub(crate) pipeline_layout: wgpu::PipelineLayout,
-    pub(crate) bind_group: wgpu::BindGroup,
-    pub(crate) uniform_buffer: wgpu::Buffer,
-    pub(crate) index_buffer: wgpu::Buffer,
-    pub(crate) vertex_buffer: wgpu::Buffer,
+    pub(crate) redraw: Redraw,
 }
 
 fn get_uniform_buffer(
@@ -74,19 +80,20 @@ impl Setup {
         config.height = size.height;
         surface.configure(device, config);
     }
-    pub fn redraw(
-        transform: &Mat4,
-        device: &Device,
-        surface: &Surface,
-        render_pipeline: &RenderPipeline,
-        queue: &wgpu::Queue,
-        config: &SurfaceConfiguration,
-        bind_group: &BindGroup,
-        uniform_buffer: &Buffer,
-        vertex_buffer: &Buffer,
-        index_buffer: &Buffer,
-        indices: &Indices,
-    ) {
+    pub fn redraw(redraw: &Redraw) {
+        let Redraw {
+            transform,
+            device,
+            surface,
+            render_pipeline,
+            queue,
+            config,
+            bind_group,
+            uniform_buffer,
+            vertex_buffer,
+            index_buffer,
+            indices,
+        } = redraw;
         let frame = surface
             .get_current_texture()
             .expect("Failed to acquire next swap chain texture");
@@ -245,21 +252,26 @@ impl Setup {
             contents: (bytemuck::cast_slice(vertices)),
             usage: wgpu::BufferUsages::VERTEX,
         });
-
-        Setup {
-            instance,
-            surface,
-            adapter,
+        let redraw = Redraw {
             device,
+            surface,
+            render_pipeline,
             queue,
             config,
-            render_pipeline,
-            shader,
-            pipeline_layout,
             bind_group,
             uniform_buffer,
             vertex_buffer,
             index_buffer,
+            indices: indices.to_vec(),
+            transform: default_transform,
+        };
+
+        Setup {
+            instance,
+            adapter,
+            shader,
+            pipeline_layout,
+            redraw,
         }
     }
 }

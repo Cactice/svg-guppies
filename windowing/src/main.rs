@@ -30,19 +30,11 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
     let mut scale = get_scale(win_size, svg_scale);
     let transform: Mat4 = translate * scale;
     let Setup {
-        instance,
+        mut redraw,
         adapter,
-        surface,
-        device,
-        queue,
-        mut config,
-        render_pipeline,
-        shader,
+        instance,
         pipeline_layout,
-        bind_group,
-        uniform_buffer,
-        index_buffer,
-        vertex_buffer,
+        shader,
     } = Setup::new(&window, transform, &vertices, &indices).await;
     event_loop.run(move |event, _, control_flow| {
         // Have the closure take ownership of the resources.
@@ -67,24 +59,12 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                 event: WindowEvent::Resized(size),
                 ..
             } => {
-                Setup::resize(size, &device, &surface, &mut config);
+                Setup::resize(size, &redraw.device, &redraw.surface, &mut redraw.config);
                 scale = get_scale(size, svg_scale);
             }
             Event::RedrawRequested(_) => {
-                let transform = translate * scale;
-                Setup::redraw(
-                    &transform,
-                    &device,
-                    &surface,
-                    &render_pipeline,
-                    &queue,
-                    &config,
-                    &bind_group,
-                    &uniform_buffer,
-                    &vertex_buffer,
-                    &index_buffer,
-                    &indices,
-                );
+                redraw.transform = translate * scale;
+                Setup::redraw(&redraw);
                 window.request_redraw();
             }
             Event::WindowEvent {
