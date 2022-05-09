@@ -1,12 +1,11 @@
-use glam::{DMat4, Mat4};
+use glam::{DMat4};
 use natura::Spring;
 use std::{
-    collections::HashMap,
     hash::{BuildHasher, Hasher},
     iter::zip,
 };
-use sxd_document::{dom::Document, parser};
-use sxd_xpath::{evaluate_xpath, Factory, Value};
+use sxd_document::{parser};
+use sxd_xpath::{evaluate_xpath};
 
 struct LifeGame {
     dollars: [i32; 4],

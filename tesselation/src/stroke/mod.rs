@@ -2,7 +2,7 @@ mod line_to_parallel_lines;
 use crate::convert_path::convert_path;
 use glam::Vec4;
 use lyon::lyon_tessellation::{
-    StrokeGeometryBuilder, StrokeOptions, StrokeTessellator, StrokeVertex,
+    StrokeOptions, StrokeTessellator, StrokeVertex,
 };
 use lyon::tessellation::geometry_builder::*;
 use lyon::tessellation::{self};
@@ -22,12 +22,12 @@ pub fn convert_stroke(s: &usvg::Stroke) -> StrokeOptions {
         usvg::LineJoin::Round => tessellation::LineJoin::Round,
     };
 
-    let opt = StrokeOptions::tolerance(0.01)
+    
+
+    StrokeOptions::tolerance(0.01)
         .with_line_width(s.width.value() as f32)
         .with_line_cap(linecap)
-        .with_line_join(linejoin);
-
-    opt
+        .with_line_join(linejoin)
 }
 
 pub fn iterate_stroke(
