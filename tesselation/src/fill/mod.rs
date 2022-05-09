@@ -1,13 +1,11 @@
-mod convert_path;
 mod convex_breakdown;
 #[allow(dead_code)]
 mod debug;
 mod get_first_convex_index;
 mod triangulate;
-use crate::fill::convert_path::convert_path;
 
-use crate::{Index, Vertex};
-use glam::{Vec4};
+use crate::{convert_path::convert_path, Index, Vertex};
+use glam::Vec4;
 use lyon::lyon_tessellation::{
     BuffersBuilder, FillOptions, FillTessellator, FillVertex, VertexBuffers,
 };

@@ -1,11 +1,13 @@
+mod convert_path;
 mod fill;
 mod stroke;
 
 use fill::iterate_fill;
 pub use glam;
 use glam::{DVec2, Vec2, Vec4};
-use lyon::lyon_tessellation::{FillVertex, VertexBuffers};
+use lyon::lyon_tessellation::{FillVertex, StrokeVertex, VertexBuffers};
 use std::sync::Arc;
+use stroke::iterate_stroke;
 use usvg::fontdb::Source;
 
 pub type Vertices = Vec<Vertex>;
@@ -35,8 +37,7 @@ pub fn init() -> (DrawPrimitives, Rect) {
     opt.fontdb
         .load_font_source(Source::Binary(Arc::new(contents.as_ref())));
     opt.font_family = "Roboto Medium".to_string();
-    let rtree =
-        usvg::Tree::from_data(include_bytes!("../../svg/Resting.svg"), &opt.to_ref()).unwrap();
+    let rtree = usvg::Tree::from_data(include_bytes!("../../svg/life.svg"), &opt.to_ref()).unwrap();
 
     let view_box = rtree.svg_node().view_box;
     let rect: Rect = (
@@ -47,11 +48,19 @@ pub fn init() -> (DrawPrimitives, Rect) {
     let mut geometry = VertexBuffers::<Vertex, Index>::new();
     for node in rtree.root().descendants() {
         if let usvg::NodeKind::Path(ref p) = *node.borrow() {
-            // if let Some(ref stroke) = p.stroke {
-            //     let (path_vertices, path_indices) = iterate_stroke(&p.data, stroke.width.value());
-            //     vertices.extend(path_vertices);
-            //     indices.extend(path_indices);
-            // }
+            if let Some(ref stroke) = p.stroke {
+                let color = match stroke.paint {
+                    usvg::Paint::Color(c) => Vec4::new(
+                        c.red as f32 / u8::MAX as f32,
+                        c.green as f32 / u8::MAX as f32,
+                        c.blue as f32 / u8::MAX as f32,
+                        stroke.opacity.value() as f32,
+                    ),
+                    _ => FALLBACK_COLOR,
+                };
+
+                iterate_stroke(stroke, p, &mut geometry, color);
+            }
             if let Some(ref fill) = p.fill {
                 let color = match fill.paint {
                     usvg::Paint::Color(c) => Vec4::new(
@@ -87,6 +96,15 @@ impl From<&DVec2> for Vertex {
 }
 impl From<(&FillVertex<'_>, &Vec4)> for Vertex {
     fn from((v, c): (&FillVertex, &Vec4)) -> Self {
+        Self {
+            position: [v.position().x, v.position().y, 0.],
+            color: c.to_array(),
+            ..Default::default()
+        }
+    }
+}
+impl From<(&StrokeVertex<'_, '_>, &Vec4)> for Vertex {
+    fn from((v, c): (&StrokeVertex, &Vec4)) -> Self {
         Self {
             position: [v.position().x, v.position().y, 0.],
             color: c.to_array(),
