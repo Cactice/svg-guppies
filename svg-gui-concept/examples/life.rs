@@ -17,7 +17,7 @@ struct LifeGame {
 }
 
 struct LifeGameView {
-    players_avatar_matrix: [SpringMat4; 4],
+    player_avatar_matrices: [SpringMat4; 4],
     tip_matrix: SpringMat4,
     players_text: [String; 4],
     position_to_coordinates: Vec<DVec2>,
@@ -26,35 +26,36 @@ struct LifeGameView {
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 struct LifeGameViewGpuBytes {
-    players_avatar_matrix: Mat4,
+    players_avatar_matrices: Mat4,
     tip_matrix: Mat4,
 }
 
 impl LifeGameView {
     async fn roulette_clicked(&mut self, life_game: &mut LifeGame) {
-        let spins = LifeGame::spin_roulette();
-        let (sender, receiver) = channel::<()>();
-        if self.tip_matrix.animating_completed.is_some() {
+        if self.tip_matrix.complete_animation.is_some()
+            || self
+                .player_avatar_matrices
+                .iter()
+                .any(|spring| spring.complete_animation.is_some())
+        {
             return;
         }
-        self.tip_matrix.animating_completed = Some(sender);
-        self.tip_matrix.target = DMat4::from_rotation_z(spins as f64 * PI);
-        if receiver.recv().is_err() {
-            return;
-        }
-        life_game.proceed(spins);
-        let (sender, receiver) = channel::<()>();
-        self.players_avatar_matrix[life_game.current_player].animating_completed = Some(sender);
-        self.players_avatar_matrix[life_game.current_player].target = DMat4::from_translation(
-            (
-                self.position_to_coordinates[life_game.position[life_game.current_player]],
-                0.0,
-            )
-                .into(),
-        );
-        if receiver.recv().is_err() {
-            return;
-        }
+
+        let one_sixths_spins = LifeGame::spin_roulette();
+        self.tip_matrix
+            .spring_to(DMat4::from_rotation_z(one_sixths_spins as f64 * PI / 3.))
+            .await;
+
+        life_game.proceed(one_sixths_spins);
+        self.player_avatar_matrices[life_game.current_player]
+            .spring_to(DMat4::from_translation(
+                (
+                    self.position_to_coordinates[life_game.position[life_game.current_player]],
+                    0.0,
+                )
+                    .into(),
+            ))
+            .await;
         life_game.finish_turn()
     }
 }
@@ -64,10 +65,18 @@ struct SpringMat4 {
     target: DMat4,
     current: DMat4,
     velocity: DMat4,
-    animating_completed: Option<Sender<()>>,
+    complete_animation: Option<Sender<()>>,
 }
 
 impl SpringMat4 {
+    async fn spring_to(&mut self, target: DMat4) {
+        self.target = target;
+        let (sender, receiver) = channel::<()>();
+        self.complete_animation = Some(sender);
+        let is_err = receiver.recv().is_err();
+        self.complete_animation = None;
+        if is_err { /* TODO: How to handle this...?*/ }
+    }
     fn update(&mut self) -> bool {
         zip(
             zip(self.current.to_cols_array(), self.velocity.to_cols_array()),
@@ -78,10 +87,10 @@ impl SpringMat4 {
         });
         let animating_complete = self.current.abs_diff_eq(self.target, 0.1)
             && self.velocity.abs_diff_eq(DMat4::ZERO, 0.01);
-        if let Some(animating_completed) = self.animating_completed.clone() {
+        if let Some(animating_completed) = self.complete_animation.clone() {
             animating_completed.send(()).unwrap();
         }
-        self.animating_completed = None;
+        self.complete_animation = None;
         animating_complete
     }
 }
@@ -101,8 +110,8 @@ impl LifeGame {
     fn spin_roulette() -> u64 {
         RANDOM_BASE + (rand_u64() % RANDOM_VARIANCE)
     }
-    fn proceed(&mut self, spins: u64) {
-        let proceed = spins % ROULETTE_MAX;
+    fn proceed(&mut self, steps: u64) {
+        let proceed = steps % ROULETTE_MAX;
         self.position[self.current_player] =
             (self.position[self.current_player] + proceed as usize).min(self.position.len() - 1);
     }
