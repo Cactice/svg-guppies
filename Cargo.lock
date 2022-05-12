@@ -1667,6 +1667,7 @@ name = "svg-gui-concept"
 version = "0.1.0"
 dependencies = [
  "async-std",
+ "bytemuck",
  "enumflags2",
  "glam",
  "natura",
