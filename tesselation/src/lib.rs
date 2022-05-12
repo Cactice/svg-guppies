@@ -48,6 +48,8 @@ pub fn init() -> (DrawPrimitives, Rect) {
     let mut geometry = VertexBuffers::<Vertex, Index>::new();
     for node in rtree.root().descendants() {
         if let usvg::NodeKind::Path(ref p) = *node.borrow() {
+            println!("{}", p.id);
+
             if let Some(ref stroke) = p.stroke {
                 let color = match stroke.paint {
                     usvg::Paint::Color(c) => Vec4::new(
@@ -58,7 +60,6 @@ pub fn init() -> (DrawPrimitives, Rect) {
                     ),
                     _ => FALLBACK_COLOR,
                 };
-
                 iterate_stroke(stroke, p, &mut geometry, color);
             }
             if let Some(ref fill) = p.fill {
