@@ -1,7 +1,8 @@
 mod setup;
 use setup::Setup;
+pub use tesselation;
 use tesselation::glam::{Mat4, Vec2};
-use tesselation::init;
+use tesselation::{init, Callback};
 use winit::dpi::PhysicalSize;
 use winit::window::WindowBuilder;
 use winit::{
@@ -23,8 +24,8 @@ fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
     )
 }
 
-async fn run(event_loop: EventLoop<()>, window: Window) {
-    let ((vertices, indices), (_translate, svg_scale)) = init();
+async fn run(event_loop: EventLoop<()>, window: Window, callback: Callback<'_>) {
+    let ((vertices, indices), (_translate, svg_scale)) = init(callback);
     let win_size = window.inner_size();
     let mut translate = Mat4::from_translation([-1., 1.0, 0.0].into());
     let mut scale = get_scale(win_size, svg_scale);
@@ -76,7 +77,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
     });
 }
 
-pub fn main() {
+pub fn main(callback: Callback) {
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new()
         .with_title("SVG-GUI")
@@ -86,7 +87,7 @@ pub fn main() {
     #[cfg(not(target_arch = "wasm32"))]
     {
         // Temporarily avoid srgb formats for the surface on the web
-        pollster::block_on(run(event_loop, window));
+        pollster::block_on(run(event_loop, window, callback));
     }
     #[cfg(target_arch = "wasm32")]
     {
@@ -102,6 +103,6 @@ pub fn main() {
                     .ok()
             })
             .expect("couldn't append canvas to document body");
-        wasm_bindgen_futures::spawn_local(run(event_loop, window));
+        wasm_bindgen_futures::spawn_local(run(event_loop, window, callback));
     }
 }

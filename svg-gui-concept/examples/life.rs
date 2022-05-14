@@ -1,19 +1,21 @@
 use glam::{DMat4, DVec2, Mat4};
 use natura::Spring;
+use regex::Regex;
 use std::sync::mpsc::{channel, Sender};
 use std::{
     f64::consts::PI,
     hash::{BuildHasher, Hasher},
     iter::zip,
 };
-use sxd_document::parser;
-use sxd_xpath::evaluate_xpath;
+use windowing::tesselation::usvg::Path;
+use windowing::tesselation::Callback;
 
+#[derive(Default)]
 struct LifeGame {
     dollars: [i32; 4],
     position: [usize; 4],
     current_player: usize,
-    position_to_dollar: Vec<i32>,
+    pub position_to_dollar: Vec<i32>,
 }
 
 struct LifeGameView {
@@ -25,7 +27,7 @@ struct LifeGameView {
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-struct LifeGameViewGpuBytes {
+struct LifeGameViewBytes {
     players_avatar_matrices: Mat4,
     tip_matrix: Mat4,
 }
@@ -102,8 +104,9 @@ pub(crate) fn rand_u64() -> u64 {
         % u64::MAX
         / u64::MAX
 }
-const RANDOM_VARIANCE: u64 = 6;
-const RANDOM_BASE: u64 = 10;
+
+const RANDOM_VARIANCE: u64 = 12;
+const RANDOM_BASE: u64 = 18;
 const ROULETTE_MAX: u64 = 6;
 
 impl LifeGame {
@@ -133,8 +136,21 @@ impl LifeGame {
 }
 
 fn main() {
-    let package = parser::parse(include_str!("../../svg/life.svg")).expect("failed to parse XML");
-    let document = package.as_document();
-    let x = evaluate_xpath(&document, "//g[@id='Route']/path[matches(@id,'\\d\\.')]")
-        .expect("Xpath parsing error");
+    let mut position_to_dollar: Vec<i32> = vec![];
+    let callback_fn = |p: &Path| {
+        let clickable = Regex::new(r"#clickable(?:$| |#)").unwrap();
+        let dynamic = Regex::new(r"#dynamic(?:$| |#)").unwrap();
+        let dynamicText = Regex::new(r"#dynamicText(?:$| |#)").unwrap();
+        let stops = Regex::new(r"^(\d+)\.((?:\+|-)\d+):").unwrap();
+        for captures in stops.captures_iter(&p.id) {
+            let stop: usize = captures[1].parse().unwrap();
+            let value: i32 = captures[2].parse().unwrap();
+            if stop >= position_to_dollar.len() {
+                position_to_dollar.resize(stop, value);
+            }
+            position_to_dollar.insert(stop, value);
+        }
+    };
+    let callback: Callback = Callback::new(callback_fn);
+    windowing::main(callback);
 }

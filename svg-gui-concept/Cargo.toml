@@ -7,10 +7,13 @@ authors = ["cactice"]
 [dependencies]
 enumflags2 = "0.7.3"
 glam = { version = "0.20.2", features = ["bytemuck", "approx"] }
+windowing = { path = "../windowing" }
 
 [dev-dependencies]
-sxd-xpath = "0.4.2"
-sxd-document = "0.3.2"
+regex = "1"
 natura = { git = "https://github.com/ziyasal/natura" }
-async-std = "*"
-bytemuck = "*"
+bytemuck = "1.9.1"
+
+
+[[example]]
+name = "life"

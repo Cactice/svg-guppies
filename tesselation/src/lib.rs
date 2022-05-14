@@ -8,7 +8,21 @@ use glam::{DVec2, Vec2, Vec4};
 use lyon::lyon_tessellation::{FillVertex, StrokeVertex, VertexBuffers};
 use std::sync::Arc;
 use stroke::iterate_stroke;
-use usvg::fontdb::Source;
+pub use usvg;
+use usvg::{fontdb::Source, Path};
+
+pub struct Callback<'a> {
+    func: Box<dyn FnMut(&Path) + 'a>,
+}
+
+impl<'a> Callback<'a> {
+    pub fn new(c: impl FnMut(&Path) + 'a) -> Self {
+        Self { func: Box::new(c) }
+    }
+    fn process_events(&mut self, path: &Path) {
+        (self.func)(path);
+    }
+}
 
 pub type Vertices = Vec<Vertex>;
 pub type Indices = Vec<Index>;
@@ -29,7 +43,7 @@ pub type Rect = (Position, Size);
 // Most of the code in this example is related to working with the GPU.
 
 pub const FALLBACK_COLOR: Vec4 = Vec4::ONE;
-pub fn init() -> (DrawPrimitives, Rect) {
+pub fn init(mut callback: Callback) -> (DrawPrimitives, Rect) {
     // Parse and tessellate the geometry
 
     let mut opt = usvg::Options::default();
@@ -48,7 +62,7 @@ pub fn init() -> (DrawPrimitives, Rect) {
     let mut geometry = VertexBuffers::<Vertex, Index>::new();
     for node in rtree.root().descendants() {
         if let usvg::NodeKind::Path(ref p) = *node.borrow() {
-            println!("{}", p.id);
+            callback.process_events(&p);
 
             if let Some(ref stroke) = p.stroke {
                 let color = match stroke.paint {
