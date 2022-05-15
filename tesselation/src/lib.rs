@@ -4,7 +4,7 @@ mod stroke;
 
 use fill::iterate_fill;
 pub use glam;
-use glam::{DVec2, Vec2, Vec4};
+use glam::{DMat4, DVec2, Vec2, Vec4};
 use lyon::lyon_tessellation::{FillVertex, StrokeVertex, VertexBuffers};
 use std::sync::Arc;
 use stroke::iterate_stroke;
@@ -12,11 +12,11 @@ pub use usvg;
 use usvg::{fontdb::Source, Path};
 
 pub struct Callback<'a> {
-    func: Box<dyn FnMut(&Path) + 'a>,
+    func: Box<dyn FnMut(&Path) -> bool + 'a>,
 }
 
 impl<'a> Callback<'a> {
-    pub fn new(c: impl FnMut(&Path) + 'a) -> Self {
+    pub fn new(c: impl FnMut(&Path) -> bool + 'a) -> Self {
         Self { func: Box::new(c) }
     }
     fn process_events(&mut self, path: &Path) {
@@ -31,18 +31,19 @@ pub type Size = Vec2;
 pub type Position = Vec2;
 pub type Rect = (Position, Size);
 
-// This example renders a very tiny subset of SVG (only filled and stroke paths with solid color
-// patterns and transforms).
-//
-// Parsing is done via the usvg crate. In this very simple example, paths are all tessellated directly
-// into a static mesh during parsing.
-// vertices embed a primitive ID which lets the vertex shader fetch the per-path information such like
-// the color from uniform buffer objects.
-// No occlusion culling optimization here (see the wgpu example).
-//
-// Most of the code in this example is related to working with the GPU.
-
 pub const FALLBACK_COLOR: Vec4 = Vec4::ONE;
+
+struct TransformVariable {
+    transform: DMat4,
+    transform_index: u16,
+}
+
+struct GeometryVariable {
+    vertices: Vertices,
+    indices: Indices,
+    index_base: u16,
+}
+
 pub fn init(mut callback: Callback) -> (DrawPrimitives, Rect) {
     // Parse and tessellate the geometry
 
@@ -87,7 +88,7 @@ pub fn init(mut callback: Callback) -> (DrawPrimitives, Rect) {
                     _ => FALLBACK_COLOR,
                 };
 
-                let (_path_vertices, _path_indices) = iterate_fill(p, &color, &mut geometry);
+                iterate_fill(p, &color, &mut geometry);
             }
         }
     }

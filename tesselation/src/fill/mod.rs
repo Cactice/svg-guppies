@@ -11,11 +11,7 @@ use lyon::lyon_tessellation::{
 };
 use usvg::{self, Path};
 
-pub fn iterate_fill(
-    path: &Path,
-    color: &Vec4,
-    geometry: &mut VertexBuffers<Vertex, Index>,
-) -> (Vec<Vertex>, Vec<Index>) {
+pub fn iterate_fill(path: &Path, color: &Vec4, geometry: &mut VertexBuffers<Vertex, Index>) {
     let mut fill_tess = FillTessellator::new();
     fill_tess
         .tessellate(
@@ -26,5 +22,4 @@ pub fn iterate_fill(
             }),
         )
         .expect("Error during tesselation!");
-    ((*geometry.vertices).to_vec(), (*geometry.indices).to_vec())
 }
