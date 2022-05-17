@@ -137,11 +137,11 @@ impl LifeGame {
 
 fn main() {
     let mut position_to_dollar: Vec<i32> = vec![];
-    let callback_fn = |p: &Path| {
-        let clickable = Regex::new(r"#clickable(?:$| |#)").unwrap();
-        let dynamic = Regex::new(r"#dynamic(?:$| |#)").unwrap();
-        let dynamicText = Regex::new(r"#dynamicText(?:$| |#)").unwrap();
-        let stops = Regex::new(r"^(\d+)\.((?:\+|-)\d+):").unwrap();
+    let clickable = Regex::new(r"#clickable(?:$| |#)").unwrap();
+    let dynamic = Regex::new(r"#dynamic(?:$| |#)").unwrap();
+    let dynamicText = Regex::new(r"#dynamicText(?:$| |#)").unwrap();
+    let stops = Regex::new(r"^(\d+)\.((?:\+|-)\d+):").unwrap();
+    let callback_fn = |p: &Path| -> bool {
         for captures in stops.captures_iter(&p.id) {
             let stop: usize = captures[1].parse().unwrap();
             let value: i32 = captures[2].parse().unwrap();
@@ -150,6 +150,7 @@ fn main() {
             }
             position_to_dollar.insert(stop, value);
         }
+        true
     };
     let callback: Callback = Callback::new(callback_fn);
     windowing::main(callback);

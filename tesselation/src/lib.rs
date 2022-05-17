@@ -99,7 +99,7 @@ pub fn init(mut callback: Callback) -> (DrawPrimitives, Rect) {
 #[derive(Copy, Clone, Debug, Default, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vertex {
     pub position: [f32; 3],
-    pub _padding1: f32,
+    pub transform_matrix_index: u32,
     pub color: [f32; 4],
 }
 impl From<&DVec2> for Vertex {
