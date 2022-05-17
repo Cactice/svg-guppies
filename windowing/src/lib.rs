@@ -84,11 +84,6 @@ pub fn main(callback: Callback) {
         .build(&event_loop)
         .unwrap();
 
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        // Temporarily avoid srgb formats for the surface on the web
-        pollster::block_on(run(event_loop, window, callback));
-    }
     #[cfg(target_arch = "wasm32")]
     {
         std::panic::set_hook(Box::new(console_error_panic_hook::hook));
@@ -102,7 +97,7 @@ pub fn main(callback: Callback) {
                 body.append_child(&web_sys::Element::from(window.canvas()))
                     .ok()
             })
-            .expect("couldn't append canvas to document body");
-        wasm_bindgen_futures::spawn_local(run(event_loop, window, callback));
+            .expect("Couldn't append canvas to document body");
     }
+    pollster::block_on(run(event_loop, window, callback));
 }

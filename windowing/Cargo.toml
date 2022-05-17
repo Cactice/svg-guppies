@@ -10,9 +10,8 @@ pollster = "0.2"
 bytemuck = { version = "1.8", features = ["derive"] }
 tesselation = { path = "../tesselation" }
 
-
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wgpu = { git = "https://github.com/gfx-rs/wgpu", features = ["webgl"] } #0.13
-wasm-bindgen-futures = "0.4.30"
 web-sys = "0.3.57"
 console_error_panic_hook = "0.1.7"
+console_log = { version = "0.2" }
