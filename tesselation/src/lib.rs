@@ -11,16 +11,22 @@ use stroke::iterate_stroke;
 pub use usvg;
 use usvg::{fontdb::Source, Path};
 
+pub enum Priority {
+    Static,
+    DynamicVertex,
+    DynamicIndex, // if index is dynamic, vertex is always dynamic
+}
+
 pub struct Callback<'a> {
-    func: Box<dyn FnMut(&Path) -> bool + 'a>,
+    func: Box<dyn FnMut(&Path) -> Priority + 'a>,
 }
 
 impl<'a> Callback<'a> {
-    pub fn new(c: impl FnMut(&Path) -> bool + 'a) -> Self {
+    pub fn new(c: impl FnMut(&Path) -> Priority + 'a) -> Self {
         Self { func: Box::new(c) }
     }
-    fn process_events(&mut self, path: &Path) {
-        (self.func)(path);
+    fn process_events(&mut self, path: &Path) -> Priority {
+        (self.func)(path)
     }
 }
 
@@ -38,10 +44,36 @@ struct TransformVariable {
     transform_index: u16,
 }
 
+#[derive(Clone, Default, Debug)]
 struct GeometryVariable {
     vertices: Vertices,
     indices: Indices,
-    index_base: u16,
+    index_base: usize,
+}
+impl GeometryVariable {
+    fn get_vertices_len(&self) -> usize {
+        self.vertices.len()
+    }
+    fn get_v(&self) -> Vertices {
+        self.vertices.clone()
+    }
+    fn get_i(&self) -> Indices {
+        self.indices
+            .clone()
+            .iter()
+            .map(|index| index + self.index_base as u32)
+            .collect()
+    }
+}
+
+impl From<(VertexBuffers<Vertex, Index>, usize)> for GeometryVariable {
+    fn from((v, index_base): (VertexBuffers<Vertex, Index>, usize)) -> Self {
+        Self {
+            vertices: v.vertices,
+            indices: v.indices,
+            index_base,
+        }
+    }
 }
 
 pub fn init(mut callback: Callback) -> (DrawPrimitives, Rect) {
@@ -60,10 +92,17 @@ pub fn init(mut callback: Callback) -> (DrawPrimitives, Rect) {
         Vec2::new(view_box.rect.width() as f32, view_box.rect.height() as f32),
     );
 
-    let mut geometry = VertexBuffers::<Vertex, Index>::new();
+    let mut vertex_buffer_static = VertexBuffers::<Vertex, Index>::new();
+    let mut vertex_buffer_dynamic_vertex = VertexBuffers::<Vertex, Index>::new();
+    let mut vertex_buffer_dynamic_index = VertexBuffers::<Vertex, Index>::new();
     for node in rtree.root().descendants() {
         if let usvg::NodeKind::Path(ref p) = *node.borrow() {
-            callback.process_events(&p);
+            let priority = callback.process_events(&p);
+            let mut vertex_buffer = match priority {
+                Priority::Static => &mut vertex_buffer_static,
+                Priority::DynamicVertex => &mut vertex_buffer_dynamic_vertex,
+                Priority::DynamicIndex => &mut vertex_buffer_dynamic_index,
+            };
 
             if let Some(ref stroke) = p.stroke {
                 let color = match stroke.paint {
@@ -75,7 +114,7 @@ pub fn init(mut callback: Callback) -> (DrawPrimitives, Rect) {
                     ),
                     _ => FALLBACK_COLOR,
                 };
-                iterate_stroke(stroke, p, &mut geometry, color);
+                iterate_stroke(stroke, p, &mut vertex_buffer, color);
             }
             if let Some(ref fill) = p.fill {
                 let color = match fill.paint {
@@ -88,11 +127,35 @@ pub fn init(mut callback: Callback) -> (DrawPrimitives, Rect) {
                     _ => FALLBACK_COLOR,
                 };
 
-                iterate_fill(p, &color, &mut geometry);
+                iterate_fill(p, &color, &mut vertex_buffer);
             }
         }
     }
-    ((geometry.vertices, geometry.indices), rect)
+    let geometry_static = GeometryVariable::from((vertex_buffer_static, 0));
+    let geometry_static_len = geometry_static.get_vertices_len();
+
+    let geometry_dynamic_vertex =
+        GeometryVariable::from((vertex_buffer_dynamic_vertex, geometry_static_len));
+    let geometry_dynamic_vertex_len = geometry_dynamic_vertex.get_vertices_len();
+
+    let geometry_dynamic_index = GeometryVariable::from((
+        vertex_buffer_dynamic_index,
+        geometry_static_len + geometry_dynamic_vertex_len,
+    ));
+
+    let vertices = [
+        geometry_static.get_v(),
+        geometry_dynamic_vertex.get_v(),
+        geometry_dynamic_index.get_v(),
+    ]
+    .concat();
+    let indices = [
+        geometry_static.get_i(),
+        geometry_dynamic_vertex.get_i(),
+        geometry_dynamic_index.get_i(),
+    ]
+    .concat();
+    ((vertices, indices), rect)
 }
 
 #[repr(C)]

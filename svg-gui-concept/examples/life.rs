@@ -1,6 +1,6 @@
 use glam::{DMat4, DVec2, Mat4};
 use natura::Spring;
-use regex::Regex;
+use regex::{Regex, RegexSet};
 use std::sync::mpsc::{channel, Sender};
 use std::{
     f64::consts::PI,
@@ -8,7 +8,7 @@ use std::{
     iter::zip,
 };
 use windowing::tesselation::usvg::Path;
-use windowing::tesselation::Callback;
+use windowing::tesselation::{Callback, Priority};
 
 #[derive(Default)]
 struct LifeGame {
@@ -135,13 +135,47 @@ impl LifeGame {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+struct RegexPattern<'a> {
+    regex_patern: &'a str,
+    index: usize,
+}
 fn main() {
     let mut position_to_dollar: Vec<i32> = vec![];
-    let clickable = Regex::new(r"#clickable(?:$| |#)").unwrap();
-    let dynamic = Regex::new(r"#dynamic(?:$| |#)").unwrap();
-    let dynamicText = Regex::new(r"#dynamicText(?:$| |#)").unwrap();
+    let mut i = 0;
+    let clickable_regex_pattern = RegexPattern {
+        regex_patern: r"#clickable(?:$| |#)",
+        index: i,
+    };
+    i += 1;
+    let dynamic_regex_pattern = RegexPattern {
+        regex_patern: r"#dynamic(?:$| |#)",
+        index: i,
+    };
+    i += 1;
+    let dynamic_text_regex_pattern = RegexPattern {
+        regex_patern: r"#dynamicText(?:$| |#)",
+        index: i,
+    };
+    let defaults = RegexSet::new(
+        [
+            clickable_regex_pattern,
+            dynamic_regex_pattern,
+            dynamic_text_regex_pattern,
+        ]
+        .map(|r| r.regex_patern),
+    )
+    .unwrap();
     let stops = Regex::new(r"^(\d+)\.((?:\+|-)\d+):").unwrap();
-    let callback_fn = |p: &Path| -> bool {
+    let callback_fn = |p: &Path| -> Priority {
+        let default_matches = defaults.matches(&p.id);
+        if default_matches.matched(dynamic_regex_pattern.index) {
+            return Priority::DynamicIndex;
+        }
+        if default_matches.matched(dynamic_text_regex_pattern.index) {
+            return Priority::DynamicVertex;
+        }
+
         for captures in stops.captures_iter(&p.id) {
             let stop: usize = captures[1].parse().unwrap();
             let value: i32 = captures[2].parse().unwrap();
@@ -150,7 +184,7 @@ fn main() {
             }
             position_to_dollar.insert(stop, value);
         }
-        true
+        Priority::Static
     };
     let callback: Callback = Callback::new(callback_fn);
     windowing::main(callback);
