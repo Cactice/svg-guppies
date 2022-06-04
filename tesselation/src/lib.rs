@@ -9,7 +9,7 @@ use lyon::lyon_tessellation::{FillVertex, StrokeVertex, VertexBuffers};
 use std::sync::Arc;
 use stroke::iterate_stroke;
 pub use usvg;
-use usvg::{fontdb::Source, Node, Path};
+use usvg::{fontdb::Source, Node, NodeKind, Path};
 
 #[derive(PartialEq, PartialOrd, Eq, Ord, Clone, Copy, Debug)]
 pub enum IndicesLength {
@@ -221,11 +221,14 @@ impl GeometryVariable {
 
 fn recursive(
     node: Node,
-    priority: IndicesLength,
+    parent_priority: IndicesLength,
     callback: &mut Callback,
     geometry_set: &mut GeometryVariablesSet,
 ) {
-    let priority = priority.max(callback.process_events(&node));
+    let priority = parent_priority.max(callback.process_events(&node));
+    if let usvg::NodeKind::Group(ref p) = *node.borrow() {
+        dbg!(&priority, NodeKind::id(&node.borrow()));
+    }
     if let usvg::NodeKind::Path(ref p) = *node.borrow() {
         let geometry = GeometryVariable::new(
             &p,
@@ -251,7 +254,8 @@ pub fn init(mut callback: Callback) -> (DrawPrimitives, Rect) {
     opt.fontdb
         .load_font_source(Source::Binary(Arc::new(contents.as_ref())));
     opt.font_family = "Roboto Medium".to_string();
-    let rtree = usvg::Tree::from_data(include_bytes!("../../svg/life.svg"), &opt.to_ref()).unwrap();
+    let rtree =
+        usvg::Tree::from_data(include_bytes!("../../svg/life_text.svg"), &opt.to_ref()).unwrap();
 
     let view_box = rtree.svg_node().view_box;
     let rect: Rect = (

@@ -137,37 +137,32 @@ impl LifeGame {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
-struct RegexPattern<'a> {
-    regex_patern: &'a str,
+#[derive(Clone, Debug, Default)]
+struct RegexPattern {
+    regex_pattern: String,
     index: usize,
 }
+#[derive(Clone, Debug, Default)]
+struct RegexPatterns(Vec<RegexPattern>);
+
+impl RegexPatterns {
+    fn add(self: &mut Self, regex_pattern: &str) -> RegexPattern {
+        let regex_pattern = RegexPattern {
+            regex_pattern: regex_pattern.to_string(),
+            index: self.0.len(),
+        };
+        self.0.push(regex_pattern.clone());
+        return regex_pattern;
+    }
+}
+
 fn main() {
     let mut position_to_dollar: Vec<i32> = vec![];
-    let mut i = 0;
-    let clickable_regex_pattern = RegexPattern {
-        regex_patern: r"#clickable(?:$| |#)",
-        index: i,
-    };
-    i += 1;
-    let dynamic_regex_pattern = RegexPattern {
-        regex_patern: r"#dynamic(?:$| |#)",
-        index: i,
-    };
-    i += 1;
-    let dynamic_text_regex_pattern = RegexPattern {
-        regex_patern: r"#dynamicText(?:$| |#)",
-        index: i,
-    };
-    let defaults = RegexSet::new(
-        [
-            clickable_regex_pattern,
-            dynamic_regex_pattern,
-            dynamic_text_regex_pattern,
-        ]
-        .map(|r| r.regex_patern),
-    )
-    .unwrap();
+    let mut regex_patterns = RegexPatterns::default();
+    let clickable_regex_pattern = regex_patterns.add(r"#clickable(?:$| |#)");
+    let dynamic_regex_pattern = regex_patterns.add(r"#dynamic(?:$| |#)");
+    let dynamic_text_regex_pattern = regex_patterns.add(r"#dynamicText(?:$| |#)");
+    let defaults = RegexSet::new(regex_patterns.0.iter().map(|r| &r.regex_pattern)).unwrap();
     let stops = Regex::new(r"^(\d+)\.((?:\+|-)\d+):").unwrap();
     let callback_fn = |node: &Node| -> IndicesLength {
         let node_kind = &node.borrow();
