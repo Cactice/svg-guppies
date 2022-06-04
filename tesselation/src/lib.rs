@@ -1,7 +1,6 @@
 mod convert_path;
 mod fill;
 mod stroke;
-
 use fill::iterate_fill;
 pub use glam;
 use glam::{DMat4, DVec2, Vec2, Vec4};
@@ -12,20 +11,20 @@ pub use usvg;
 use usvg::{fontdb::Source, Node, NodeKind, Path};
 
 #[derive(PartialEq, PartialOrd, Eq, Ord, Clone, Copy, Debug)]
-pub enum IndicesLength {
+pub enum IndicesPriority {
     Fixed,
     Variable,
 }
 
 pub struct Callback<'a> {
-    func: Box<dyn FnMut(&Node) -> IndicesLength + 'a>,
+    func: Box<dyn FnMut(&Node) -> IndicesPriority + 'a>,
 }
 
 impl<'a> Callback<'a> {
-    pub fn new(c: impl FnMut(&Node) -> IndicesLength + 'a) -> Self {
+    pub fn new(c: impl FnMut(&Node) -> IndicesPriority + 'a) -> Self {
         Self { func: Box::new(c) }
     }
-    fn process_events(&mut self, node: &Node) -> IndicesLength {
+    fn process_events(&mut self, node: &Node) -> IndicesPriority {
         (self.func)(node)
     }
 }
@@ -90,22 +89,23 @@ struct TransformVariable {
 }
 
 #[derive(Clone, Default, Debug)]
-struct GeometryVariable {
+struct Geometry {
     id: Option<String>,
     vertices: Vertices,
     indices: Indices,
     index_base: usize,
     transform_index: usize,
 }
+
 #[derive(Clone, Default, Debug)]
-struct GeometryVariablesSet {
-    fixed_geometries: GeometryVariables,
-    variable_geometries: GeometryVariables,
+struct GeometryCollection {
+    fixed_geometries: Geometries,
+    variable_geometries: Geometries,
     fixed_geometries_vertices_len: usize,
     variable_geometries_vertices_len: usize,
 }
 
-impl GeometryVariablesSet {
+impl GeometryCollection {
     fn get_indices(&self) -> Indices {
         [
             self.fixed_geometries.get_indices_with_offset(0),
@@ -121,19 +121,19 @@ impl GeometryVariablesSet {
         ]
         .concat()
     }
-    fn get_vertices_len(&self, priority: IndicesLength) -> usize {
+    fn get_vertices_len(&self, priority: IndicesPriority) -> usize {
         match priority {
-            IndicesLength::Fixed => self.fixed_geometries_vertices_len,
-            IndicesLength::Variable => self.variable_geometries_vertices_len,
+            IndicesPriority::Fixed => self.fixed_geometries_vertices_len,
+            IndicesPriority::Variable => self.variable_geometries_vertices_len,
         }
     }
-    fn push_with_priority(&mut self, geometry: GeometryVariable, priority: IndicesLength) {
+    fn push_with_priority(&mut self, geometry: Geometry, priority: IndicesPriority) {
         let (geometries, vertices_len) = match priority {
-            IndicesLength::Fixed => (
+            IndicesPriority::Fixed => (
                 &mut self.fixed_geometries,
                 &mut self.fixed_geometries_vertices_len,
             ),
-            IndicesLength::Variable => (
+            IndicesPriority::Variable => (
                 &mut self.variable_geometries,
                 &mut self.variable_geometries_vertices_len,
             ),
@@ -144,13 +144,8 @@ impl GeometryVariablesSet {
 }
 
 #[derive(Clone, Default, Debug)]
-struct GeometryVariables(Vec<GeometryVariable>);
-impl GeometryVariables {
-    fn get_vertices_len(&self, priority: IndicesLength) -> usize {
-        self.0
-            .iter()
-            .fold(0, |acc, curr| acc + curr.get_vertices_len())
-    }
+struct Geometries(Vec<Geometry>);
+impl Geometries {
     fn get_vertices(&self) -> Vertices {
         self.0.iter().flat_map(|v| v.get_v()).collect()
     }
@@ -162,7 +157,7 @@ impl GeometryVariables {
     }
 }
 
-impl GeometryVariable {
+impl Geometry {
     fn get_vertices_len(&self) -> usize {
         self.vertices.len()
     }
@@ -177,7 +172,7 @@ impl GeometryVariable {
     }
 }
 
-impl GeometryVariable {
+impl Geometry {
     fn prepare_vertex_buffer(p: &Path) -> VertexBuffers<Vertex, Index> {
         let mut vertex_buffer = VertexBuffers::<Vertex, Index>::new();
         if let Some(ref stroke) = p.stroke {
@@ -221,16 +216,16 @@ impl GeometryVariable {
 
 fn recursive(
     node: Node,
-    parent_priority: IndicesLength,
+    parent_priority: IndicesPriority,
     callback: &mut Callback,
-    geometry_set: &mut GeometryVariablesSet,
+    geometry_set: &mut GeometryCollection,
 ) {
     let priority = parent_priority.max(callback.process_events(&node));
     if let usvg::NodeKind::Group(ref p) = *node.borrow() {
         dbg!(&priority, NodeKind::id(&node.borrow()));
     }
     if let usvg::NodeKind::Path(ref p) = *node.borrow() {
-        let geometry = GeometryVariable::new(
+        let geometry = Geometry::new(
             &p,
             geometry_set.get_vertices_len(priority),
             if &p.id == "" {
@@ -263,7 +258,7 @@ pub fn init(mut callback: Callback) -> (DrawPrimitives, Rect) {
         Vec2::new(view_box.rect.width() as f32, view_box.rect.height() as f32),
     );
 
-    let mut geometry_set = GeometryVariablesSet::default();
+    let mut geometry_set = GeometryCollection::default();
 
     for node in rtree.root().children() {
         let priority = callback.process_events(&node);

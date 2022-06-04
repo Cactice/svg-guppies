@@ -10,7 +10,7 @@ use std::{
 };
 use windowing::tesselation::usvg::NodeKind;
 use windowing::tesselation::usvg::{Node, Path};
-use windowing::tesselation::{Callback, Indices, IndicesLength};
+use windowing::tesselation::{Callback, Indices, IndicesPriority};
 
 #[derive(Default)]
 struct LifeGame {
@@ -164,15 +164,15 @@ fn main() {
     let dynamic_text_regex_pattern = regex_patterns.add(r"#dynamicText(?:$| |#)");
     let defaults = RegexSet::new(regex_patterns.0.iter().map(|r| &r.regex_pattern)).unwrap();
     let stops = Regex::new(r"^(\d+)\.((?:\+|-)\d+):").unwrap();
-    let callback_fn = |node: &Node| -> IndicesLength {
+    let callback_fn = |node: &Node| -> IndicesPriority {
         let node_kind = &node.borrow();
         let id = NodeKind::id(node_kind);
         let default_matches = defaults.matches(&id);
         if default_matches.matched(dynamic_regex_pattern.index) {
-            return IndicesLength::Fixed;
+            return IndicesPriority::Fixed;
         }
         if default_matches.matched(dynamic_text_regex_pattern.index) {
-            return IndicesLength::Variable;
+            return IndicesPriority::Variable;
         }
 
         for captures in stops.captures_iter(&id) {
@@ -183,7 +183,7 @@ fn main() {
             }
             position_to_dollar.insert(stop, value);
         }
-        IndicesLength::Fixed
+        IndicesPriority::Fixed
     };
     let callback: Callback = Callback::new(callback_fn);
     windowing::main(callback);
