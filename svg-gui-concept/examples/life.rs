@@ -1,13 +1,15 @@
 use glam::{DMat4, DVec2, Mat4};
 use natura::Spring;
 use regex::{Regex, RegexSet};
+use std::borrow::Borrow;
 use std::sync::mpsc::{channel, Sender};
 use std::{
     f64::consts::PI,
     hash::{BuildHasher, Hasher},
     iter::zip,
 };
-use windowing::tesselation::usvg::Path;
+use windowing::tesselation::usvg::NodeKind;
+use windowing::tesselation::usvg::{Node, Path};
 use windowing::tesselation::{Callback, Priority};
 
 #[derive(Default)]
@@ -167,8 +169,10 @@ fn main() {
     )
     .unwrap();
     let stops = Regex::new(r"^(\d+)\.((?:\+|-)\d+):").unwrap();
-    let callback_fn = |p: &Path| -> Priority {
-        let default_matches = defaults.matches(&p.id);
+    let callback_fn = |node: &Node| -> Priority {
+        let node_kind = &node.borrow();
+        let id = NodeKind::id(node_kind);
+        let default_matches = defaults.matches(&id);
         if default_matches.matched(dynamic_regex_pattern.index) {
             return Priority::DynamicIndex;
         }
@@ -176,7 +180,7 @@ fn main() {
             return Priority::DynamicVertex;
         }
 
-        for captures in stops.captures_iter(&p.id) {
+        for captures in stops.captures_iter(&id) {
             let stop: usize = captures[1].parse().unwrap();
             let value: i32 = captures[2].parse().unwrap();
             if stop >= position_to_dollar.len() {
