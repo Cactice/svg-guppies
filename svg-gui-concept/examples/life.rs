@@ -10,7 +10,7 @@ use std::{
 };
 use windowing::tesselation::usvg::NodeKind;
 use windowing::tesselation::usvg::{Node, Path};
-use windowing::tesselation::{Callback, Priority};
+use windowing::tesselation::{Callback, Indices, IndicesComplexity};
 
 #[derive(Default)]
 struct LifeGame {
@@ -169,15 +169,15 @@ fn main() {
     )
     .unwrap();
     let stops = Regex::new(r"^(\d+)\.((?:\+|-)\d+):").unwrap();
-    let callback_fn = |node: &Node| -> Priority {
+    let callback_fn = |node: &Node| -> IndicesComplexity {
         let node_kind = &node.borrow();
         let id = NodeKind::id(node_kind);
         let default_matches = defaults.matches(&id);
         if default_matches.matched(dynamic_regex_pattern.index) {
-            return Priority::DynamicIndex;
+            return IndicesComplexity::Static;
         }
         if default_matches.matched(dynamic_text_regex_pattern.index) {
-            return Priority::DynamicVertex;
+            return IndicesComplexity::Dynamic;
         }
 
         for captures in stops.captures_iter(&id) {
@@ -188,7 +188,7 @@ fn main() {
             }
             position_to_dollar.insert(stop, value);
         }
-        Priority::Static
+        IndicesComplexity::Static
     };
     let callback: Callback = Callback::new(callback_fn);
     windowing::main(callback);

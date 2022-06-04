@@ -9,24 +9,23 @@ use lyon::lyon_tessellation::{FillVertex, StrokeVertex, VertexBuffers};
 use std::sync::Arc;
 use stroke::iterate_stroke;
 pub use usvg;
-use usvg::{fontdb::Source, Node, NodeKind, Path};
+use usvg::{fontdb::Source, Node};
 
 #[derive(PartialEq, PartialOrd, Eq, Ord, Clone, Copy)]
-pub enum Priority {
+pub enum IndicesComplexity {
     Static,
-    DynamicVertex,
-    DynamicIndex, // if index is dynamic, vertex is always dynamic
+    Dynamic,
 }
 
 pub struct Callback<'a> {
-    func: Box<dyn FnMut(&Node) -> Priority + 'a>,
+    func: Box<dyn FnMut(&Node) -> IndicesComplexity + 'a>,
 }
 
 impl<'a> Callback<'a> {
-    pub fn new(c: impl FnMut(&Node) -> Priority + 'a) -> Self {
+    pub fn new(c: impl FnMut(&Node) -> IndicesComplexity + 'a) -> Self {
         Self { func: Box::new(c) }
     }
-    fn process_events(&mut self, node: &Node) -> Priority {
+    fn process_events(&mut self, node: &Node) -> IndicesComplexity {
         (self.func)(node)
     }
 }
@@ -99,24 +98,67 @@ struct GeometryVariable {
     transform_index: usize,
 }
 #[derive(Clone, Default, Debug)]
+struct GeometryVariablesSet {
+    static_geometries: GeometryVariables,
+    dynamic_geometries: GeometryVariables,
+    static_geometries_vertices_len: usize,
+    dynamic_geometries_vertices_len: usize,
+}
+
+impl GeometryVariablesSet {
+    fn get_indices(&self) -> Indices {
+        [
+            self.static_geometries.get_indices_with_offset(0),
+            self.dynamic_geometries
+                .get_indices_with_offset(self.static_geometries_vertices_len as u32),
+        ]
+        .concat()
+    }
+    fn get_vertices(&self) -> Vertices {
+        [
+            self.static_geometries.get_vertices(),
+            self.dynamic_geometries.get_vertices(),
+        ]
+        .concat()
+    }
+    fn get_vertices_len(&self, priority: IndicesComplexity) -> usize {
+        match priority {
+            IndicesComplexity::Static => self.static_geometries_vertices_len,
+            IndicesComplexity::Dynamic => self.dynamic_geometries_vertices_len,
+        }
+    }
+    fn push_with_priority(&mut self, geometry: GeometryVariable, priority: IndicesComplexity) {
+        let (geometries, vertices_len) = match priority {
+            IndicesComplexity::Static => (
+                &mut self.static_geometries,
+                &mut self.static_geometries_vertices_len,
+            ),
+            IndicesComplexity::Dynamic => (
+                &mut self.dynamic_geometries,
+                &mut self.dynamic_geometries_vertices_len,
+            ),
+        };
+        *vertices_len += geometry.get_vertices_len();
+        geometries.0.push(geometry);
+    }
+}
+
+#[derive(Clone, Default, Debug)]
 struct GeometryVariables(Vec<GeometryVariable>);
 impl GeometryVariables {
-    fn get_vertices_len(&mut self) -> usize {
+    fn get_vertices_len(&self, priority: IndicesComplexity) -> usize {
         self.0
             .iter()
             .fold(0, |acc, curr| acc + curr.get_vertices_len())
     }
-    fn get_vertices(&mut self) -> Vertices {
+    fn get_vertices(&self) -> Vertices {
         self.0.iter().flat_map(|v| v.get_v()).collect()
     }
-    fn get_indices_with_offset(&mut self, offset: u32) -> Vec<u32> {
+    fn get_indices_with_offset(&self, offset: u32) -> Indices {
         self.0
             .iter()
-            .flat_map(|v| v.get_i().iter().map(|i| i + offset).collect::<Vec<_>>())
+            .flat_map(|v| v.get_i().iter().map(|i| i + offset).collect::<Indices>())
             .collect()
-    }
-    fn new() -> Self {
-        Self(vec![])
     }
 }
 
@@ -146,7 +188,8 @@ impl GeometryVariable {
         }
     }
 }
-fn recursive(node: Node, priority: Priority, callback: &mut Callback) {
+
+fn recursive(node: Node, priority: IndicesComplexity, callback: &mut Callback) {
     if let usvg::NodeKind::Path(ref p) = *node.borrow() {
         for child in node.children() {
             let priority = priority.max(callback.process_events(&node));
@@ -171,24 +214,12 @@ pub fn init(mut callback: Callback) -> (DrawPrimitives, Rect) {
         Vec2::new(view_box.rect.width() as f32, view_box.rect.height() as f32),
     );
 
-    let mut statics: GeometryVariables = GeometryVariables::new();
-    let mut dynamic_vertices: GeometryVariables = GeometryVariables::new();
-    let mut dynamic_indices: GeometryVariables = GeometryVariables::new();
-    let mut statics_vertices_len: usize = 0;
-    let mut dynamic_vertices_vertices_len: usize = 0;
-    let mut dynamic_indices_vertices_len: usize = 0;
+    let mut geometry_set = GeometryVariablesSet::default();
 
     for node in rtree.root().descendants() {
         if let usvg::NodeKind::Path(ref p) = *node.borrow() {
             let priority = callback.process_events(&node);
             let mut vertex_buffer = VertexBuffers::<Vertex, Index>::new();
-            let (priority_container, vertices_len) = match priority {
-                Priority::Static => (&mut statics, &mut statics_vertices_len),
-                Priority::DynamicVertex => {
-                    (&mut dynamic_vertices, &mut dynamic_vertices_vertices_len)
-                }
-                Priority::DynamicIndex => (&mut dynamic_indices, &mut dynamic_indices_vertices_len),
-            };
 
             if let Some(ref stroke) = p.stroke {
                 let color = match stroke.paint {
@@ -215,33 +246,22 @@ pub fn init(mut callback: Callback) -> (DrawPrimitives, Rect) {
 
                 iterate_fill(p, &color, &mut vertex_buffer);
             }
+
             let geometry = GeometryVariable::new(
                 vertex_buffer,
-                *vertices_len,
+                geometry_set.get_vertices_len(priority),
                 if &p.id == "" {
                     None
                 } else {
                     Some((*p.id).to_string())
                 },
             );
-            *vertices_len += geometry.get_vertices_len();
-            priority_container.0.push(geometry);
+            geometry_set.push_with_priority(geometry, priority)
         }
     }
 
-    let vertices = [
-        statics.get_vertices(),
-        dynamic_vertices.get_vertices(),
-        dynamic_indices.get_vertices(),
-    ]
-    .concat();
-    let indices = [
-        statics.get_indices_with_offset(0),
-        dynamic_vertices.get_indices_with_offset(statics_vertices_len as u32),
-        dynamic_indices.get_indices_with_offset(
-            statics_vertices_len as u32 + dynamic_vertices_vertices_len as u32,
-        ),
-    ]
-    .concat();
-    ((vertices, indices), rect)
+    (
+        (geometry_set.get_vertices(), geometry_set.get_indices()),
+        rect,
+    )
 }
