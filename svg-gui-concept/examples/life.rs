@@ -8,8 +8,8 @@ use std::{
     hash::{BuildHasher, Hasher},
     iter::zip,
 };
+use windowing::tesselation::geometry::{Callback, IndicesPriority};
 use windowing::tesselation::usvg::{Node, NodeKind};
-use windowing::tesselation::{Callback, Indices, IndicesPriority};
 
 #[derive(Default)]
 struct LifeGame {

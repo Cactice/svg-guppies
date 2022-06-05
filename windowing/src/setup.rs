@@ -1,5 +1,8 @@
 use std::borrow::Cow;
-use tesselation::{glam::Mat4, Indices, Vertex, Vertices};
+use tesselation::{
+    geometry::{Indices, Vertex, Vertices},
+    glam::Mat4,
+};
 use wgpu::{
     util::DeviceExt, BindGroup, Buffer, Device, RenderPipeline, Surface, SurfaceConfiguration,
 };

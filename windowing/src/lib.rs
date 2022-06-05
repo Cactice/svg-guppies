@@ -1,8 +1,9 @@
 mod setup;
 use setup::Setup;
 pub use tesselation;
+use tesselation::geometry::Callback;
 use tesselation::glam::{Mat4, Vec2};
-use tesselation::{init, Callback};
+use tesselation::init;
 use winit::dpi::PhysicalSize;
 use winit::window::WindowBuilder;
 use winit::{
