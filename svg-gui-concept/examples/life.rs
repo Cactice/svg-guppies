@@ -1,14 +1,13 @@
 use glam::{DMat4, DVec2, Mat4};
 use natura::Spring;
 use regex::{Regex, RegexSet};
-use std::borrow::Borrow;
 use std::sync::mpsc::{channel, Sender};
 use std::{
     f64::consts::PI,
     hash::{BuildHasher, Hasher},
     iter::zip,
 };
-use windowing::tesselation::geometry::{Callback, IndicesPriority};
+use windowing::tesselation::callback::{Callback, IndicesPriority};
 use windowing::tesselation::usvg::{Node, NodeKind};
 
 #[derive(Default)]

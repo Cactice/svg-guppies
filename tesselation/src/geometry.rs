@@ -1,4 +1,8 @@
-use crate::{fill::iterate_fill, stroke::iterate_stroke};
+use crate::{
+    callback::{Callback, IndicesPriority},
+    fill::iterate_fill,
+    stroke::iterate_stroke,
+};
 use glam::{DVec2, Vec2, Vec4};
 use lyon::lyon_tessellation::{FillVertex, StrokeVertex, VertexBuffers};
 use roxmltree::{Document, NodeId};
@@ -13,25 +17,6 @@ pub type Position = Vec2;
 pub type Rect = (Position, Size);
 
 pub const FALLBACK_COLOR: Vec4 = Vec4::ONE;
-
-#[derive(PartialEq, PartialOrd, Eq, Ord, Clone, Copy, Debug)]
-pub enum IndicesPriority {
-    Fixed,
-    Variable,
-}
-
-pub struct Callback<'a> {
-    func: Box<dyn FnMut(&Node) -> IndicesPriority + 'a>,
-}
-
-impl<'a> Callback<'a> {
-    pub fn new(c: impl FnMut(&Node) -> IndicesPriority + 'a) -> Self {
-        Self { func: Box::new(c) }
-    }
-    pub fn process_events(&mut self, node: &Node) -> IndicesPriority {
-        (self.func)(node)
-    }
-}
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Default, bytemuck::Pod, bytemuck::Zeroable)]
@@ -232,6 +217,7 @@ fn recursive_svg(
         recursive_svg(child, priority, callback, geometry_set, ids.clone());
     }
 }
+
 #[derive(Clone, Debug)]
 pub struct SvgSet {
     pub geometry_set: GeometrySet,
