@@ -1452,9 +1452,7 @@ dependencies = [
  "bytemuck",
  "glam",
  "lyon",
- "roxmltree",
  "usvg",
- "xmlwriter 0.1.0",
 ]
 
 [[package]]
@@ -1569,7 +1567,7 @@ dependencies = [
  "unicode-bidi",
  "unicode-script",
  "unicode-vo",
- "xmlwriter 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "xmlwriter",
 ]
 
 [[package]]
@@ -2123,10 +2121,6 @@ name = "xmlparser"
 version = "0.13.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "114ba2b24d2167ef6d67d7d04c8cc86522b87f490025f39f0303b7db5bf5e3d8"
-
-[[package]]
-name = "xmlwriter"
-version = "0.1.0"
 
 [[package]]
 name = "xmlwriter"

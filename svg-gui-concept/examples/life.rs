@@ -8,7 +8,7 @@ use std::{
     hash::{BuildHasher, Hasher},
     iter::zip,
 };
-use windowing::tesselation::roxmltree::Node;
+use windowing::tesselation::usvg::{Node, NodeKind};
 use windowing::tesselation::{Callback, Indices, IndicesPriority};
 
 #[derive(Default)]
@@ -164,7 +164,8 @@ fn main() {
     let defaults = RegexSet::new(regex_patterns.0.iter().map(|r| &r.regex_pattern)).unwrap();
     let stops = Regex::new(r"^(\d+)\.((?:\+|-)\d+):").unwrap();
     let callback_fn = |node: &Node| -> IndicesPriority {
-        let id = node.attribute("id").unwrap_or("");
+        let node_ref = &node.borrow();
+        let id = NodeKind::id(node_ref);
         let default_matches = defaults.matches(&id);
         if default_matches.matched(dynamic_regex_pattern.index) {
             return IndicesPriority::Fixed;

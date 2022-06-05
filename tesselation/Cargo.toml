@@ -8,5 +8,3 @@ usvg = { git = "https://github.com/Cactice/resvg" }
 bytemuck = "1.2.0"
 glam = { version = "0.20.2", features = ["bytemuck", "approx"] }
 lyon = "0.17.10"
-roxmltree = "0.14.1"
-xmlwriter = { path = "../../xmlwriter" }
