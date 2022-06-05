@@ -5,10 +5,13 @@ use fill::iterate_fill;
 pub use glam;
 use glam::{DMat4, DVec2, Vec2, Vec4};
 use lyon::lyon_tessellation::{FillVertex, StrokeVertex, VertexBuffers};
+pub use roxmltree;
+use roxmltree::Node;
 use std::sync::Arc;
 use stroke::iterate_stroke;
 pub use usvg;
-use usvg::{fontdb::Source, Node, NodeKind, Path};
+use usvg::{fontdb::Source, NodeKind, Path, Tree};
+use xmlwriter::XmlWriter;
 
 #[derive(PartialEq, PartialOrd, Eq, Ord, Clone, Copy, Debug)]
 pub enum IndicesPriority {
@@ -214,16 +217,11 @@ impl Geometry {
     }
 }
 
-fn recursive(
-    node: Node,
-    parent_priority: IndicesPriority,
-    callback: &mut Callback,
+fn recursive_svg(
+    node: usvg::Node,
+    priority: IndicesPriority,
     geometry_set: &mut GeometryCollection,
 ) {
-    let priority = parent_priority.max(callback.process_events(&node));
-    if let usvg::NodeKind::Group(ref p) = *node.borrow() {
-        dbg!(&priority, NodeKind::id(&node.borrow()));
-    }
     if let usvg::NodeKind::Path(ref p) = *node.borrow() {
         let geometry = Geometry::new(
             &p,
@@ -237,33 +235,96 @@ fn recursive(
         geometry_set.push_with_priority(geometry, priority)
     }
     for child in node.children() {
-        recursive(child, priority, callback, geometry_set);
+        recursive_svg(child, priority, geometry_set);
+    }
+}
+
+fn recursive_xml(
+    writer_without_siblings: &mut XmlWriter,
+    writer_with_siblings: &mut XmlWriter,
+    node: roxmltree::Node,
+    parent_priority: IndicesPriority,
+    callback: &mut Callback,
+    geometry_set: &mut GeometryCollection,
+    usvg_options: &usvg::Options,
+) {
+    let priority = parent_priority.max(callback.process_events(&node));
+    let writer = if priority > parent_priority {
+        writer_without_siblings
+    } else {
+        writer_with_siblings
+    };
+    if node.is_element() {
+        writer.start_element(node.tag_name().name());
+        for a in node.attributes() {
+            let name = if let Some(namespace) = a.namespace() {
+                format!("xml:{}", a.name())
+            } else {
+                a.name().to_string()
+            };
+            writer.write_attribute(&name, a.value());
+        }
+        if node.tag_name().name() == "svg" {
+            writer.write_attribute("xmlns", "http://www.w3.org/2000/svg");
+        }
+    }
+    if node.is_text() {
+        writer.write_text(node.text().unwrap());
+    }
+
+    for child in node.children() {
+        recursive_xml(
+            &mut writer.clone(),
+            writer,
+            child,
+            priority,
+            callback,
+            geometry_set,
+            &usvg_options,
+        );
+    }
+    if node.is_element() {
+        writer.end_element();
     }
 }
 
 pub fn init(mut callback: Callback) -> (DrawPrimitives, Rect) {
     // Parse and tessellate the geometry
 
-    let mut opt = usvg::Options::default();
     let contents = include_bytes!("../fallback_font/Roboto-Medium.ttf");
+    let mut opt = usvg::Options::default();
     opt.fontdb
         .load_font_source(Source::Binary(Arc::new(contents.as_ref())));
     opt.font_family = "Roboto Medium".to_string();
-    let rtree =
-        usvg::Tree::from_data(include_bytes!("../../svg/life_text.svg"), &opt.to_ref()).unwrap();
+    let tree = roxmltree::Document::parse(include_str!("../../svg/life_text.svg")).unwrap();
 
+    let mut geometry_set = GeometryCollection::default();
+
+    let mut writer = xmlwriter::XmlWriter::new(xmlwriter::Options {
+        indent: xmlwriter::Indent::Spaces(0),
+        ..Default::default()
+    });
+    writer.write_declaration();
+    for node in tree.root().children() {
+        recursive_xml(
+            &mut writer.clone(),
+            &mut writer,
+            node,
+            IndicesPriority::Fixed,
+            &mut callback,
+            &mut geometry_set,
+            &opt,
+        )
+    }
+    let xml = writer.end_document();
+    println!("{}", xml);
+    let rtree = Tree::from_str(&xml, &opt.to_ref()).unwrap();
+    recursive_svg(rtree.root(), IndicesPriority::Fixed, &mut geometry_set);
     let view_box = rtree.svg_node().view_box;
     let rect: Rect = (
         Vec2::new(view_box.rect.x() as f32, view_box.rect.y() as f32),
         Vec2::new(view_box.rect.width() as f32, view_box.rect.height() as f32),
     );
-
-    let mut geometry_set = GeometryCollection::default();
-
-    for node in rtree.root().children() {
-        let priority = callback.process_events(&node);
-        recursive(node, priority, &mut callback, &mut geometry_set)
-    }
 
     (
         (geometry_set.get_vertices(), geometry_set.get_indices()),
