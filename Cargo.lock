@@ -1454,6 +1454,7 @@ dependencies = [
  "lyon",
  "roxmltree",
  "usvg",
+ "xmlwriter",
 ]
 
 [[package]]
