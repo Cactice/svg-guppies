@@ -26,7 +26,10 @@ fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
 }
 
 async fn run(event_loop: EventLoop<()>, window: Window, callback: Callback<'_>) {
-    let ((vertices, indices), (_translate, svg_scale)) = init(callback);
+    let svg_set = init(callback);
+    let vertices = svg_set.geometry_set.get_vertices();
+    let indices = svg_set.geometry_set.get_indices();
+    let (_translate, svg_scale) = svg_set.bbox;
     let win_size = window.inner_size();
     let mut translate = Mat4::from_translation([-1., 1.0, 0.0].into());
     let mut scale = get_scale(win_size, svg_scale);
