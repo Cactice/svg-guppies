@@ -7,7 +7,7 @@ use glam::{DVec2, Vec2, Vec4};
 use lyon::lyon_tessellation::{FillVertex, StrokeVertex, VertexBuffers};
 use roxmltree::{Document, NodeId};
 use std::{collections::HashMap, ops::Range, sync::Arc};
-use usvg::{fontdb::Source, Node, NodeKind, Options, Path, Tree};
+use usvg::{fontdb::Source, NodeKind, Options, Path, Tree};
 use xmlwriter::XmlWriter;
 pub type Index = u32;
 pub type Vertices = Vec<Vertex>;
@@ -241,7 +241,7 @@ fn recursive_svg(
 fn copy_element(node: &roxmltree::Node, writer: &mut XmlWriter) {
     writer.start_element(node.tag_name().name());
     for a in node.attributes() {
-        let name = if let Some(namespace) = a.namespace() {
+        let name = if a.namespace().is_some() {
             format!("xml:{}", a.name())
         } else {
             a.name().to_string()
@@ -291,7 +291,7 @@ impl<'a> SvgSet<'a> {
         );
         Self {
             geometry_set,
-            document: document,
+            document,
             id_map,
             bbox,
             usvg_options: opt,
