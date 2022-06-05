@@ -4,12 +4,12 @@ pub mod geometry;
 mod stroke;
 use geometry::{Callback, DrawPrimitives, Geometry, GeometrySet, IndicesPriority, Rect};
 pub use glam;
-use glam::{DMat4, DVec2, Vec2, Vec4};
-use lyon::lyon_tessellation::{FillVertex, StrokeVertex, VertexBuffers};
-use roxmltree::{Document, NodeId};
-use std::{collections::HashMap, ops::Range, sync::Arc};
+use glam::{DMat4, Vec2};
+
+use roxmltree::{NodeId};
+use std::{collections::HashMap, sync::Arc};
 pub use usvg;
-use usvg::{fontdb::Source, Node, NodeKind, Path, Tree};
+use usvg::{fontdb::Source, Node, NodeKind, Tree};
 
 struct TransformVariable {
     transform: DMat4,
@@ -33,12 +33,12 @@ fn recursive_svg(
     let priority = parent_priority.max(callback.process_events(&node));
     let node_ref = &node.borrow();
     let id = NodeKind::id(node_ref);
-    if id != "" {
+    if !id.is_empty() {
         ids.push(id.to_string());
     }
 
     if let usvg::NodeKind::Path(ref p) = *node.borrow() {
-        let geometry = Geometry::new(&p, geometry_set.get_vertices_len(priority), ids.to_vec());
+        let geometry = Geometry::new(p, geometry_set.get_vertices_len(priority), ids.to_vec());
         geometry_set.push_with_priority(geometry, priority);
     }
     for child in node.children() {
@@ -59,7 +59,7 @@ pub fn init(mut callback: Callback) -> (DrawPrimitives, Rect) {
     let mut geometry_set = GeometrySet::default();
     let tree = roxmltree::Document::parse(include_str!("../../svg/life_text.svg")).unwrap();
     let rtree = Tree::from_xmltree(&tree, &opt.to_ref()).unwrap();
-    let id_map = tree
+    let _id_map = tree
         .descendants()
         .fold(HashMap::<String, NodeId>::new(), |mut acc, curr| {
             if let Some(attribute_id) = tree.root().attribute("id") {

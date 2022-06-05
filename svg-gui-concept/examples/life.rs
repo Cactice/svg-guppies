@@ -145,20 +145,20 @@ struct RegexPattern {
 struct RegexPatterns(Vec<RegexPattern>);
 
 impl RegexPatterns {
-    fn add(self: &mut Self, regex_pattern: &str) -> RegexPattern {
+    fn add(&mut self, regex_pattern: &str) -> RegexPattern {
         let regex_pattern = RegexPattern {
             regex_pattern: regex_pattern.to_string(),
             index: self.0.len(),
         };
         self.0.push(regex_pattern.clone());
-        return regex_pattern;
+        regex_pattern
     }
 }
 
 fn main() {
     let mut position_to_dollar: Vec<i32> = vec![];
     let mut regex_patterns = RegexPatterns::default();
-    let clickable_regex_pattern = regex_patterns.add(r"#clickable(?:$| |#)");
+    let _clickable_regex_pattern = regex_patterns.add(r"#clickable(?:$| |#)");
     let dynamic_regex_pattern = regex_patterns.add(r"#dynamic(?:$| |#)");
     let dynamic_text_regex_pattern = regex_patterns.add(r"#dynamicText(?:$| |#)");
     let defaults = RegexSet::new(regex_patterns.0.iter().map(|r| &r.regex_pattern)).unwrap();
@@ -166,7 +166,7 @@ fn main() {
     let callback_fn = |node: &Node| -> IndicesPriority {
         let node_ref = &node.borrow();
         let id = NodeKind::id(node_ref);
-        let default_matches = defaults.matches(&id);
+        let default_matches = defaults.matches(id);
         if default_matches.matched(dynamic_regex_pattern.index) {
             return IndicesPriority::Fixed;
         }
@@ -174,7 +174,7 @@ fn main() {
             return IndicesPriority::Variable;
         }
 
-        for captures in stops.captures_iter(&id) {
+        for captures in stops.captures_iter(id) {
             let stop: usize = captures[1].parse().unwrap();
             let value: i32 = captures[2].parse().unwrap();
             if stop >= position_to_dollar.len() {

@@ -1,9 +1,9 @@
 use crate::{fill::iterate_fill, stroke::iterate_stroke};
-use glam::{DMat4, DVec2, Vec2, Vec4};
+use glam::{DVec2, Vec2, Vec4};
 use lyon::lyon_tessellation::{FillVertex, StrokeVertex, VertexBuffers};
-use roxmltree::{Document, NodeId};
-use std::{collections::HashMap, ops::Range, sync::Arc};
-use usvg::{fontdb::Source, Node, NodeKind, Path, Tree};
+
+use std::{collections::HashMap, ops::Range};
+use usvg::{Node, Path};
 pub type Index = u32;
 pub type Vertices = Vec<Vertex>;
 pub type Indices = Vec<Index>;
@@ -195,7 +195,7 @@ impl Geometry {
 
             iterate_fill(p, &color, &mut vertex_buffer);
         };
-        return vertex_buffer;
+        vertex_buffer
     }
     pub fn new(p: &Path, index_base: usize, ids: Vec<String>) -> Self {
         let v = Self::prepare_vertex_buffer(p);
