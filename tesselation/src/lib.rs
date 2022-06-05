@@ -5,7 +5,8 @@ use fill::iterate_fill;
 pub use glam;
 use glam::{DMat4, DVec2, Vec2, Vec4};
 use lyon::lyon_tessellation::{FillVertex, StrokeVertex, VertexBuffers};
-use std::sync::Arc;
+use roxmltree::NodeId;
+use std::{collections::HashMap, sync::Arc};
 use stroke::iterate_stroke;
 pub use usvg;
 use usvg::{fontdb::Source, Node, NodeKind, Path, Tree};
@@ -90,22 +91,75 @@ struct TransformVariable {
 
 #[derive(Clone, Default, Debug)]
 struct Geometry {
-    id: Option<String>,
+    ids: Vec<String>,
     vertices: Vertices,
     indices: Indices,
     index_base: usize,
     transform_index: usize,
 }
+impl Geometry {
+    fn get_vertices_len(&self) -> usize {
+        self.vertices.len()
+    }
+    fn get_v(&self) -> Vertices {
+        self.vertices.clone()
+    }
+    fn get_i(&self) -> Indices {
+        self.indices
+            .iter()
+            .map(|index| index + self.index_base as u32)
+            .collect()
+    }
+    fn prepare_vertex_buffer(p: &Path) -> VertexBuffers<Vertex, Index> {
+        let mut vertex_buffer = VertexBuffers::<Vertex, Index>::new();
+        if let Some(ref stroke) = p.stroke {
+            let color = match stroke.paint {
+                usvg::Paint::Color(c) => Vec4::new(
+                    c.red as f32 / u8::MAX as f32,
+                    c.green as f32 / u8::MAX as f32,
+                    c.blue as f32 / u8::MAX as f32,
+                    stroke.opacity.value() as f32,
+                ),
+                _ => FALLBACK_COLOR,
+            };
+            iterate_stroke(stroke, p, &mut vertex_buffer, color);
+        }
+        if let Some(ref fill) = p.fill {
+            let color = match fill.paint {
+                usvg::Paint::Color(c) => Vec4::new(
+                    c.red as f32 / u8::MAX as f32,
+                    c.green as f32 / u8::MAX as f32,
+                    c.blue as f32 / u8::MAX as f32,
+                    fill.opacity.value() as f32,
+                ),
+                _ => FALLBACK_COLOR,
+            };
+
+            iterate_fill(p, &color, &mut vertex_buffer);
+        };
+        return vertex_buffer;
+    }
+    fn new(p: &Path, index_base: usize, ids: Vec<String>) -> Self {
+        let v = Self::prepare_vertex_buffer(p);
+        Self {
+            ids,
+            vertices: v.vertices,
+            indices: v.indices,
+            index_base,
+            ..Default::default()
+        }
+    }
+}
 
 #[derive(Clone, Default, Debug)]
-struct GeometryCollection {
+struct GeometrySet {
     fixed_geometries: Geometries,
     variable_geometries: Geometries,
     fixed_geometries_vertices_len: usize,
     variable_geometries_vertices_len: usize,
 }
 
-impl GeometryCollection {
+impl GeometrySet {
     fn get_indices(&self) -> Indices {
         [
             self.fixed_geometries.get_indices_with_offset(0),
@@ -157,84 +211,26 @@ impl Geometries {
     }
 }
 
-impl Geometry {
-    fn get_vertices_len(&self) -> usize {
-        self.vertices.len()
-    }
-    fn get_v(&self) -> Vertices {
-        self.vertices.clone()
-    }
-    fn get_i(&self) -> Indices {
-        self.indices
-            .iter()
-            .map(|index| index + self.index_base as u32)
-            .collect()
-    }
-}
-
-impl Geometry {
-    fn prepare_vertex_buffer(p: &Path) -> VertexBuffers<Vertex, Index> {
-        let mut vertex_buffer = VertexBuffers::<Vertex, Index>::new();
-        if let Some(ref stroke) = p.stroke {
-            let color = match stroke.paint {
-                usvg::Paint::Color(c) => Vec4::new(
-                    c.red as f32 / u8::MAX as f32,
-                    c.green as f32 / u8::MAX as f32,
-                    c.blue as f32 / u8::MAX as f32,
-                    stroke.opacity.value() as f32,
-                ),
-                _ => FALLBACK_COLOR,
-            };
-            iterate_stroke(stroke, p, &mut vertex_buffer, color);
-        }
-        if let Some(ref fill) = p.fill {
-            let color = match fill.paint {
-                usvg::Paint::Color(c) => Vec4::new(
-                    c.red as f32 / u8::MAX as f32,
-                    c.green as f32 / u8::MAX as f32,
-                    c.blue as f32 / u8::MAX as f32,
-                    fill.opacity.value() as f32,
-                ),
-                _ => FALLBACK_COLOR,
-            };
-
-            iterate_fill(p, &color, &mut vertex_buffer);
-        };
-        return vertex_buffer;
-    }
-    fn new(p: &Path, index_base: usize, id: Option<String>) -> Self {
-        let v = Self::prepare_vertex_buffer(p);
-        Self {
-            id,
-            vertices: v.vertices,
-            indices: v.indices,
-            index_base,
-            ..Default::default()
-        }
-    }
-}
-
 fn recursive_svg(
     node: usvg::Node,
     parent_priority: IndicesPriority,
     callback: &mut Callback,
-    geometry_set: &mut GeometryCollection,
+    geometry_set: &mut GeometrySet,
+    ids: &mut Vec<String>,
 ) {
     let priority = parent_priority.max(callback.process_events(&node));
+    let node_ref = &node.borrow();
+    let id = NodeKind::id(node_ref);
+    if id != "" {
+        ids.push(id.to_string());
+    }
+
     if let usvg::NodeKind::Path(ref p) = *node.borrow() {
-        let geometry = Geometry::new(
-            &p,
-            geometry_set.get_vertices_len(priority),
-            if &p.id == "" {
-                None
-            } else {
-                Some((*p.id).to_string())
-            },
-        );
+        let geometry = Geometry::new(&p, geometry_set.get_vertices_len(priority), ids.to_vec());
         geometry_set.push_with_priority(geometry, priority)
     }
     for child in node.children() {
-        recursive_svg(child, priority, callback, geometry_set);
+        recursive_svg(child, priority, callback, geometry_set, ids);
     }
 }
 
@@ -248,14 +244,23 @@ pub fn init(mut callback: Callback) -> (DrawPrimitives, Rect) {
     opt.font_family = "Roboto Medium".to_string();
     opt.keep_named_groups = true;
 
-    let mut geometry_set = GeometryCollection::default();
-    let rtree = Tree::from_str(include_str!("../../svg/life_text.svg"), &opt.to_ref()).unwrap();
-
+    let mut geometry_set = GeometrySet::default();
+    let tree = roxmltree::Document::parse(include_str!("../../svg/life_text.svg")).unwrap();
+    let rtree = Tree::from_xmltree(&tree, &opt.to_ref()).unwrap();
+    let id_map = tree
+        .descendants()
+        .fold(HashMap::<String, NodeId>::new(), |mut acc, curr| {
+            if let Some(attribute_id) = tree.root().attribute("id") {
+                acc.insert(attribute_id.to_string(), curr.id());
+            }
+            acc
+        });
     recursive_svg(
         rtree.root(),
         IndicesPriority::Fixed,
         &mut callback,
         &mut geometry_set,
+        &mut vec![],
     );
 
     let view_box = rtree.svg_node().view_box;
