@@ -86,7 +86,6 @@ impl GeometrySet {
             .expect("variable_geometry_index is out of bounds");
 
         let index_base_offset = vertices.len() as i32 - geometry.vertices.len() as i32;
-        dbg!(geometry.bbox);
         geometry.vertices = vertices;
         geometry.indices = indices;
         self.variable_geometries.0[variable_geometry_index + 1..]
@@ -158,14 +157,13 @@ impl Geometries {
             .collect()
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Geometry {
     ids: Vec<String>,
     vertices: Vertices,
     indices: Indices,
     index_base: usize,
     transform_index: usize,
-    bbox: PathBbox,
 }
 impl Geometry {
     pub fn get_vertices_len(&self) -> usize {
@@ -216,7 +214,6 @@ impl Geometry {
             vertices: v.vertices,
             indices: v.indices,
             index_base,
-            bbox: p.data.bbox().unwrap(),
             transform_index: 0,
         }
     }
@@ -397,16 +394,12 @@ impl<'a> SvgSet<'a> {
             vec![],
         );
         let Geometry {
-            indices,
-            vertices,
-            bbox: new_bbox,
-            ..
+            indices, vertices, ..
         } = geometry_set
             .variable_geometries
             .0
             .first()
             .expect("No geometry in geometry_set");
-        dbg!(new_bbox);
 
         self.geometry_set
             .update_geometry(id, vertices.to_vec(), indices.to_vec());
