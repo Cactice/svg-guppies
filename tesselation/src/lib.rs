@@ -20,10 +20,6 @@ pub fn init(callback: Callback) -> SvgSet {
 
     let mut s = SvgSet::new(include_str!("../../svg/life_text.svg"), callback);
     s.update_text(
-        &"Player2 #dynamicText".to_string(),
-        &"Player2: $1000a dkfj".to_string(),
-    );
-    s.update_text(
         &"Player3 #dynamicText".to_string(),
         &"Player3: $1000a dkfj".to_string(),
     );

@@ -270,7 +270,9 @@ pub struct SvgSet<'a> {
 }
 impl<'a> SvgSet<'a> {
     fn copy_element_recursively(&self, node: &roxmltree::Node, writer: &mut XmlWriter) {
-        self.copy_element(node, writer);
+        if node.is_element() {
+            self.copy_element(node, writer);
+        }
         for child in node.children() {
             self.copy_element_recursively(&child, writer)
         }
@@ -279,18 +281,6 @@ impl<'a> SvgSet<'a> {
         }
     }
     fn copy_element(&self, node: &roxmltree::Node, writer: &mut XmlWriter) {
-        if !node.is_element() {
-            return;
-        }
-        writer.start_element(node.tag_name().name());
-        for a in node.attributes() {
-            let name = if a.namespace().is_some() {
-                format!("xml:{}", a.name())
-            } else {
-                a.name().to_string()
-            };
-            writer.write_attribute(&name, a.value());
-        }
         if let Some(value) = node.attribute("filter") {
             let id = Regex::new(r"url\(#(.*)\)")
                 .unwrap()
@@ -302,6 +292,15 @@ impl<'a> SvgSet<'a> {
             let node = self.get_node_with_id(&id.to_string()).unwrap();
             dbg!(&node);
             self.copy_element_recursively(&node, writer)
+        }
+        writer.start_element(node.tag_name().name());
+        for a in node.attributes() {
+            let name = if a.namespace().is_some() {
+                format!("xml:{}", a.name())
+            } else {
+                a.name().to_string()
+            };
+            writer.write_attribute(&name, a.value());
         }
     }
 
@@ -351,10 +350,11 @@ impl<'a> SvgSet<'a> {
     }
     fn get_base_writer(&self) -> XmlWriter {
         let mut writer = XmlWriter::new(xmlwriter::Options {
-            indent: xmlwriter::Indent::Spaces(0),
+            use_single_quote: true,
             ..Default::default()
         });
         writer.write_declaration();
+        writer.set_preserve_whitespaces(true);
         writer
     }
     pub fn update_text(&mut self, id: &String, new_text: &String) {
