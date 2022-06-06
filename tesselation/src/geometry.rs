@@ -1,14 +1,13 @@
 use crate::{
-    callback::{Callback, IndicesPriority},
+    callback::{IndicesPriority, InitCallback, Initialization, OnClickCallback},
     fill::iterate_fill,
     stroke::iterate_stroke,
 };
 use glam::{DVec2, Vec2, Vec4};
 use lyon::lyon_tessellation::{FillVertex, StrokeVertex, VertexBuffers};
-
 use roxmltree::{Document, NodeId};
 use std::{collections::HashMap, ops::Range, sync::Arc};
-use usvg::{fontdb::Source, NodeKind, Options, Path, Tree};
+use usvg::{fontdb::Source, NodeKind, Options, Path, PathBbox, Tree};
 use xmlwriter::XmlWriter;
 pub type Index = u32;
 pub type Vertices = Vec<Vertex>;
@@ -16,7 +15,35 @@ pub type Indices = Vec<Index>;
 pub type DrawPrimitives = (Vertices, Indices);
 pub type Size = Vec2;
 pub type Position = Vec2;
-pub type Rect = (Position, Size);
+
+#[derive(Copy, Clone, Debug, Default)]
+pub struct Rect {
+    pub position: Position,
+    pub size: Size,
+}
+impl Rect {
+    fn new(position: Vec2, size: Vec2) -> Self {
+        Self { position, size }
+    }
+    fn contains_point(self, position: &Vec2) -> bool {
+        if self.position.x < position.x
+            && self.position.y < position.y
+            && position.x < self.position.x + self.size.x
+            && position.y < self.position.y + self.size.y
+        {
+            return true;
+        }
+        false
+    }
+}
+impl From<&PathBbox> for Rect {
+    fn from(bbox: &PathBbox) -> Self {
+        Rect {
+            position: Vec2::new(bbox.x() as f32, bbox.y() as f32),
+            size: Vec2::new(bbox.width() as f32, bbox.height() as f32),
+        }
+    }
+}
 
 pub const FALLBACK_COLOR: Vec4 = Vec4::ONE;
 
@@ -72,7 +99,21 @@ pub struct GeometrySet {
     variable_geometries_vertices_len: usize,
     variable_geometries_id_range: HashMap<String, Range<usize>>,
 }
+
 impl GeometrySet {
+    fn get_geometries_at_position(&self, position: &Vec2) -> Geometries {
+        // TODO: The performance can be improved so much by only checking clickable
+        // but IDK how to keep a reference of Geometries
+        Geometries(
+            self.fixed_geometries
+                .0
+                .iter()
+                .chain(self.variable_geometries.0.iter())
+                .filter(|g| g.bbox.contains_point(position))
+                .cloned()
+                .collect(),
+        )
+    }
     fn update_geometry(&mut self, id: &String, vertices: Vertices, indices: Indices) {
         let variable_geometry_index = self
             .variable_geometries_id_range
@@ -164,6 +205,7 @@ pub struct Geometry {
     indices: Indices,
     index_base: usize,
     transform_index: usize,
+    bbox: Rect,
 }
 impl Geometry {
     pub fn get_vertices_len(&self) -> usize {
@@ -215,6 +257,7 @@ impl Geometry {
             indices: v.indices,
             index_base,
             transform_index: 0,
+            bbox: Rect::from(&p.data.bbox().unwrap()),
         }
     }
 }
@@ -222,11 +265,11 @@ impl Geometry {
 fn recursive_svg(
     node: usvg::Node,
     parent_priority: IndicesPriority,
-    callback: &mut Callback,
+    callback: &mut InitCallback,
     geometry_set: &mut GeometrySet,
     mut ids: Vec<String>,
 ) {
-    let priority = parent_priority.max(callback.process_events(&node));
+    let priority = parent_priority.max(callback.process_events(&node).indicesPriority);
     let node_ref = &node.borrow();
     let id = NodeKind::id(node_ref);
     if !id.is_empty() {
@@ -290,13 +333,13 @@ impl<'a> SvgSet<'a> {
             }
         }
     }
-
     pub fn get_node_with_id(&self, id: &String) -> Result<roxmltree::Node, &str> {
         let node_id = self.id_map.get(id).ok_or("Not in node_id")?;
         let node = self.document.get_node(*node_id).ok_or("Not in document")?;
         Ok(node)
     }
-    pub fn new(xml: &'a str, mut callback: Callback) -> Self {
+
+    pub fn new(xml: &'a str, mut callback: InitCallback) -> Self {
         let font = include_bytes!("../fallback_font/Roboto-Medium.ttf");
         let mut opt = Options::default();
         opt.fontdb
@@ -323,7 +366,7 @@ impl<'a> SvgSet<'a> {
             vec![],
         );
         let view_box = tree.svg_node().view_box;
-        let bbox: Rect = (
+        let bbox: Rect = Rect::new(
             Vec2::new(view_box.rect.x() as f32, view_box.rect.y() as f32),
             Vec2::new(view_box.rect.width() as f32, view_box.rect.height() as f32),
         );
@@ -379,7 +422,10 @@ impl<'a> SvgSet<'a> {
         recursive_svg(
             tree.root(),
             IndicesPriority::Variable,
-            &mut Callback::new(|_| IndicesPriority::Variable),
+            &mut InitCallback::new(|_| Initialization {
+                indicesPriority: IndicesPriority::Variable,
+                onClickCallBack: OnClickCallback::new(|_| ()),
+            }),
             &mut geometry_set,
             vec![],
         );

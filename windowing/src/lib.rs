@@ -1,7 +1,8 @@
 mod setup;
 use setup::Setup;
 pub use tesselation;
-use tesselation::callback::Callback;
+use tesselation::callback::InitCallback;
+use tesselation::geometry::Rect;
 use tesselation::glam::{Mat4, Vec2};
 use tesselation::init;
 use winit::dpi::PhysicalSize;
@@ -25,11 +26,13 @@ fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
     )
 }
 
-async fn run(event_loop: EventLoop<()>, window: Window, callback: Callback<'_>) {
+async fn run(event_loop: EventLoop<()>, window: Window, callback: InitCallback<'_>) {
     let svg_set = init(callback);
     let vertices = svg_set.geometry_set.get_vertices();
     let indices = svg_set.geometry_set.get_indices();
-    let (_translate, svg_scale) = svg_set.bbox;
+    let Rect {
+        size: svg_scale, ..
+    } = svg_set.bbox;
     let win_size = window.inner_size();
     let mut translate = Mat4::from_translation([-1., 1.0, 0.0].into());
     let mut scale = get_scale(win_size, svg_scale);
@@ -81,7 +84,7 @@ async fn run(event_loop: EventLoop<()>, window: Window, callback: Callback<'_>) 
     });
 }
 
-pub fn main(callback: Callback) {
+pub fn main(callback: InitCallback) {
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new()
         .with_title("SVG-GUI")

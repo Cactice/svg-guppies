@@ -7,7 +7,9 @@ use std::{
     hash::{BuildHasher, Hasher},
     iter::zip,
 };
-use windowing::tesselation::callback::{Callback, IndicesPriority};
+use windowing::tesselation::callback::{
+    Callback, IndicesPriority, InitCallback, Initialization, OnClickCallback,
+};
 use windowing::tesselation::usvg::{Node, NodeKind};
 
 #[derive(Default)]
@@ -162,17 +164,9 @@ fn main() {
     let dynamic_text_regex_pattern = regex_patterns.add(r"#dynamicText(?:$| |#)");
     let defaults = RegexSet::new(regex_patterns.0.iter().map(|r| &r.regex_pattern)).unwrap();
     let stops = Regex::new(r"^(\d+)\.((?:\+|-)\d+):").unwrap();
-    let callback_fn = |node: &Node| -> IndicesPriority {
+    let callback_fn = |node: &Node| -> Initialization {
         let node_ref = &node.borrow();
         let id = NodeKind::id(node_ref);
-        let default_matches = defaults.matches(id);
-        if default_matches.matched(dynamic_regex_pattern.index) {
-            return IndicesPriority::Fixed;
-        }
-        if default_matches.matched(dynamic_text_regex_pattern.index) {
-            return IndicesPriority::Variable;
-        }
-
         for captures in stops.captures_iter(id) {
             let stop: usize = captures[1].parse().unwrap();
             let value: i32 = captures[2].parse().unwrap();
@@ -181,8 +175,23 @@ fn main() {
             }
             position_to_dollar.insert(stop, value);
         }
-        IndicesPriority::Fixed
+        let default_matches = defaults.matches(id);
+        if default_matches.matched(dynamic_regex_pattern.index) {
+            return Initialization {
+                indicesPriority: IndicesPriority::Fixed,
+                ..Default::default()
+            };
+        }
+        if default_matches.matched(dynamic_text_regex_pattern.index) {
+            return Initialization {
+                indicesPriority: IndicesPriority::Variable,
+                ..Default::default()
+            };
+        }
+
+        let onClickCallBack: OnClickCallback = OnClickCallback::new(|_| {});
+        Initialization::default()
     };
-    let callback: Callback = Callback::new(callback_fn);
+    let callback = InitCallback::new(callback_fn);
     windowing::main(callback);
 }

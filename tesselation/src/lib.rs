@@ -3,7 +3,7 @@ mod convert_path;
 mod fill;
 pub mod geometry;
 mod stroke;
-use callback::Callback;
+use callback::InitCallback;
 use geometry::SvgSet;
 pub use glam;
 use glam::DMat4;
@@ -15,7 +15,7 @@ struct TransformVariable {
     transform_index: u16,
 }
 
-pub fn init(callback: Callback) -> SvgSet {
+pub fn init(callback: InitCallback) -> SvgSet {
     // Parse and tessellate the geometry
 
     let mut s = SvgSet::new(include_str!("../../svg/life_text.svg"), callback);
