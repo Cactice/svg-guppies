@@ -5,9 +5,10 @@ use crate::{
 };
 use glam::{DVec2, Vec2, Vec4};
 use lyon::lyon_tessellation::{FillVertex, StrokeVertex, VertexBuffers};
+use regex::Regex;
 use roxmltree::{Document, NodeId};
-use std::{collections::HashMap, ops::Range, sync::Arc};
-use usvg::{fontdb::Source, NodeKind, Options, Path, Tree};
+use std::{collections::HashMap, iter, ops::Range, sync::Arc};
+use usvg::{fontdb::Source, NodeKind, Options, Path, PathBbox, Tree};
 use xmlwriter::XmlWriter;
 pub type Index = u32;
 pub type Vertices = Vec<Vertex>;
@@ -84,12 +85,16 @@ impl GeometrySet {
             .get_mut(variable_geometry_index)
             .expect("variable_geometry_index is out of bounds");
 
-        let index_base_offset = geometry.vertices.len() - vertices.len();
+        let index_base_offset = vertices.len() as i32 - geometry.vertices.len() as i32;
+        dbg!(geometry.bbox);
         geometry.vertices = vertices;
         geometry.indices = indices;
-        self.variable_geometries.0[variable_geometry_index..]
+        self.variable_geometries.0[variable_geometry_index + 1..]
             .iter_mut()
-            .for_each(|geometry: &mut Geometry| geometry.index_base += index_base_offset);
+            .for_each(|geometry: &mut Geometry| {
+                geometry.index_base =
+                    (geometry.index_base as i32 + index_base_offset as i32) as usize;
+            });
     }
     pub fn get_indices(&self) -> Indices {
         [
@@ -153,13 +158,14 @@ impl Geometries {
             .collect()
     }
 }
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Debug)]
 pub struct Geometry {
     ids: Vec<String>,
     vertices: Vertices,
     indices: Indices,
     index_base: usize,
     transform_index: usize,
+    bbox: PathBbox,
 }
 impl Geometry {
     pub fn get_vertices_len(&self) -> usize {
@@ -210,7 +216,8 @@ impl Geometry {
             vertices: v.vertices,
             indices: v.indices,
             index_base,
-            ..Default::default()
+            bbox: p.data.bbox().unwrap(),
+            transform_index: 0,
         }
     }
 }
@@ -238,17 +245,21 @@ fn recursive_svg(
     }
 }
 
-fn copy_element(node: &roxmltree::Node, writer: &mut XmlWriter) {
-    writer.start_element(node.tag_name().name());
-    for a in node.attributes() {
-        let name = if a.namespace().is_some() {
-            format!("xml:{}", a.name())
-        } else {
-            a.name().to_string()
-        };
-        writer.write_attribute(&name, a.value());
+fn find_text_node_path(node: roxmltree::Node, path: &mut Vec<roxmltree::NodeId>) -> bool {
+    if node.is_text() {
+        return true;
     }
+    for child in node.children() {
+        if find_text_node_path(child, path) {
+            if child.is_element() {
+                path.push(child.id());
+            }
+            return true;
+        }
+    }
+    return false;
 }
+
 #[derive(Debug)]
 pub struct SvgSet<'a> {
     pub geometry_set: GeometrySet,
@@ -258,6 +269,47 @@ pub struct SvgSet<'a> {
     usvg_options: Options,
 }
 impl<'a> SvgSet<'a> {
+    fn copy_element_recursively(&self, node: &roxmltree::Node, writer: &mut XmlWriter) {
+        self.copy_element(node, writer);
+        for child in node.children() {
+            self.copy_element_recursively(&child, writer)
+        }
+        if node.is_element() {
+            writer.end_element()
+        }
+    }
+    fn copy_element(&self, node: &roxmltree::Node, writer: &mut XmlWriter) {
+        if !node.is_element() {
+            return;
+        }
+        writer.start_element(node.tag_name().name());
+        for a in node.attributes() {
+            let name = if a.namespace().is_some() {
+                format!("xml:{}", a.name())
+            } else {
+                a.name().to_string()
+            };
+            writer.write_attribute(&name, a.value());
+        }
+        if let Some(value) = node.attribute("filter") {
+            let id = Regex::new(r"url\(#(.*)\)")
+                .unwrap()
+                .captures(value)
+                .unwrap()
+                .get(1)
+                .unwrap()
+                .as_str();
+            let node = self.get_node_with_id(&id.to_string()).unwrap();
+            dbg!(&node);
+            self.copy_element_recursively(&node, writer)
+        }
+    }
+
+    pub fn get_node_with_id(&self, id: &String) -> Result<roxmltree::Node, &str> {
+        let node_id = self.id_map.get(id).ok_or("Not in node_id")?;
+        let node = self.document.get_node(*node_id).ok_or("Not in document")?;
+        Ok(node)
+    }
     pub fn new(xml: &'a str, mut callback: Callback) -> Self {
         let font = include_bytes!("../fallback_font/Roboto-Medium.ttf");
         let mut opt = Options::default();
@@ -272,7 +324,7 @@ impl<'a> SvgSet<'a> {
             document
                 .descendants()
                 .fold(HashMap::<String, NodeId>::new(), |mut acc, curr| {
-                    if let Some(attribute_id) = document.root().attribute("id") {
+                    if let Some(attribute_id) = curr.attribute("id") {
                         acc.insert(attribute_id.to_string(), curr.id());
                     }
                     acc
@@ -298,41 +350,65 @@ impl<'a> SvgSet<'a> {
         }
     }
     fn get_base_writer(&self) -> XmlWriter {
-        let mut writer = XmlWriter::new(xmlwriter::Options::default());
+        let mut writer = XmlWriter::new(xmlwriter::Options {
+            indent: xmlwriter::Indent::Spaces(0),
+            ..Default::default()
+        });
         writer.write_declaration();
-        writer.write_attribute("xmlns", "http://www.w3.org/2000/svg");
-        copy_element(&self.document.root(), &mut writer);
         writer
     }
     pub fn update_text(&mut self, id: &String, new_text: &String) {
-        if let Some(node_id) = self.id_map.get(id) {
-            if let Some(node) = self.document.get_node(*node_id) {
-                let mut writer = self.get_base_writer();
-                copy_element(&node, &mut writer);
-                writer.write_text(new_text);
+        let node = self.get_node_with_id(id).unwrap();
+        let mut writer = self.get_base_writer();
+        let mut parent_ids: Vec<roxmltree::NodeId> = vec![];
+        find_text_node_path(node, &mut parent_ids);
 
-                let tree =
-                    Tree::from_str(writer.end_document().as_str(), &self.usvg_options.to_ref())
-                        .unwrap();
-                let mut geometry_set = GeometrySet::default();
-                recursive_svg(
-                    tree.root(),
-                    IndicesPriority::Variable,
-                    &mut Callback::new(|_| IndicesPriority::Variable),
-                    &mut geometry_set,
-                    vec![],
-                );
-                let Geometry {
-                    indices, vertices, ..
-                } = geometry_set
-                    .variable_geometries
-                    .0
-                    .first()
-                    .expect("no geometry in geometry_set");
-
-                self.geometry_set
-                    .update_geometry(id, vertices.to_vec(), indices.to_vec());
+        parent_ids.push(node.id());
+        let mut current_node = node;
+        while let Some(parent) = current_node.parent() {
+            if !parent.is_element() {
+                // FIXME: why doesn't simple continue not work..?
+                if parent.parent().is_none() {
+                    break;
+                }
+                continue;
             }
-        };
+            parent_ids.push(parent.id());
+            current_node = parent;
+        }
+        while let Some(parent_id) = parent_ids.pop() {
+            let parent = self.document.get_node(parent_id).unwrap();
+            self.copy_element(&parent, &mut writer);
+            if parent.has_tag_name("svg") {
+                writer.write_attribute("xmlns", "http://www.w3.org/2000/svg");
+            }
+        }
+        writer.write_text(new_text);
+
+        let xml = writer.end_document();
+        println!("{}", &xml);
+        let tree = Tree::from_str(&xml, &self.usvg_options.to_ref()).unwrap();
+        let mut geometry_set = GeometrySet::default();
+        recursive_svg(
+            tree.root(),
+            IndicesPriority::Variable,
+            &mut Callback::new(|_| IndicesPriority::Variable),
+            &mut geometry_set,
+            vec![],
+        );
+        let Geometry {
+            indices,
+            vertices,
+            bbox: new_bbox,
+            ..
+        } = geometry_set
+            .variable_geometries
+            .0
+            .first()
+            .expect("No geometry in geometry_set");
+        dbg!(new_bbox);
+
+        self.geometry_set
+            .update_geometry(id, vertices.to_vec(), indices.to_vec());
     }
 }

@@ -1452,6 +1452,7 @@ dependencies = [
  "bytemuck",
  "glam",
  "lyon",
+ "regex",
  "roxmltree",
  "usvg",
  "xmlwriter",
