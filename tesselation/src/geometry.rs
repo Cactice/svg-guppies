@@ -7,8 +7,8 @@ use glam::{DVec2, Vec2, Vec4};
 use lyon::lyon_tessellation::{FillVertex, StrokeVertex, VertexBuffers};
 use regex::Regex;
 use roxmltree::{Document, NodeId};
-use std::{collections::HashMap, iter, ops::Range, sync::Arc};
-use usvg::{fontdb::Source, NodeKind, Options, Path, PathBbox, Tree};
+use std::{collections::HashMap, ops::Range, sync::Arc};
+use usvg::{fontdb::Source, NodeKind, Options, Path, Tree};
 use xmlwriter::XmlWriter;
 pub type Index = u32;
 pub type Vertices = Vec<Vertex>;
@@ -254,7 +254,7 @@ fn find_text_node_path(node: roxmltree::Node, path: &mut Vec<roxmltree::NodeId>)
             return true;
         }
     }
-    return false;
+    false
 }
 
 #[derive(Debug)]
