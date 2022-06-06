@@ -5,7 +5,7 @@ use crate::{
 };
 use glam::{DVec2, Vec2, Vec4};
 use lyon::lyon_tessellation::{FillVertex, StrokeVertex, VertexBuffers};
-use regex::Regex;
+
 use roxmltree::{Document, NodeId};
 use std::{collections::HashMap, ops::Range, sync::Arc};
 use usvg::{fontdb::Source, NodeKind, Options, Path, Tree};
@@ -278,18 +278,6 @@ impl<'a> SvgSet<'a> {
         }
     }
     fn copy_element(&self, node: &roxmltree::Node, writer: &mut XmlWriter) {
-        if let Some(value) = node.attribute("filter") {
-            let id = Regex::new(r"url\(#(.*)\)")
-                .unwrap()
-                .captures(value)
-                .unwrap()
-                .get(1)
-                .unwrap()
-                .as_str();
-            let node = self.get_node_with_id(&id.to_string()).unwrap();
-            dbg!(&node);
-            self.copy_element_recursively(&node, writer)
-        }
         writer.start_element(node.tag_name().name());
         for a in node.attributes() {
             let name = if a.namespace().is_some() {
@@ -297,7 +285,9 @@ impl<'a> SvgSet<'a> {
             } else {
                 a.name().to_string()
             };
-            writer.write_attribute(&name, a.value());
+            if a.name() != "filter" {
+                writer.write_attribute(&name, a.value());
+            }
         }
     }
 
