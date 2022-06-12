@@ -21,17 +21,17 @@ impl Default for Initialization<'_> {
     }
 }
 
-pub type InitCallback<'a> = Callback<'a, Initialization<'a>, Node>;
+pub type InitCallback<'a> = Callback<'a, Node, Initialization<'a>>;
 
-pub struct Callback<'a, T, S> {
-    func: Box<dyn FnMut(&S) -> T + 'a>,
+pub struct Callback<'a, A, T> {
+    func: Box<dyn FnMut(&A) -> T + 'a>,
 }
 
-impl<'a, T: Default, S> Callback<'a, T, S> {
-    pub fn new(c: impl FnMut(&S) -> T + 'a) -> Self {
+impl<'a, A, T> Callback<'a, A, T> {
+    pub fn new(c: impl FnMut(&A) -> T + 'a) -> Self {
         Self { func: Box::new(c) }
     }
-    pub fn process_events(&mut self, arg: &S) -> T {
+    pub fn process_events(&mut self, arg: &A) -> T {
         (self.func)(arg)
     }
 }

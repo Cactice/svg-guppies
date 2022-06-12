@@ -1,4 +1,4 @@
-use glam::{DMat4, DVec2, Mat4};
+use glam::{DMat4, DVec2, Mat4, Vec2};
 use natura::Spring;
 use regex::{Regex, RegexSet};
 use std::sync::mpsc::{channel, Sender};
@@ -10,7 +10,7 @@ use std::{
 use windowing::tesselation::callback::{
     IndicesPriority, InitCallback, Initialization, OnClickCallback,
 };
-use windowing::tesselation::usvg::{Node, NodeKind};
+use windowing::tesselation::usvg::{Node, NodeExt, NodeKind};
 
 #[derive(Default)]
 struct LifeGame {
@@ -18,20 +18,14 @@ struct LifeGame {
     position: [usize; 4],
     current_player: usize,
     pub position_to_dollar: Vec<i32>,
+    position_to_coordinates: Vec<DVec2>,
 }
 
 struct LifeGameView {
     player_avatar_matrices: [SpringMat4; 4],
     tip_matrix: SpringMat4,
     players_text: [String; 4],
-    position_to_coordinates: Vec<DVec2>,
-}
-
-#[repr(C)]
-#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-struct LifeGameViewBytes {
-    players_avatar_matrices: Mat4,
-    tip_matrix: Mat4,
+    instruction_text: String,
 }
 
 impl LifeGameView {
@@ -54,7 +48,7 @@ impl LifeGameView {
         self.player_avatar_matrices[life_game.current_player]
             .spring_to(DMat4::from_translation(
                 (
-                    self.position_to_coordinates[life_game.position[life_game.current_player]],
+                    life_game.position_to_coordinates[life_game.position[life_game.current_player]],
                     0.0,
                 )
                     .into(),
@@ -130,7 +124,7 @@ impl LifeGame {
             if n == 4 {
                 todo!("game finished")
             } else {
-                self.position[self.current_player] = self.current_player + n;
+                self.current_player = self.current_player + n;
                 break;
             }
         }
@@ -158,6 +152,7 @@ impl RegexPatterns {
 
 fn main() {
     let mut position_to_dollar: Vec<i32> = vec![];
+    let mut position_to_cordinates: Vec<DVec2> = vec![];
     let mut regex_patterns = RegexPatterns::default();
     let _clickable_regex_pattern = regex_patterns.add(r"#clickable(?:$| |#)");
     let dynamic_regex_pattern = regex_patterns.add(r"#dynamic(?:$| |#)");
@@ -165,15 +160,20 @@ fn main() {
     let defaults = RegexSet::new(regex_patterns.0.iter().map(|r| &r.regex_pattern)).unwrap();
     let stops = Regex::new(r"^(\d+)\.((?:\+|-)\d+):").unwrap();
     let callback_fn = |node: &Node| -> Initialization {
-        let node_ref = &node.borrow();
-        let id = NodeKind::id(node_ref);
+        let node_ref = node.borrow();
+        let id = NodeKind::id(&node_ref);
         for captures in stops.captures_iter(id) {
             let stop: usize = captures[1].parse().unwrap();
-            let value: i32 = captures[2].parse().unwrap();
+            let dollar: i32 = captures[2].parse().unwrap();
+            let bbox = node.calculate_bbox().unwrap();
+            let coordinate =
+                DVec2::new(bbox.x() + bbox.width() / 2., bbox.y() + bbox.height() / 2.);
             if stop >= position_to_dollar.len() {
-                position_to_dollar.resize(stop, value);
+                position_to_dollar.resize(stop, dollar);
+                position_to_cordinates.resize(stop, coordinate);
             }
-            position_to_dollar.insert(stop, value);
+            position_to_dollar.insert(stop, dollar);
+            position_to_cordinates.insert(stop, coordinate);
         }
         let default_matches = defaults.matches(id);
         if !default_matches.matched(dynamic_text_regex_pattern.index) {
@@ -182,7 +182,6 @@ fn main() {
                 ..Default::default()
             };
         }
-
         Initialization::default()
     };
     let callback = InitCallback::new(callback_fn);
