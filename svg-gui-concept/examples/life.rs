@@ -8,7 +8,7 @@ use std::{
     iter::zip,
 };
 use windowing::tesselation::callback::{
-    Callback, IndicesPriority, InitCallback, Initialization, OnClickCallback,
+    IndicesPriority, InitCallback, Initialization, OnClickCallback,
 };
 use windowing::tesselation::usvg::{Node, NodeKind};
 
@@ -176,20 +176,13 @@ fn main() {
             position_to_dollar.insert(stop, value);
         }
         let default_matches = defaults.matches(id);
-        if default_matches.matched(dynamic_regex_pattern.index) {
+        if !default_matches.matched(dynamic_text_regex_pattern.index) {
             return Initialization {
                 indicesPriority: IndicesPriority::Fixed,
                 ..Default::default()
             };
         }
-        if default_matches.matched(dynamic_text_regex_pattern.index) {
-            return Initialization {
-                indicesPriority: IndicesPriority::Variable,
-                ..Default::default()
-            };
-        }
 
-        let onClickCallBack: OnClickCallback = OnClickCallback::new(|_| {});
         Initialization::default()
     };
     let callback = InitCallback::new(callback_fn);
