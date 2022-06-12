@@ -269,7 +269,7 @@ fn recursive_svg(
     geometry_set: &mut GeometrySet,
     mut ids: Vec<String>,
 ) {
-    let priority = parent_priority.max(callback.process_events(&node).indicesPriority);
+    let priority = parent_priority.max(callback.process_events(&node).indices_priority);
     let node_ref = &node.borrow();
     let id = NodeKind::id(node_ref);
     if !id.is_empty() {
@@ -423,8 +423,8 @@ impl<'a> SvgSet<'a> {
             tree.root(),
             IndicesPriority::Variable,
             &mut InitCallback::new(|_| Initialization {
-                indicesPriority: IndicesPriority::Variable,
-                onClickCallBack: OnClickCallback::new(|_| ()),
+                indices_priority: IndicesPriority::Variable,
+                on_click_callback: OnClickCallback::new(|_| ()),
             }),
             &mut geometry_set,
             vec![],

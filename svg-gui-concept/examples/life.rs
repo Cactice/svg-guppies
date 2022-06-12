@@ -178,7 +178,7 @@ fn main() {
         let default_matches = defaults.matches(id);
         if !default_matches.matched(dynamic_text_regex_pattern.index) {
             return Initialization {
-                indicesPriority: IndicesPriority::Fixed,
+                indices_priority: IndicesPriority::Fixed,
                 ..Default::default()
             };
         }

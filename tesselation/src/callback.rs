@@ -9,14 +9,14 @@ pub enum IndicesPriority {
 pub type OnClickCallback<'a> = Callback<'a, (), ()>;
 
 pub struct Initialization<'a> {
-    pub indicesPriority: IndicesPriority,
-    pub onClickCallBack: OnClickCallback<'a>,
+    pub indices_priority: IndicesPriority,
+    pub on_click_callback: OnClickCallback<'a>,
 }
 impl Default for Initialization<'_> {
     fn default() -> Self {
         return Self {
-            indicesPriority: IndicesPriority::Variable,
-            onClickCallBack: OnClickCallback::new(|_| {}),
+            indices_priority: IndicesPriority::Variable,
+            on_click_callback: OnClickCallback::new(|_| {}),
         };
     }
 }
