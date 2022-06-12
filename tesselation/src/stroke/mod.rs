@@ -1,4 +1,3 @@
-mod line_to_parallel_lines;
 use crate::convert_path::convert_path;
 use crate::geometry::{Index, Vertex};
 use glam::Vec4;

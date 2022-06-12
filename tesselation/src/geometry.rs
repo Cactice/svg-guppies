@@ -422,10 +422,7 @@ impl<'a> SvgSet<'a> {
         recursive_svg(
             tree.root(),
             IndicesPriority::Variable,
-            &mut InitCallback::new(|_| Initialization {
-                indices_priority: IndicesPriority::Variable,
-                on_click_callback: OnClickCallback::new(|_| ()),
-            }),
+            &mut InitCallback::new(|_| Initialization::default()),
             &mut geometry_set,
             vec![],
         );
