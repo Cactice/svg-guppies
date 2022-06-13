@@ -1,4 +1,4 @@
-use glam::{DMat4, DVec2, Mat4, Vec2};
+use glam::{DMat4, DVec2};
 use natura::Spring;
 use regex::{Regex, RegexSet};
 use std::sync::mpsc::{channel, Sender};
@@ -8,7 +8,7 @@ use std::{
     iter::zip,
 };
 use windowing::tesselation::callback::{
-    IndicesPriority, InitCallback, Initialization, OnClickCallback,
+    IndicesPriority, InitCallback, Initialization,
 };
 use windowing::tesselation::usvg::{Node, NodeExt, NodeKind};
 
@@ -124,7 +124,7 @@ impl LifeGame {
             if n == 4 {
                 todo!("game finished")
             } else {
-                self.current_player = self.current_player + n;
+                self.current_player += n;
                 break;
             }
         }
@@ -155,7 +155,7 @@ fn main() {
     let mut position_to_cordinates: Vec<DVec2> = vec![];
     let mut regex_patterns = RegexPatterns::default();
     let _clickable_regex_pattern = regex_patterns.add(r"#clickable(?:$| |#)");
-    let dynamic_regex_pattern = regex_patterns.add(r"#dynamic(?:$| |#)");
+    let _dynamic_regex_pattern = regex_patterns.add(r"#dynamic(?:$| |#)");
     let dynamic_text_regex_pattern = regex_patterns.add(r"#dynamicText(?:$| |#)");
     let defaults = RegexSet::new(regex_patterns.0.iter().map(|r| &r.regex_pattern)).unwrap();
     let stops = Regex::new(r"^(\d+)\.((?:\+|-)\d+):").unwrap();

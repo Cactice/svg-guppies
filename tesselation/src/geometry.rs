@@ -1,5 +1,5 @@
 use crate::{
-    callback::{IndicesPriority, InitCallback, Initialization, OnClickCallback},
+    callback::{IndicesPriority, InitCallback, Initialization},
     fill::iterate_fill,
     stroke::iterate_stroke,
 };

@@ -12,16 +12,21 @@ struct VertexOutput {
 };
 
 
-@group(0) @binding(0)
-var<uniform> u: Uniform;
+@group(0) @binding(0) var<uniform> u: Uniform;
+@group(0) @binding(1) var transform_texture : texture_1d<f32>;
 
 @stage(vertex)
 fn vs_main(
-    model: VertexInput,
+        model: VertexInput,
 ) -> VertexOutput {
     var out: VertexOutput;
     out.color = model.color;
-    out.clip_position = u.transform*vec4<f32>(model.position, 1.0);
+    var t1 = textureLoad(transform_texture,0,0);
+    var t2 = textureLoad(transform_texture,1,0);
+    var t3 = textureLoad(transform_texture,2,0);
+    var t4 = textureLoad(transform_texture,3,0);
+    var texture_transform = mat4x4<f32>(t1,t2,t3,t4);
+    out.clip_position = u.transform*texture_transform*vec4<f32>(model.position, 1.0);
     return out;
 }
 

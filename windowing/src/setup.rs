@@ -1,12 +1,20 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, num::NonZeroU32};
 use tesselation::{
     geometry::{Indices, Vertex, Vertices},
     glam::Mat4,
 };
 use wgpu::{
-    util::DeviceExt, BindGroup, Buffer, Device, RenderPipeline, Surface, SurfaceConfiguration,
+    util::DeviceExt, BindGroup, Buffer, Device, Extent3d, RenderPipeline, Surface,
+    SurfaceConfiguration, Texture,
 };
 use winit::{dpi::PhysicalSize, window::Window};
+
+const TRANSFORM_TEXTURE_SIZE: Extent3d = Extent3d {
+    width: 4 * 2048,
+    height: 1,
+    depth_or_array_layers: 1,
+};
+
 #[derive(Debug)]
 pub struct Redraw {
     pub transform: Mat4,
@@ -20,6 +28,7 @@ pub struct Redraw {
     pub vertex_buffer: Buffer,
     pub index_buffer: Buffer,
     pub indices: Indices,
+    pub transform_texture: Texture,
 }
 
 const SAMPLE_COUNT: u32 = 4;
@@ -35,39 +44,74 @@ pub(crate) struct Setup {
 fn get_uniform_buffer(
     device: &Device,
     contents: &[u8],
-) -> (wgpu::Buffer, wgpu::BindGroup, wgpu::BindGroupLayout) {
+) -> (
+    wgpu::Buffer,
+    wgpu::BindGroup,
+    wgpu::BindGroupLayout,
+    wgpu::Texture,
+) {
     let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: None,
         contents,
         usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
     });
+    let transform_texture = device.create_texture(&wgpu::TextureDescriptor {
+        label: Some("transform texture"),
+        size: TRANSFORM_TEXTURE_SIZE,
+        mip_level_count: 1,
+        sample_count: 1,
+        dimension: wgpu::TextureDimension::D1,
+        format: wgpu::TextureFormat::Rgba32Float,
+        usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+    });
     let uniform_bind_group_layout =
         device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            entries: &[wgpu::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: wgpu::ShaderStages::VERTEX,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
+            entries: &[
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::VERTEX,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
                 },
-                count: None,
-            }],
+                wgpu::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: wgpu::ShaderStages::VERTEX,
+                    ty: wgpu::BindingType::Texture {
+                        sample_type: wgpu::TextureSampleType::Float { filterable: false },
+                        view_dimension: wgpu::TextureViewDimension::D1,
+                        multisampled: false,
+                    },
+                    count: None,
+                },
+            ],
             label: Some("uniform_bind_group_layout"),
         });
 
     let uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
         layout: &uniform_bind_group_layout,
-        entries: &[wgpu::BindGroupEntry {
-            binding: 0,
-            resource: uniform_buffer.as_entire_binding(),
-        }],
+        entries: &[
+            wgpu::BindGroupEntry {
+                binding: 0,
+                resource: uniform_buffer.as_entire_binding(),
+            },
+            wgpu::BindGroupEntry {
+                binding: 1,
+                resource: wgpu::BindingResource::TextureView(
+                    &transform_texture.create_view(&wgpu::TextureViewDescriptor::default()),
+                ),
+            },
+        ],
         label: Some("uniform_bind_group"),
     });
     (
         uniform_buffer,
         uniform_bind_group,
         uniform_bind_group_layout,
+        transform_texture,
     )
 }
 
@@ -83,7 +127,7 @@ impl Setup {
         config.height = size.height;
         surface.configure(device, config);
     }
-    pub fn redraw(redraw: &Redraw) {
+    pub fn redraw(redraw: &Redraw, transforms: Vec<Mat4>) {
         let Redraw {
             transform,
             device,
@@ -96,6 +140,7 @@ impl Setup {
             vertex_buffer,
             index_buffer,
             indices,
+            transform_texture,
         } = redraw;
         let frame = surface
             .get_current_texture()
@@ -147,6 +192,12 @@ impl Setup {
                 transform: *transform,
             }]),
         );
+        queue.write_texture(
+            transform_texture.as_image_copy(),
+            bytemuck::cast_slice(transforms.as_slice()),
+            wgpu::ImageDataLayout::default(),
+            TRANSFORM_TEXTURE_SIZE,
+        );
         queue.submit(Some(encoder.finish()));
         frame.present();
     }
@@ -191,14 +242,15 @@ impl Setup {
             source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("shader.wgsl"))),
         });
 
-        let (uniform_buffer, bind_group, bind_group_layout) = get_uniform_buffer(
-            &device,
-            bytemuck::cast_slice(&[Uniform {
-                transform: default_transform,
-            }]),
-        );
+        let (uniform_buffer, uniform_bind_group, uniform_bind_group_layout, transform_texture) =
+            get_uniform_buffer(
+                &device,
+                bytemuck::cast_slice(&[Uniform {
+                    transform: default_transform,
+                }]),
+            );
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            bind_group_layouts: &[&bind_group_layout],
+            bind_group_layouts: &[&uniform_bind_group_layout],
             ..Default::default()
         });
 
@@ -261,12 +313,13 @@ impl Setup {
             render_pipeline,
             queue,
             config,
-            bind_group,
+            bind_group: uniform_bind_group,
             uniform_buffer,
             vertex_buffer,
             index_buffer,
             indices: indices.to_vec(),
             transform: default_transform,
+            transform_texture,
         };
 
         Setup {
