@@ -1,5 +1,4 @@
 mod setup;
-use rand::random;
 use setup::Setup;
 pub use tesselation;
 use tesselation::callback::InitCallback;
@@ -73,15 +72,7 @@ async fn run(event_loop: EventLoop<()>, window: Window, callback: InitCallback<'
             }
             Event::RedrawRequested(_) => {
                 redraw.transform = translate * scale;
-                Setup::redraw(
-                    &redraw,
-                    [Mat4::from_translation(Vec3::from([
-                        random::<f32>() * 20.,
-                        random::<f32>() * 30.,
-                        0.,
-                    ])); 2048]
-                        .to_vec(),
-                );
+                Setup::redraw(&redraw, [Mat4::IDENTITY; 2048].to_vec());
                 window.request_redraw();
             }
             Event::WindowEvent {
