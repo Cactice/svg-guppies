@@ -7,10 +7,9 @@ use std::{
     hash::{BuildHasher, Hasher},
     iter::zip,
 };
-use windowing::tesselation::callback::{
-    IndicesPriority, InitCallback, Initialization,
-};
+use windowing::tesselation::callback::{IndicesPriority, InitCallback, Initialization};
 use windowing::tesselation::usvg::{Node, NodeExt, NodeKind};
+use windowing::IntoBytes;
 
 #[derive(Default)]
 struct LifeGame {
@@ -21,11 +20,24 @@ struct LifeGame {
     position_to_coordinates: Vec<DVec2>,
 }
 
+#[derive(Default)]
 struct LifeGameView {
     player_avatar_matrices: [SpringMat4; 4],
     tip_matrix: SpringMat4,
     players_text: [String; 4],
     instruction_text: String,
+}
+
+impl IntoBytes for LifeGameView {
+    fn into_bytes(&self) -> Vec<u8> {
+        let mat_4: Vec<DMat4> = self
+            .player_avatar_matrices
+            .iter()
+            .map(|m| m.current)
+            .chain([self.tip_matrix.current])
+            .collect();
+        bytemuck::cast_vec(mat_4)
+    }
 }
 
 impl LifeGameView {
@@ -58,6 +70,7 @@ impl LifeGameView {
     }
 }
 
+#[derive(Default)]
 struct SpringMat4 {
     spring: Spring,
     target: DMat4,
@@ -185,5 +198,6 @@ fn main() {
         Initialization::default()
     };
     let callback = InitCallback::new(callback_fn);
-    windowing::main(callback);
+    let life_view = LifeGameView::default();
+    windowing::main::<LifeGameView>(callback, life_view);
 }

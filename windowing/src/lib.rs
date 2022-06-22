@@ -14,7 +14,6 @@ use winit::{
 
 fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
     let ratio = f32::min(1200_f32, 1600_f32) / f32::max(svg_scale.x, svg_scale.y);
-
     Mat4::from_scale(
         [
             2.0 * ratio / size.width as f32,
@@ -25,7 +24,13 @@ fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
     )
 }
 
-pub fn main(callback: InitCallback) {
+pub trait IntoBytes {
+    // fn update_shader(&self) -> Option<>;
+    // fn update_svg(&self) -> Option<HashMap<String, String>;
+    fn into_bytes(&self) -> Vec<u8>;
+}
+
+pub fn main<State: IntoBytes>(callback: InitCallback, state: State) {
     let event_loop = EventLoop::new();
     let svg_set = init(callback);
     let vertices = svg_set.geometry_set.get_vertices();

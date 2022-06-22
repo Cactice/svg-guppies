@@ -1,4 +1,4 @@
-use std::{borrow::Cow, num::NonZeroU32};
+use std::borrow::Cow;
 use tesselation::{
     geometry::{Indices, Vertex, Vertices},
     glam::Mat4,
