@@ -2,16 +2,16 @@
 <g id='Life' filter='url(#filter0_d_7_15)'>
 <rect width='1920' height='1080' fill='white'/>
 <rect id='Background' width='1920' height='1080' fill='#004500'/>
-<text id='Life, I guess' fill='white' xml:space='preserve' style='white-space: pre' font-family='Fascinate' font-size='128' font-weight='900' letter-spacing='0em'><tspan x='532' y='244.938'>Life, I guess</tspan></text>
+<text id='instruction #dynamicText' fill='white' xml:space='preserve' style='white-space: pre' font-family='Fascinate' font-size='128' font-weight='900' letter-spacing='0em'><tspan x='532' y='244.938'>Life, I guess</tspan></text>
 <g id='Players'>
 <g id='PlayerBackground' filter='url(#filter1_d_7_15)'>
 <rect x='1201' y='309' width='600' height='669' rx='30' fill='white'/>
 </g>
 <text id='Players_2' fill='black' xml:space='preserve' style='white-space: pre' font-family='Epilogue' font-size='64' font-weight='bold' letter-spacing='0em'><tspan x='1381.44' y='418.26'>Players</tspan></text>
-<text id='Player1 #dynamicText' fill='black' xml:space='preserve' style='white-space: pre' font-family='Alata' font-size='36' letter-spacing='0em'><tspan x='1330' y='524.76'>Player1: $1040</tspan></text>
-<text id='Player2 #dynamicText' fill='black' xml:space='preserve' style='white-space: pre' font-family='Alata' font-size='36' letter-spacing='0em'><tspan x='1330' y='613.76'>Player2: $1040</tspan></text>
-<text id='Player3 #dynamicText' fill='black' xml:space='preserve' style='white-space: pre' font-family='Alata' font-size='36' letter-spacing='0em'><tspan x='1330' y='702.76'>Player3: -$30</tspan></text>
-<text id='Player4 #dynamicText' fill='black' xml:space='preserve' style='white-space: pre' font-family='Alata' font-size='36' letter-spacing='0em'><tspan x='1330' y='791.76'>Player4: $100</tspan></text>
+<text id='0. Player #dynamicText' fill='black' xml:space='preserve' style='white-space: pre' font-family='Alata' font-size='36' letter-spacing='0em'><tspan x='1330' y='524.76'>Player1: $1040</tspan></text>
+<text id='1. Player #dynamicText' fill='black' xml:space='preserve' style='white-space: pre' font-family='Alata' font-size='36' letter-spacing='0em'><tspan x='1330' y='613.76'>Player2: $1040</tspan></text>
+<text id='2. Player #dynamicText' fill='black' xml:space='preserve' style='white-space: pre' font-family='Alata' font-size='36' letter-spacing='0em'><tspan x='1330' y='702.76'>Player3: -$30</tspan></text>
+<text id='3. Player #dynamicText' fill='black' xml:space='preserve' style='white-space: pre' font-family='Alata' font-size='36' letter-spacing='0em'><tspan x='1330' y='791.76'>Player4: $100</tspan></text>
 <g id='Player1 Avatar Static'>
 <circle id='Ellipse 2' cx='1290.5' cy='499.5' r='10.5' fill='#000077'/>
 <path id='Polygon 1' d='M1290.5 502L1299.59 531.25H1281.41L1290.5 502Z' fill='#000077'/>
@@ -50,19 +50,19 @@
 <text id='14.+1500: You find money in a public restroom' fill='black' xml:space='preserve' style='white-space: pre' font-family='Alata' font-size='12' letter-spacing='0em'><tspan x='836.24' y='425.42'>You find </tspan><tspan x='828.424' y='442.42'>money in a </tspan><tspan x='841.783' y='459.42'>public </tspan><tspan x='834.061' y='476.42'>restroom</tspan></text>
 <text id='15.+1000: Retirement!' fill='black' xml:space='preserve' style='white-space: pre' font-family='Alata' font-size='12' letter-spacing='0em'><tspan x='716.842' y='411.92'>Retirement!</tspan></text>
 <text id='16.+0: STOP' fill='black' xml:space='preserve' style='white-space: pre' font-family='Alata' font-size='24' letter-spacing='0em'><tspan x='620.105' y='411.84'>STOP</tspan></text>
-<g id='Player1 Avatar #dynamic'>
+<g id='0. Player Avatar #dynamic'>
 <circle id='Ellipse 2_5' cx='524.5' cy='362.5' r='10.5' fill='#000077'/>
 <path id='Polygon 1_5' d='M524.5 365L533.593 394.25H515.407L524.5 365Z' fill='#000077'/>
 </g>
-<g id='Player2 Avatar #dynamic'>
+<g id='1. Player Avatar #dynamic'>
 <circle id='Ellipse 2_6' cx='546.5' cy='362.5' r='10.5' fill='#007700'/>
 <path id='Polygon 1_6' d='M546.5 365L555.593 394.25H537.407L546.5 365Z' fill='#007700'/>
 </g>
-<g id='Player3 Avatar #dynamic'>
+<g id='2. Player Avatar #dynamic'>
 <circle id='Ellipse 2_7' cx='524.5' cy='407.5' r='10.5' fill='#770000'/>
 <path id='Polygon 1_7' d='M524.5 410L533.593 439.25H515.407L524.5 410Z' fill='#770000'/>
 </g>
-<g id='Player4 Avatar #dynamic'>
+<g id='3. Player Avatar #dynamic'>
 <circle id='Ellipse 2_8' cx='549.5' cy='407.5' r='10.5' fill='#777700'/>
 <path id='Polygon 1_8' d='M549.5 410L558.593 439.25H540.407L549.5 410Z' fill='#777700'/>
 </g>

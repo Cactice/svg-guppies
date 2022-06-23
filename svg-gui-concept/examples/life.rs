@@ -9,7 +9,7 @@ use std::{
 };
 use windowing::tesselation::callback::{IndicesPriority, InitCallback, Initialization};
 use windowing::tesselation::usvg::{Node, NodeExt, NodeKind};
-use windowing::IntoBytes;
+use windowing::IntoWindowable;
 
 #[derive(Default)]
 struct LifeGame {
@@ -24,19 +24,32 @@ struct LifeGame {
 struct LifeGameView {
     player_avatar_matrices: [SpringMat4; 4],
     tip_matrix: SpringMat4,
-    players_text: [String; 4],
+    player_texts: [String; 4],
     instruction_text: String,
 }
 
-impl IntoBytes for LifeGameView {
-    fn into_bytes(&self) -> Vec<u8> {
+impl IntoWindowable for LifeGameView {
+    fn into_bytes(&self) -> Option<Vec<u8>> {
         let mat_4: Vec<DMat4> = self
             .player_avatar_matrices
             .iter()
             .map(|m| m.current)
             .chain([self.tip_matrix.current])
             .collect();
-        bytemuck::cast_vec(mat_4)
+        Some(bytemuck::cast_vec(mat_4))
+    }
+    fn into_texts(&self) -> Option<Vec<(String, String)>> {
+        let texts: Vec<(String, String)> = self
+            .player_texts
+            .iter()
+            .enumerate()
+            .map(|(i, m)| (format!("{}. Player #dynamicText", i), m.to_owned()))
+            .chain([(
+                "instruction #dynamicText".to_string(),
+                self.instruction_text.clone(),
+            )])
+            .collect();
+        Some(texts)
     }
 }
 

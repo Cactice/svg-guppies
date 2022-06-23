@@ -24,13 +24,12 @@ fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
     )
 }
 
-pub trait IntoBytes {
-    // fn update_shader(&self) -> Option<>;
-    // fn update_svg(&self) -> Option<HashMap<String, String>;
-    fn into_bytes(&self) -> Vec<u8>;
+pub trait IntoWindowable {
+    fn into_bytes(&self) -> Option<Vec<u8>>;
+    fn into_texts(&self) -> Option<Vec<(String, String)>>;
 }
 
-pub fn main<State: IntoBytes>(callback: InitCallback, state: State) {
+pub fn main<State: IntoWindowable>(callback: InitCallback, state: State) {
     let event_loop = EventLoop::new();
     let svg_set = init(callback);
     let vertices = svg_set.geometry_set.get_vertices();
@@ -75,13 +74,13 @@ pub fn main<State: IntoBytes>(callback: InitCallback, state: State) {
                     let setup =
                         pollster::block_on(Setup::new(&window, transform, &vertices, &indices));
                     let Setup {
-                        redraw: redraw0,
+                        redraw: some_redraw,
                         adapter,
                         instance,
                         pipeline_layout,
                         shader,
                     } = setup;
-                    redraw = Some(redraw0);
+                    redraw = Some(some_redraw);
 
                     let win_size = window.inner_size();
                     translate = Mat4::from_translation([-1., 1.0, 0.0].into());
