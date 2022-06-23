@@ -24,12 +24,13 @@ fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
     )
 }
 
-pub trait IntoWindowable {
+pub trait ViewModel {
     fn into_bytes(&self) -> Option<Vec<u8>>;
     fn into_texts(&self) -> Option<Vec<(String, String)>>;
+    fn reset_mut_count(&mut self);
 }
 
-pub fn main<State: IntoWindowable>(callback: InitCallback, state: State) {
+pub fn main<State: ViewModel>(callback: InitCallback, state: State) {
     let event_loop = EventLoop::new();
     let svg_set = init(callback);
     let vertices = svg_set.geometry_set.get_vertices();

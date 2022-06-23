@@ -1,6 +1,7 @@
 use glam::{DMat4, DVec2};
 use natura::Spring;
 use regex::{Regex, RegexSet};
+use std::ops::{Deref, DerefMut};
 use std::sync::mpsc::{channel, Sender};
 use std::{
     f64::consts::PI,
@@ -9,7 +10,7 @@ use std::{
 };
 use windowing::tesselation::callback::{IndicesPriority, InitCallback, Initialization};
 use windowing::tesselation::usvg::{Node, NodeExt, NodeKind};
-use windowing::IntoWindowable;
+use windowing::ViewModel;
 
 #[derive(Default)]
 struct LifeGame {
@@ -22,14 +23,30 @@ struct LifeGame {
 
 #[derive(Default)]
 struct LifeGameView {
-    player_avatar_matrices: [SpringMat4; 4],
-    tip_matrix: SpringMat4,
-    player_texts: [String; 4],
-    instruction_text: String,
+    player_avatar_matrices: MutCount<[SpringMat4; 4]>,
+    tip_matrix: MutCount<SpringMat4>,
+    player_texts: MutCount<[String; 4]>,
+    instruction_text: MutCount<String>,
 }
 
-impl IntoWindowable for LifeGameView {
+impl ViewModel for LifeGameView {
+    fn reset_mut_count(&mut self) {
+        self.player_avatar_matrices.reset_mut_count();
+        self.tip_matrix.reset_mut_count();
+        self.player_texts.reset_mut_count();
+        self.instruction_text.reset_mut_count();
+    }
     fn into_bytes(&self) -> Option<Vec<u8>> {
+        let is_mutated = [
+            self.player_avatar_matrices.mut_count,
+            self.tip_matrix.mut_count,
+        ]
+        .iter()
+        .any(|x| x > &0);
+        if is_mutated {
+            return None;
+        }
+
         let mat_4: Vec<DMat4> = self
             .player_avatar_matrices
             .iter()
@@ -39,6 +56,13 @@ impl IntoWindowable for LifeGameView {
         Some(bytemuck::cast_vec(mat_4))
     }
     fn into_texts(&self) -> Option<Vec<(String, String)>> {
+        let is_mutated = [self.player_texts.mut_count, self.instruction_text.mut_count]
+            .iter()
+            .any(|x| x > &0);
+        if is_mutated {
+            return None;
+        }
+
         let texts: Vec<(String, String)> = self
             .player_texts
             .iter()
@@ -90,6 +114,30 @@ struct SpringMat4 {
     current: DMat4,
     velocity: DMat4,
     complete_animation: Option<Sender<()>>,
+}
+
+#[derive(Default)]
+struct MutCount<T> {
+    unwrapped: T,
+    mut_count: u8,
+}
+
+impl<T> MutCount<T> {
+    fn reset_mut_count(&mut self) {
+        self.mut_count = 0
+    }
+}
+impl<T> Deref for MutCount<T> {
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        &self.unwrapped
+    }
+}
+impl<T> DerefMut for MutCount<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.mut_count += 1;
+        &mut self.unwrapped
+    }
 }
 
 impl SpringMat4 {
