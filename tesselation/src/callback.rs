@@ -6,22 +6,19 @@ pub enum IndicesPriority {
     Variable,
 }
 
-pub type OnClickCallback<'a> = Callback<'a, (), ()>;
-
-pub struct Initialization<'a> {
+pub struct Initialization {
     pub indices_priority: IndicesPriority,
-    pub on_click_callback: OnClickCallback<'a>,
 }
-impl Default for Initialization<'_> {
+impl Default for Initialization {
     fn default() -> Self {
         return Self {
             indices_priority: IndicesPriority::Variable,
-            on_click_callback: OnClickCallback::new(|_| {}),
         };
     }
 }
 
-pub type InitCallback<'a> = Callback<'a, Node, Initialization<'a>>;
+pub type InitCallback<'a> = Callback<'a, Node, Initialization>;
+pub type OnClickCallback<'a> = Callback<'a, Node, Initialization>;
 
 pub struct Callback<'a, A, T> {
     func: Box<dyn FnMut(&A) -> T + 'a>,
