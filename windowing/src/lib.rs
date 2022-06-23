@@ -6,6 +6,7 @@ use tesselation::geometry::Rect;
 use tesselation::glam::{Mat4, Vec2};
 use tesselation::init;
 use winit::dpi::PhysicalSize;
+use winit::event::MouseScrollDelta;
 use winit::window::WindowBuilder;
 use winit::{
     event::{Event, WindowEvent},
@@ -90,16 +91,17 @@ pub fn main<State: ViewModel>(callback: InitCallback, state: State) {
                 _ => {}
             },
             Event::WindowEvent {
-                event: WindowEvent::MouseWheel { delta, .. },
+                event:
+                    WindowEvent::MouseWheel {
+                        delta: MouseScrollDelta::PixelDelta(p),
+                        ..
+                    },
                 ..
-            } => match delta {
-                winit::event::MouseScrollDelta::PixelDelta(p) => {
-                    translate *= Mat4::from_translation(
-                        [-p.x as f32 * 1.5 / 1600., -p.y as f32 * 1.5 / 1600., 0.].into(),
-                    );
-                }
-                winit::event::MouseScrollDelta::LineDelta(_, _) => todo!(),
-            },
+            } => {
+                translate *= Mat4::from_translation(
+                    [-p.x as f32 * 1.5 / 1600., -p.y as f32 * 1.5 / 1600., 0.].into(),
+                );
+            }
             Event::WindowEvent {
                 event: WindowEvent::Resized(size),
                 ..
