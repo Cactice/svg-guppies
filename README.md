@@ -73,28 +73,31 @@ flowchart TB;
 
 ### Full
 
-- SVG-GUI-VIEW
+- Layout
 
   1. - [ ] Center a rectangle
-  1. - [ ] Resize a rounded rectangle
+  1. - [ ] Resizable rounded rectangle
 
-- SVG-GUI-CONTROLLER
-
-  1. - [ ] Checkbox
-  1. - [ ] Show Array
+- Array
+  1. - [ ] Show array
   1. - [ ] Modify array
   1. - [ ] Reorder array
 
+- Components
+
+  1. - [ ] Checkbox
+
 - Text
 
-  1. - [ ] Resize a text field with word break
   1. - [ ] Write text
-  1. - [ ] Delete multi-line text
+  1. - [ ] Delete text
+  1. - [ ] Multiline
   1. - [ ] Copy/Paste
+  1. - [ ] Resizable text field with word break
 
 - Scroll
 
-  1. - [ ] Scroll
+  1. - [x] Scroll
 
 - Media
 
@@ -109,7 +112,6 @@ flowchart TB;
 - [ ] Minimal Test
 - [ ] State diff interceptor
 - [ ] SVG code-gen Rust
-- [ ] GPU layout
 
 # Why Gpu
 
