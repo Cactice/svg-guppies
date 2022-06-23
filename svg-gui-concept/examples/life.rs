@@ -1,6 +1,7 @@
 use glam::{DMat4, DVec2};
 use natura::Spring;
 use regex::{Regex, RegexSet};
+use std::iter;
 use std::ops::{Deref, DerefMut};
 use std::sync::mpsc::{channel, Sender};
 use std::{
@@ -27,6 +28,7 @@ struct LifeGameView {
     tip_matrix: MutCount<SpringMat4>,
     player_texts: MutCount<[String; 4]>,
     instruction_text: MutCount<String>,
+    life_game: LifeGame,
 }
 
 impl ViewModel for LifeGameView {
@@ -47,10 +49,8 @@ impl ViewModel for LifeGameView {
             return None;
         }
 
-        let mat_4: Vec<DMat4> = self
-            .player_avatar_matrices
-            .iter()
-            .map(|m| m.current)
+        let mat_4 = iter::empty::<DMat4>()
+            .chain(self.player_avatar_matrices.iter().map(|m| m.current))
             .chain([self.tip_matrix.current])
             .collect();
         Some(bytemuck::cast_vec(mat_4))
@@ -63,11 +63,13 @@ impl ViewModel for LifeGameView {
             return None;
         }
 
-        let texts: Vec<(String, String)> = self
-            .player_texts
-            .iter()
-            .enumerate()
-            .map(|(i, m)| (format!("{}. Player #dynamicText", i), m.to_owned()))
+        let texts = iter::empty::<(String, String)>()
+            .chain(
+                self.player_texts
+                    .iter()
+                    .enumerate()
+                    .map(|(i, m)| (format!("{}. Player #dynamicText", i), m.to_owned())),
+            )
             .chain([(
                 "instruction #dynamicText".to_string(),
                 self.instruction_text.clone(),

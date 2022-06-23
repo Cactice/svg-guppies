@@ -6,7 +6,7 @@ use crate::{
 use glam::{DVec2, Vec2, Vec4};
 use lyon::lyon_tessellation::{FillVertex, StrokeVertex, VertexBuffers};
 use roxmltree::{Document, NodeId};
-use std::{collections::HashMap, ops::Range, sync::Arc};
+use std::{collections::HashMap, iter, ops::Range, sync::Arc};
 use usvg::{fontdb::Source, NodeKind, Options, Path, PathBbox, Tree};
 use xmlwriter::XmlWriter;
 pub type Index = u32;
@@ -103,11 +103,10 @@ pub struct GeometrySet {
 impl GeometrySet {
     fn get_geometries_at_position(&self, position: &Vec2) -> Geometries {
         // TODO: The performance can be improved so much by only checking clickable
-        // but IDK how to keep a reference of Geometries
+        // but IDK how to keep a reference of such Geometries and I imagine this is fast enough
         Geometries(
-            self.fixed_geometries
-                .0
-                .iter()
+            iter::empty::<&Geometry>()
+                .chain(self.fixed_geometries.0.iter())
                 .chain(self.variable_geometries.0.iter())
                 .filter(|g| g.bbox.contains_point(position))
                 .cloned()
@@ -185,6 +184,7 @@ impl GeometrySet {
         geometries.0.push(geometry);
     }
 }
+
 #[derive(Clone, Default, Debug)]
 pub struct Geometries(Vec<Geometry>);
 impl Geometries {
