@@ -228,7 +228,7 @@ impl RegexPatterns {
 
 fn main() {
     let mut position_to_dollar: Vec<i32> = vec![];
-    let mut position_to_cordinates: Vec<DVec2> = vec![];
+    let mut position_to_coordinates: Vec<DVec2> = vec![];
     let mut regex_patterns = RegexPatterns::default();
     let _clickable_regex_pattern = regex_patterns.add(r"#clickable(?:$| |#)");
     let _dynamic_regex_pattern = regex_patterns.add(r"#dynamic(?:$| |#)");
@@ -246,10 +246,10 @@ fn main() {
                 DVec2::new(bbox.x() + bbox.width() / 2., bbox.y() + bbox.height() / 2.);
             if stop >= position_to_dollar.len() {
                 position_to_dollar.resize(stop, dollar);
-                position_to_cordinates.resize(stop, coordinate);
+                position_to_coordinates.resize(stop, coordinate);
             }
             position_to_dollar.insert(stop, dollar);
-            position_to_cordinates.insert(stop, coordinate);
+            position_to_coordinates.insert(stop, coordinate);
         }
         let default_matches = defaults.matches(id);
         if !default_matches.matched(dynamic_text_regex_pattern.index) {
