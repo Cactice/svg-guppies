@@ -101,7 +101,7 @@ pub struct GeometrySet {
 }
 
 impl GeometrySet {
-    fn get_geometries_at_position(&self, position: &Vec2) -> Geometries {
+    pub fn get_geometries_at_position(&self, position: &Vec2) -> Geometries {
         // TODO: The performance can be improved so much by only checking clickable
         // but IDK how to keep a reference of such Geometries and I imagine this is fast enough
         Geometries(
@@ -186,8 +186,11 @@ impl GeometrySet {
 }
 
 #[derive(Clone, Default, Debug)]
-pub struct Geometries(Vec<Geometry>);
+pub struct Geometries(pub Vec<Geometry>);
 impl Geometries {
+    pub fn get_tag_names(&self) -> Vec<Vec<String>> {
+        self.0.iter().map(|a| a.ids.clone()).collect()
+    }
     pub fn get_vertices(&self) -> Vertices {
         self.0.iter().flat_map(|v| v.get_v()).collect()
     }

@@ -1,4 +1,4 @@
-use glam::{DMat4, DVec2};
+use glam::{DMat4, DVec2, Mat4, Vec2};
 use natura::Spring;
 use regex::{Regex, RegexSet};
 use std::iter;
@@ -10,8 +10,10 @@ use std::{
     iter::zip,
 };
 use windowing::tesselation::callback::{IndicesPriority, InitCallback, Initialization};
+use windowing::tesselation::geometry::SvgSet;
 use windowing::tesselation::usvg::{Node, NodeExt, NodeKind};
-use windowing::ViewModel;
+use windowing::winit::event::{ElementState, MouseScrollDelta, WindowEvent};
+use windowing::{pollster, ViewModel};
 
 #[derive(Default)]
 struct LifeGame {
@@ -24,24 +26,26 @@ struct LifeGame {
 
 #[derive(Default)]
 struct LifeGameView {
-    player_avatar_matrices: MutCount<[SpringMat4; 4]>,
-    tip_matrix: MutCount<SpringMat4>,
+    player_avatar_transforms: MutCount<[SpringMat4; 4]>,
+    global_transform: MutCount<DMat4>,
+    tip_transform: MutCount<SpringMat4>,
     player_texts: MutCount<[String; 4]>,
     instruction_text: MutCount<String>,
     life_game: LifeGame,
+    mouse_position: Vec2,
 }
 
 impl ViewModel for LifeGameView {
     fn reset_mut_count(&mut self) {
-        self.player_avatar_matrices.reset_mut_count();
-        self.tip_matrix.reset_mut_count();
+        self.player_avatar_transforms.reset_mut_count();
+        self.tip_transform.reset_mut_count();
         self.player_texts.reset_mut_count();
         self.instruction_text.reset_mut_count();
     }
     fn into_bytes(&self) -> Option<Vec<u8>> {
         let is_mutated = [
-            self.player_avatar_matrices.mut_count,
-            self.tip_matrix.mut_count,
+            self.player_avatar_transforms.mut_count,
+            self.tip_transform.mut_count,
         ]
         .iter()
         .any(|x| x > &0);
@@ -49,11 +53,12 @@ impl ViewModel for LifeGameView {
             return None;
         }
 
-        let mat_4 = iter::empty::<DMat4>()
-            .chain(self.player_avatar_matrices.iter().map(|m| m.current))
-            .chain([self.tip_matrix.current])
+        let mat_4: Vec<DMat4> = iter::empty::<DMat4>()
+            .chain([self.global_transform.unwrapped])
+            .chain(self.player_avatar_transforms.iter().map(|m| m.current))
+            .chain([self.tip_transform.current])
             .collect();
-        Some(bytemuck::cast_vec(mat_4))
+        Some(bytemuck::cast_slice(mat_4.as_slice()).to_vec())
     }
     fn into_texts(&self) -> Option<Vec<(String, String)>> {
         let is_mutated = [self.player_texts.mut_count, self.instruction_text.mut_count]
@@ -77,13 +82,43 @@ impl ViewModel for LifeGameView {
             .collect();
         Some(texts)
     }
+    fn on_event(&mut self, svg_set: &SvgSet, event: WindowEvent) {
+        match event {
+            WindowEvent::CursorMoved { position, .. } => {
+                self.mouse_position = Vec2::new(position.x as f32, position.y as f32)
+            }
+            WindowEvent::MouseInput {
+                state: ElementState::Pressed,
+                ..
+            } => {
+                let tip_clicked = svg_set
+                    .geometry_set
+                    .get_geometries_at_position(&self.mouse_position)
+                    .get_tag_names()
+                    .iter()
+                    .any(|ids| ids.iter().any(|id| id.contains("Tip")));
+                if tip_clicked {
+                    pollster::block_on(self.tip_clicked())
+                }
+            }
+            WindowEvent::MouseWheel {
+                delta: MouseScrollDelta::PixelDelta(p),
+                ..
+            } => {
+                self.global_transform.unwrapped *=
+                    DMat4::from_translation([-p.x / 1600., -p.y / 1600., 0.].into());
+            }
+            _ => (),
+        }
+    }
 }
 
 impl LifeGameView {
-    async fn roulette_clicked(&mut self, life_game: &mut LifeGame) {
-        if self.tip_matrix.complete_animation.is_some()
+    async fn tip_clicked(&mut self) {
+        let life_game = &mut self.life_game;
+        if self.tip_transform.complete_animation.is_some()
             || self
-                .player_avatar_matrices
+                .player_avatar_transforms
                 .iter()
                 .any(|spring| spring.complete_animation.is_some())
         {
@@ -91,12 +126,12 @@ impl LifeGameView {
         }
 
         let one_sixths_spins = LifeGame::spin_roulette();
-        self.tip_matrix
+        self.tip_transform
             .spring_to(DMat4::from_rotation_z(one_sixths_spins as f64 * PI / 3.))
             .await;
 
         life_game.proceed(one_sixths_spins);
-        self.player_avatar_matrices[life_game.current_player]
+        self.player_avatar_transforms[life_game.current_player]
             .spring_to(DMat4::from_translation(
                 (
                     life_game.position_to_coordinates[life_game.position[life_game.current_player]],

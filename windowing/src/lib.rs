@@ -1,12 +1,12 @@
 mod setup;
+pub use pollster;
 use setup::Setup;
 pub use tesselation;
 use tesselation::callback::InitCallback;
-use tesselation::geometry::Rect;
+use tesselation::geometry::{Rect, SvgSet};
 use tesselation::glam::{Mat4, Vec2};
-use tesselation::init;
+pub use winit;
 use winit::dpi::PhysicalSize;
-use winit::event::MouseScrollDelta;
 use winit::window::WindowBuilder;
 use winit::{
     event::{Event, WindowEvent},
@@ -29,11 +29,12 @@ pub trait ViewModel {
     fn into_bytes(&self) -> Option<Vec<u8>>;
     fn into_texts(&self) -> Option<Vec<(String, String)>>;
     fn reset_mut_count(&mut self);
+    fn on_event(&mut self, svg_set: &SvgSet, event: WindowEvent);
 }
 
-pub fn main<State: ViewModel>(callback: InitCallback, state: State) {
+pub fn main<V: ViewModel + 'static>(callback: InitCallback, mut view_model: V) {
     let event_loop = EventLoop::new();
-    let svg_set = init(callback);
+    let svg_set = SvgSet::new(include_str!("../../svg/life_text.svg"), callback);
     let vertices = svg_set.geometry_set.get_vertices();
     let indices = svg_set.geometry_set.get_indices();
     let Rect {
@@ -90,26 +91,14 @@ pub fn main<State: ViewModel>(callback: InitCallback, state: State) {
                 }
                 _ => {}
             },
-            Event::WindowEvent {
-                event:
-                    WindowEvent::MouseWheel {
-                        delta: MouseScrollDelta::PixelDelta(p),
-                        ..
-                    },
-                ..
-            } => {
-                translate *= Mat4::from_translation(
-                    [-p.x as f32 * 1.5 / 1600., -p.y as f32 * 1.5 / 1600., 0.].into(),
-                );
-            }
-            Event::WindowEvent {
-                event: WindowEvent::Resized(size),
-                ..
-            } => {
-                if let Some(redraw) = redraw.as_mut() {
-                    Setup::resize(size, &redraw.device, &redraw.surface, &mut redraw.config);
-                    scale = get_scale(size, svg_scale);
+            Event::WindowEvent { event, .. } => {
+                match event {
+                    WindowEvent::CloseRequested => {
+                        *control_flow = ControlFlow::Exit;
+                    }
+                    _ => {}
                 }
+                view_model.on_event(&svg_set, event);
             }
             Event::RedrawRequested(_) => {
                 if let (Some(mut redraw), Some(window)) = (redraw.as_mut(), window.as_mut()) {
@@ -118,10 +107,6 @@ pub fn main<State: ViewModel>(callback: InitCallback, state: State) {
                     window.request_redraw();
                 }
             }
-            Event::WindowEvent {
-                event: WindowEvent::CloseRequested,
-                ..
-            } => *control_flow = ControlFlow::Exit,
             _ => {}
         }
     });

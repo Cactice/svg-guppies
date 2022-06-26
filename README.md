@@ -33,7 +33,7 @@ Designs created on figma can be considered a test case for a specific state.
 Generate code from SVG
 
 - ID list
-- Directives: @Clickable, @Component, @State, @NoScroll, etc...
+- Directives: @Clickable, @Component, @State, @Scroll, etc...
 
 # Architecture
 
@@ -130,3 +130,4 @@ https://makepad.dev/
 - GPU vector rendering: https://developer.nvidia.com/gpugems/gpugems3/part-iv-image-effects/chapter-25-rendering-vector-art-gpu
 - Rust api guidelines: https://rust-lang.github.io/api-guidelines/about.html
 - rust-analyzer guidelines: https://github.com/rust-analyzer/rust-analyzer/blob/master/docs/dev/style.md#getters--setters
+- vector-texture: https://wdobbie.com/post/gpu-text-rendering-with-vector-textures/
