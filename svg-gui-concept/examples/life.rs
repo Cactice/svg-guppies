@@ -1,19 +1,20 @@
-use glam::{DMat4, DVec2, Mat4, Vec2};
+use glam::{DVec2, Mat4, Vec2};
 use natura::Spring;
 use regex::{Regex, RegexSet};
 use std::iter;
 use std::ops::{Deref, DerefMut};
 use std::sync::mpsc::{channel, Sender};
 use std::{
-    f64::consts::PI,
+    f32::consts::PI,
     hash::{BuildHasher, Hasher},
     iter::zip,
 };
 use windowing::tesselation::callback::{IndicesPriority, InitCallback, Initialization};
 use windowing::tesselation::geometry::SvgSet;
 use windowing::tesselation::usvg::{Node, NodeExt, NodeKind};
+use windowing::winit::dpi::PhysicalSize;
 use windowing::winit::event::{ElementState, MouseScrollDelta, WindowEvent};
-use windowing::{pollster, ViewModel};
+use windowing::{get_scale, pollster, ViewModel};
 
 #[derive(Default)]
 struct LifeGame {
@@ -27,7 +28,7 @@ struct LifeGame {
 #[derive(Default)]
 struct LifeGameView {
     player_avatar_transforms: MutCount<[SpringMat4; 4]>,
-    global_transform: MutCount<DMat4>,
+    global_transform: MutCount<Mat4>,
     tip_transform: MutCount<SpringMat4>,
     player_texts: MutCount<[String; 4]>,
     instruction_text: MutCount<String>,
@@ -53,7 +54,7 @@ impl ViewModel for LifeGameView {
             return None;
         }
 
-        let mat_4: Vec<DMat4> = iter::empty::<DMat4>()
+        let mat_4: Vec<Mat4> = iter::empty::<Mat4>()
             .chain([self.global_transform.unwrapped])
             .chain(self.player_avatar_transforms.iter().map(|m| m.current))
             .chain([self.tip_transform.current])
@@ -91,22 +92,23 @@ impl ViewModel for LifeGameView {
                 state: ElementState::Pressed,
                 ..
             } => {
-                let tip_clicked = svg_set
-                    .geometry_set
-                    .get_geometries_at_position(&self.mouse_position)
-                    .get_tag_names()
-                    .iter()
-                    .any(|ids| ids.iter().any(|id| id.contains("Tip")));
-                if tip_clicked {
-                    pollster::block_on(self.tip_clicked())
-                }
+                dbg!(&self.mouse_position);
+                // let tip_clicked = svg_set
+                //     .geometry_set
+                //     .get_geometries_at_position(&self.mouse_position)
+                //     .get_tag_names()
+                //     .iter()
+                //     .any(|ids| ids.iter().any(|id| id.contains("Tip")));
+                // if tip_clicked {
+                pollster::block_on(self.tip_clicked())
+                // }
             }
             WindowEvent::MouseWheel {
                 delta: MouseScrollDelta::PixelDelta(p),
                 ..
             } => {
                 self.global_transform.unwrapped *=
-                    DMat4::from_translation([-p.x / 1600., -p.y / 1600., 0.].into());
+                    Mat4::from_translation([(-p.x) as f32, (p.y) as f32, 0. as f32].into());
             }
             _ => (),
         }
@@ -127,15 +129,16 @@ impl LifeGameView {
 
         let one_sixths_spins = LifeGame::spin_roulette();
         self.tip_transform
-            .spring_to(DMat4::from_rotation_z(one_sixths_spins as f64 * PI / 3.))
+            .spring_to(Mat4::from_rotation_z(one_sixths_spins as f32 * PI / 3.))
             .await;
 
         life_game.proceed(one_sixths_spins);
         self.player_avatar_transforms[life_game.current_player]
-            .spring_to(DMat4::from_translation(
+            .spring_to(Mat4::from_translation(
                 (
-                    life_game.position_to_coordinates[life_game.position[life_game.current_player]],
-                    0.0,
+                    life_game.position_to_coordinates[life_game.position[life_game.current_player]]
+                        .as_vec2(),
+                    0.0 as f32,
                 )
                     .into(),
             ))
@@ -147,9 +150,9 @@ impl LifeGameView {
 #[derive(Default)]
 struct SpringMat4 {
     spring: Spring,
-    target: DMat4,
-    current: DMat4,
-    velocity: DMat4,
+    target: Mat4,
+    current: Mat4,
+    velocity: Mat4,
     complete_animation: Option<Sender<()>>,
 }
 
@@ -162,6 +165,14 @@ struct MutCount<T> {
 impl<T> MutCount<T> {
     fn reset_mut_count(&mut self) {
         self.mut_count = 0
+    }
+}
+impl<T> From<T> for MutCount<T> {
+    fn from(unwrapped: T) -> Self {
+        return Self {
+            unwrapped,
+            mut_count: 0,
+        };
     }
 }
 impl<T> Deref for MutCount<T> {
@@ -178,7 +189,7 @@ impl<T> DerefMut for MutCount<T> {
 }
 
 impl SpringMat4 {
-    async fn spring_to(&mut self, target: DMat4) {
+    async fn spring_to(&mut self, target: Mat4) {
         self.target = target;
         let (sender, receiver) = channel::<()>();
         self.complete_animation = Some(sender);
@@ -192,10 +203,14 @@ impl SpringMat4 {
             self.target.to_cols_array(),
         )
         .for_each(|((mut current_position, mut vel), target)| {
-            (current_position, vel) = self.spring.update(current_position, vel, target);
+            let (new_current_position, new_vel) =
+                self.spring
+                    .update(current_position as f64, vel as f64, target as f64);
+            current_position = new_current_position as f32;
+            vel = new_vel as f32;
         });
         let animating_complete = self.current.abs_diff_eq(self.target, 0.1)
-            && self.velocity.abs_diff_eq(DMat4::ZERO, 0.01);
+            && self.velocity.abs_diff_eq(Mat4::IDENTITY, 0.01);
         if let Some(animating_completed) = self.complete_animation.clone() {
             animating_completed.send(()).unwrap();
         }
@@ -296,6 +311,14 @@ fn main() {
         Initialization::default()
     };
     let callback = InitCallback::new(callback_fn);
-    let life_view = LifeGameView::default();
-    windowing::main::<LifeGameView>(callback, life_view);
+    let svg_set = SvgSet::new(include_str!("../../svg/life_text.svg"), callback);
+    let svg_scale = svg_set.bbox.size;
+
+    let scale: Mat4 = get_scale(PhysicalSize::<u32>::new(1600, 1200), svg_scale);
+    let translate = Mat4::from_translation([-1., 1.0, 0.0].into());
+    let life_view = LifeGameView {
+        global_transform: (translate * scale).into(),
+        ..Default::default()
+    };
+    windowing::main::<LifeGameView>(svg_set, life_view);
 }

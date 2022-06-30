@@ -2,8 +2,8 @@ mod setup;
 pub use pollster;
 use setup::Setup;
 pub use tesselation;
-use tesselation::callback::InitCallback;
 use tesselation::geometry::{Rect, SvgSet};
+pub use tesselation::glam;
 use tesselation::glam::{Mat4, Vec2};
 pub use winit;
 use winit::dpi::PhysicalSize;
@@ -13,7 +13,7 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
 };
 
-fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
+pub fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
     let ratio = f32::min(1200_f32, 1600_f32) / f32::max(svg_scale.x, svg_scale.y);
     Mat4::from_scale(
         [
@@ -32,16 +32,10 @@ pub trait ViewModel {
     fn on_event(&mut self, svg_set: &SvgSet, event: WindowEvent);
 }
 
-pub fn main<V: ViewModel + 'static>(callback: InitCallback, mut view_model: V) {
+pub fn main<V: ViewModel + 'static>(svg_set: SvgSet<'static>, mut view_model: V) {
     let event_loop = EventLoop::new();
-    let svg_set = SvgSet::new(include_str!("../../svg/life_text.svg"), callback);
     let vertices = svg_set.geometry_set.get_vertices();
     let indices = svg_set.geometry_set.get_indices();
-    let Rect {
-        size: svg_scale, ..
-    } = svg_set.bbox;
-    let mut translate = Mat4::IDENTITY;
-    let mut scale = Mat4::IDENTITY;
     let mut redraw = None;
     let mut window = None;
 
@@ -73,9 +67,12 @@ pub fn main<V: ViewModel + 'static>(callback: InitCallback, mut view_model: V) {
                             })
                             .expect("Couldn't append canvas to document body");
                     }
-                    let transform: Mat4 = translate * scale;
-                    let setup =
-                        pollster::block_on(Setup::new(&window, transform, &vertices, &indices));
+                    let setup = pollster::block_on(Setup::new(
+                        &window,
+                        Mat4::IDENTITY,
+                        &vertices,
+                        &indices,
+                    ));
                     let Setup {
                         redraw: some_redraw,
                         adapter,
@@ -86,8 +83,6 @@ pub fn main<V: ViewModel + 'static>(callback: InitCallback, mut view_model: V) {
                     redraw = Some(some_redraw);
 
                     let win_size = window.inner_size();
-                    translate = Mat4::from_translation([-1., 1.0, 0.0].into());
-                    scale = get_scale(win_size, svg_scale);
                 }
                 _ => {}
             },
@@ -102,9 +97,11 @@ pub fn main<V: ViewModel + 'static>(callback: InitCallback, mut view_model: V) {
             }
             Event::RedrawRequested(_) => {
                 if let (Some(mut redraw), Some(window)) = (redraw.as_mut(), window.as_mut()) {
-                    redraw.transform = translate * scale;
-                    Setup::redraw(&redraw, [Mat4::IDENTITY; 2048].to_vec());
-                    window.request_redraw();
+                    if let Some(mut texture) = view_model.into_bytes() {
+                        texture.resize(8192 * 16, 0);
+                        Setup::redraw(&redraw, &texture[..]);
+                        window.request_redraw();
+                    }
                 }
             }
             _ => {}

@@ -127,7 +127,7 @@ impl Setup {
         config.height = size.height;
         surface.configure(device, config);
     }
-    pub fn redraw(redraw: &Redraw, transforms: Vec<Mat4>) {
+    pub fn redraw(redraw: &Redraw, texture: &[u8]) {
         let Redraw {
             transform,
             device,
@@ -194,7 +194,7 @@ impl Setup {
         );
         queue.write_texture(
             transform_texture.as_image_copy(),
-            bytemuck::cast_slice(transforms.as_slice()),
+            texture,
             wgpu::ImageDataLayout::default(),
             TRANSFORM_TEXTURE_SIZE,
         );
