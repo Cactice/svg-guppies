@@ -1,4 +1,4 @@
-use glam::{DVec2, Mat4, Vec2};
+use glam::{DVec2, Mat4, Vec2, Vec3};
 use natura::Spring;
 use regex::{Regex, RegexSet};
 use std::iter;
@@ -34,6 +34,7 @@ struct LifeGameView {
     instruction_text: MutCount<String>,
     life_game: LifeGame,
     mouse_position: Vec2,
+    mouse_down: Option<Vec2>,
 }
 
 impl ViewModel for LifeGameView {
@@ -86,29 +87,38 @@ impl ViewModel for LifeGameView {
     fn on_event(&mut self, svg_set: &SvgSet, event: WindowEvent) {
         match event {
             WindowEvent::CursorMoved { position, .. } => {
-                self.mouse_position = Vec2::new(position.x as f32, position.y as f32)
+                let new_position = Vec2::new(position.x as f32, position.y as f32);
+                if self.mouse_down.is_some() {
+                    let motion = new_position - self.mouse_position;
+                    self.global_transform.unwrapped *=
+                        Mat4::from_translation(Vec3::from((motion.x, motion.y, 0. as f32)))
+                }
+                self.mouse_position = new_position
+            }
+            WindowEvent::MouseInput {
+                state: ElementState::Released,
+                ..
+            } => {
+                self.mouse_down = None;
             }
             WindowEvent::MouseInput {
                 state: ElementState::Pressed,
                 ..
-            } => {
-                dbg!(&self.mouse_position);
-                // let tip_clicked = svg_set
-                //     .geometry_set
-                //     .get_geometries_at_position(&self.mouse_position)
-                //     .get_tag_names()
-                //     .iter()
-                //     .any(|ids| ids.iter().any(|id| id.contains("Tip")));
-                // if tip_clicked {
-                pollster::block_on(self.tip_clicked())
-                // }
-            }
+            } => self.mouse_down = Some(self.mouse_position),
             WindowEvent::MouseWheel {
                 delta: MouseScrollDelta::PixelDelta(p),
                 ..
             } => {
-                self.global_transform.unwrapped *=
-                    Mat4::from_translation([(-p.x) as f32, (p.y) as f32, 0. as f32].into());
+                if p.y != 0. {
+                    self.global_transform.unwrapped = Mat4::from_scale(
+                        [
+                            1. + (1. / (p.y as f32)),
+                            1. + (1. / (p.y as f32)),
+                            1. as f32,
+                        ]
+                        .into(),
+                    ) * self.global_transform.unwrapped;
+                }
             }
             _ => (),
         }
