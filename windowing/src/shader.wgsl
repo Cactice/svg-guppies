@@ -14,7 +14,7 @@ struct VertexOutput {
 @group(0) @binding(0) var<uniform> u: Uniform;
 @group(0) @binding(1) var transform_texture : texture_1d<f32>;
 
-@stage(vertex)
+@vertex
 fn vs_main(
         model: VertexInput,
 ) -> VertexOutput {
@@ -29,7 +29,7 @@ fn vs_main(
     return out;
 }
 
-@stage(fragment)
+@fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     return in.color;
 }

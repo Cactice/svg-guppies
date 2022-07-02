@@ -5,13 +5,13 @@ edition = "2021"
 
 [dependencies]
 winit = "0.26.1"
-wgpu = { git = "https://github.com/gfx-rs/wgpu" }     #0.13
+wgpu = "0.13.0"                                       #0.13
 pollster = "0.2"
 bytemuck = { version = "1.8", features = ["derive"] }
 tesselation = { path = "../tesselation" }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wgpu = { git = "https://github.com/gfx-rs/wgpu", features = ["webgl"] } #0.13
+wgpu = { version = "0.13.0", features = ["webgl"] } #0.13
 web-sys = "0.3.57"
 console_error_panic_hook = "0.1.7"
 console_log = { version = "0.2" }
