@@ -104,7 +104,9 @@ impl ViewModel for LifeGameView {
             WindowEvent::MouseInput {
                 state: ElementState::Pressed,
                 ..
-            } => self.mouse_down = Some(self.mouse_position),
+            } => {
+                self.mouse_down = Some(self.mouse_position);
+            }
             WindowEvent::MouseWheel {
                 delta: MouseScrollDelta::PixelDelta(p),
                 ..
