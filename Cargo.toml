@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["svg-gui-concept", "windowing", "tesselation", "run-wasm"]
+members = ["concept", "windowing", "tesselation", "run-wasm"]
 
 [profile.release]
 lto = true
