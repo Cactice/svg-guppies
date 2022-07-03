@@ -241,6 +241,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "concept"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "enumflags2",
+ "glam",
+ "regex",
+ "windowing",
+]
+
+[[package]]
 name = "console_error_panic_hook"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -956,11 +967,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "natura"
-version = "0.1.0"
-source = "git+https://github.com/ziyasal/natura#15421c2dd9b55e2745ecd1c8d06d9ede93abcf3d"
-
-[[package]]
 name = "ndk"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1403,18 +1409,6 @@ name = "strsim"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
-
-[[package]]
-name = "svg-gui-concept"
-version = "0.1.0"
-dependencies = [
- "bytemuck",
- "enumflags2",
- "glam",
- "natura",
- "regex",
- "windowing",
-]
 
 [[package]]
 name = "svgtypes"

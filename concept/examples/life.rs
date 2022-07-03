@@ -1,5 +1,4 @@
 use glam::{DVec2, Mat4, Vec2, Vec3};
-use natura::Spring;
 use regex::{Regex, RegexSet};
 use std::iter;
 use std::ops::{Deref, DerefMut};
@@ -14,7 +13,7 @@ use windowing::tesselation::geometry::SvgSet;
 use windowing::tesselation::usvg::{Node, NodeExt, NodeKind};
 use windowing::winit::dpi::PhysicalSize;
 use windowing::winit::event::{ElementState, MouseScrollDelta, WindowEvent};
-use windowing::{get_scale, pollster, ViewModel};
+use windowing::{get_scale, ViewModel};
 
 #[derive(Default)]
 struct LifeGame {
@@ -105,6 +104,7 @@ impl ViewModel for LifeGameView {
                 state: ElementState::Pressed,
                 ..
             } => {
+                // pollster::block_on(self.tip_clicked());
                 self.mouse_down = Some(self.mouse_position);
             }
             WindowEvent::MouseWheel {
@@ -141,31 +141,40 @@ impl LifeGameView {
 
         let one_sixths_spins = LifeGame::spin_roulette();
         self.tip_transform
-            .spring_to(Mat4::from_rotation_z(one_sixths_spins as f32 * PI / 3.))
-            .await;
+            .spring_to(Mat4::from_rotation_z(one_sixths_spins as f32 * PI / 3.));
 
         life_game.proceed(one_sixths_spins);
-        self.player_avatar_transforms[life_game.current_player]
-            .spring_to(Mat4::from_translation(
-                (
-                    life_game.position_to_coordinates[life_game.position[life_game.current_player]]
-                        .as_vec2(),
-                    0.0 as f32,
-                )
-                    .into(),
-            ))
-            .await;
+        self.player_avatar_transforms[life_game.current_player].spring_to(Mat4::from_translation(
+            (
+                life_game.position_to_coordinates[life_game.position[life_game.current_player]]
+                    .as_vec2(),
+                0.0 as f32,
+            )
+                .into(),
+        ));
         life_game.finish_turn()
     }
 }
 
-#[derive(Default)]
 struct SpringMat4 {
     spring: Spring,
     target: Mat4,
     current: Mat4,
     velocity: Mat4,
     complete_animation: Option<Sender<()>>,
+}
+
+impl Default for SpringMat4 {
+    fn default() -> Self {
+        Self {
+            spring: Spring::new(
+                DeltaTime(natura::fps(60)),
+                AngularFrequency(6.0),
+                DampingRatio(0.5),
+            ),
+            ..Default::default()
+        }
+    }
 }
 
 #[derive(Default)]
@@ -201,7 +210,7 @@ impl<T> DerefMut for MutCount<T> {
 }
 
 impl SpringMat4 {
-    async fn spring_to(&mut self, target: Mat4) {
+    fn spring_to(&mut self, target: Mat4) {
         self.target = target;
         let (sender, receiver) = channel::<()>();
         self.complete_animation = Some(sender);
@@ -210,17 +219,26 @@ impl SpringMat4 {
         if is_err { /* TODO: How to handle this...?*/ }
     }
     fn update(&mut self) -> bool {
-        zip(
+        let iter = zip(
             zip(self.current.to_cols_array(), self.velocity.to_cols_array()),
             self.target.to_cols_array(),
         )
-        .for_each(|((mut current_position, mut vel), target)| {
+        .map(|((mut current_position, mut vel), target)| {
             let (new_current_position, new_vel) =
                 self.spring
                     .update(current_position as f64, vel as f64, target as f64);
             current_position = new_current_position as f32;
             vel = new_vel as f32;
+            (current_position, vel)
         });
+        let iter2 = iter.clone();
+        let current =
+            Mat4::from_cols_array(&iter.map(|x| x.0).collect::<Vec<f32>>().try_into().unwrap());
+        let velocity =
+            Mat4::from_cols_array(&iter.map(|x| x.1).collect::<Vec<f32>>().try_into().unwrap());
+        self.current = current;
+        self.velocity = velocity;
+
         let animating_complete = self.current.abs_diff_eq(self.target, 0.1)
             && self.velocity.abs_diff_eq(Mat4::IDENTITY, 0.01);
         if let Some(animating_completed) = self.complete_animation.clone() {
