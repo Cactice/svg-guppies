@@ -1,17 +1,23 @@
 use glam::Mat4;
 use natura::{AngularFrequency, DampingRatio, DeltaTime, Spring};
+use std::default::Default;
 use std::{
     iter::zip,
     ops::{Deref, DerefMut},
-    sync::mpsc::{channel, Sender},
+    sync::{
+        mpsc::{channel, Sender},
+        RwLock,
+    },
+    thread::{sleep, spawn},
+    time::Duration,
 };
 
 pub struct SpringMat4 {
     spring: Spring,
     target: Mat4,
-    pub current: Mat4,
+    pub current: RwLock<Mat4>,
     velocity: Mat4,
-    pub complete_animation: Option<Sender<()>>,
+    pub is_animating: bool,
 }
 impl Default for SpringMat4 {
     fn default() -> Self {
@@ -21,7 +27,7 @@ impl Default for SpringMat4 {
                 AngularFrequency(6.0),
                 DampingRatio(0.5),
             ),
-            complete_animation: None,
+            is_animating: false,
             current: Default::default(),
             target: Default::default(),
             velocity: Default::default(),
@@ -30,41 +36,55 @@ impl Default for SpringMat4 {
 }
 
 impl SpringMat4 {
-    pub async fn spring_to(&mut self, target: Mat4) {
+    pub fn spring_to(&mut self, target: Mat4) {
         self.target = target;
-        let (sender, receiver) = channel::<()>();
-        self.complete_animation = Some(sender);
-        let is_err = receiver.recv().is_err();
-        self.complete_animation = None;
-        if is_err { /* TODO: How to handle this...?*/ }
+        self.is_animating = true;
+        self.update();
+        self.is_animating = false;
     }
-    fn update(&mut self) -> bool {
+    fn update(&mut self) {
+        let current = self.current.get_mut().unwrap();
+        let mut current_position_vec = vec![];
+        let mut vel_vec = vec![];
         zip(
-            zip(self.current.to_cols_array(), self.velocity.to_cols_array()),
+            zip(current.to_cols_array(), self.velocity.to_cols_array()),
             self.target.to_cols_array(),
         )
         .for_each(|((mut current_position, mut vel), target)| {
             let (new_current_position, new_vel) =
                 self.spring
                     .update(current_position as f64, vel as f64, target as f64);
-            current_position = new_current_position as f32;
-            vel = new_vel as f32;
+            current_position_vec.push(new_current_position as f32);
+            vel_vec.push(new_vel as f32);
         });
-        let animating_complete = self.current.abs_diff_eq(self.target, 0.1)
-            && self.velocity.abs_diff_eq(Mat4::IDENTITY, 0.01);
-        if let Some(animating_completed) = self.complete_animation.clone() {
-            animating_completed.send(()).unwrap();
+
+        *current = Mat4::from_cols_array(&current_position_vec.try_into().unwrap());
+        self.velocity = Mat4::from_cols_array(&vel_vec.try_into().unwrap());
+
+        let animating_complete = current.abs_diff_eq(self.target, 0.1);
+        // && self.velocity.abs_diff_eq(Mat4::IDENTITY, 0.01);
+        // dbg!(self.velocity.abs_diff_eq(Mat4::IDENTITY, 0.1));
+        dbg!(current.abs_diff_eq(self.target, 0.1));
+        if !animating_complete {
+            sleep(Duration::from_millis(17));
+            self.update();
         }
-        self.complete_animation = None;
-        animating_complete
     }
 }
 
-#[derive(Default)]
 pub struct MutCount<T> {
     pub unwrapped: T, //TODO: remove pub
     pub mut_count: u8,
 }
+impl<T: std::default::Default> Default for MutCount<T> {
+    fn default() -> Self {
+        Self {
+            unwrapped: Default::default(),
+            mut_count: 1,
+        }
+    }
+}
+
 impl<T> MutCount<T> {
     pub fn reset_mut_count(&mut self) {
         self.mut_count = 0

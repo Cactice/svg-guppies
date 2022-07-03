@@ -24,8 +24,13 @@ fn vs_main(
     var t2 = textureLoad(transform_texture,1,0);
     var t3 = textureLoad(transform_texture,2,0);
     var t4 = textureLoad(transform_texture,3,0);
+    var s1 = textureLoad(transform_texture,4,0);
+    var s2 = textureLoad(transform_texture,5,0);
+    var s3 = textureLoad(transform_texture,6,0);
+    var s4 = textureLoad(transform_texture,7,0);
     var texture_transform = mat4x4<f32>(t1,t2,t3,t4);
-    out.clip_position =texture_transform*vec4<f32>(model.position, 1.0);
+    var sexture_transform = mat4x4<f32>(s1,s2,s3,s4);
+    out.clip_position =texture_transform*sexture_transform*vec4<f32>(model.position, 1.0);
     return out;
 }
 
