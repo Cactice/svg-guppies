@@ -11,9 +11,9 @@ pub struct Initialization {
 }
 impl Default for Initialization {
     fn default() -> Self {
-        return Self {
+        Self {
             indices_priority: IndicesPriority::Variable,
-        };
+        }
     }
 }
 
