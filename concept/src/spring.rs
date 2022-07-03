@@ -72,10 +72,10 @@ impl<T> MutCount<T> {
 }
 impl<T> From<T> for MutCount<T> {
     fn from(unwrapped: T) -> Self {
-        return Self {
+        Self {
             unwrapped,
             mut_count: 0,
-        };
+        }
     }
 }
 impl<T> Deref for MutCount<T> {

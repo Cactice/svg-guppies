@@ -2,7 +2,7 @@ mod setup;
 pub use pollster;
 use setup::Setup;
 pub use tesselation;
-use tesselation::geometry::{Rect, SvgSet};
+use tesselation::geometry::{SvgSet};
 pub use tesselation::glam;
 use tesselation::glam::{Mat4, Vec2};
 pub use winit;
@@ -47,7 +47,7 @@ pub fn main<V: ViewModel + 'static>(svg_set: SvgSet<'static>, mut view_model: V)
                     window = Some(
                         WindowBuilder::new()
                             .with_title("SVG-GUI")
-                            .build(&event_loop)
+                            .build(event_loop)
                             .unwrap(),
                     );
                     let window = window.as_ref().expect("Window is None");
@@ -68,21 +68,21 @@ pub fn main<V: ViewModel + 'static>(svg_set: SvgSet<'static>, mut view_model: V)
                             .expect("Couldn't append canvas to document body");
                     }
                     let setup = pollster::block_on(Setup::new(
-                        &window,
+                        window,
                         Mat4::IDENTITY,
                         &vertices,
                         &indices,
                     ));
                     let Setup {
                         redraw: some_redraw,
-                        adapter,
-                        instance,
-                        pipeline_layout,
-                        shader,
+                        adapter: _,
+                        instance: _,
+                        pipeline_layout: _,
+                        shader: _,
                     } = setup;
                     redraw = Some(some_redraw);
 
-                    let win_size = window.inner_size();
+                    let _win_size = window.inner_size();
                 }
                 _ => {}
             },
@@ -96,10 +96,10 @@ pub fn main<V: ViewModel + 'static>(svg_set: SvgSet<'static>, mut view_model: V)
                 view_model.on_event(&svg_set, event);
             }
             Event::RedrawRequested(_) => {
-                if let (Some(mut redraw), Some(window)) = (redraw.as_mut(), window.as_mut()) {
+                if let (Some(redraw), Some(window)) = (redraw.as_mut(), window.as_mut()) {
                     if let Some(mut texture) = view_model.into_bytes() {
                         texture.resize(8192 * 16, 0);
-                        Setup::redraw(&redraw, &texture[..]);
+                        Setup::redraw(redraw, &texture[..]);
                         window.request_redraw();
                     }
                 }

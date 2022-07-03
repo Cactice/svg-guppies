@@ -2,12 +2,11 @@ use concept::spring::{MutCount, SpringMat4};
 use glam::{DVec2, Mat4, Vec2, Vec3};
 use regex::{Regex, RegexSet};
 use std::iter;
-use std::ops::{Deref, DerefMut};
-use std::sync::mpsc::{channel, Sender};
+
+
 use std::{
     f32::consts::PI,
     hash::{BuildHasher, Hasher},
-    iter::zip,
 };
 use windowing::tesselation::callback::{IndicesPriority, InitCallback, Initialization};
 use windowing::tesselation::geometry::SvgSet;
@@ -84,14 +83,14 @@ impl ViewModel for LifeGameView {
             .collect();
         Some(texts)
     }
-    fn on_event(&mut self, svg_set: &SvgSet, event: WindowEvent) {
+    fn on_event(&mut self, _svg_set: &SvgSet, event: WindowEvent) {
         match event {
             WindowEvent::CursorMoved { position, .. } => {
                 let new_position = Vec2::new(position.x as f32, position.y as f32);
                 if self.mouse_down.is_some() {
                     let motion = new_position - self.mouse_position;
                     self.global_transform.unwrapped *=
-                        Mat4::from_translation(Vec3::from((motion.x, motion.y, 0. as f32)))
+                        Mat4::from_translation(Vec3::from((motion.x, motion.y, 0_f32)))
                 }
                 self.mouse_position = new_position
             }
@@ -116,7 +115,7 @@ impl ViewModel for LifeGameView {
                         [
                             1. + (1. / (p.y as f32)),
                             1. + (1. / (p.y as f32)),
-                            1. as f32,
+                            1_f32,
                         ]
                         .into(),
                     ) * self.global_transform.unwrapped;
@@ -150,7 +149,7 @@ impl LifeGameView {
                 (
                     life_game.position_to_coordinates[life_game.position[life_game.current_player]]
                         .as_vec2(),
-                    0.0 as f32,
+                    0.0_f32,
                 )
                     .into(),
             ))
