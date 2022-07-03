@@ -1,7 +1,8 @@
 use std::ops::{Deref, DerefMut};
 
-use crate::concept::{Layout, Point, Presenter};
 use enumflags2::bitflags;
+
+use crate::concept::{Layout, Point, Presenter};
 
 #[bitflags]
 #[repr(u32)]
