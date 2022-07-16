@@ -2,10 +2,7 @@ use glam::Mat4;
 use natura::{AngularFrequency, DampingRatio, DeltaTime, Spring};
 use std::default::Default;
 use std::ops::{Deref, DerefMut};
-use std::sync::mpsc::{channel, sync_channel};
-use std::thread::spawn;
-use std::{iter::zip, sync::RwLock, time::Duration};
-use windowing::pollster::block_on;
+use std::{iter::zip, sync::RwLock};
 
 pub struct SpringMat4 {
     spring: Spring,
@@ -44,7 +41,7 @@ impl SpringMat4 {
                 zip(current.to_cols_array(), self.velocity.to_cols_array()),
                 self.target.to_cols_array(),
             )
-            .for_each(|((mut current_position, mut vel), target)| {
+            .for_each(|((current_position, vel), target)| {
                 let (new_current_position, new_vel) =
                     self.spring
                         .update(current_position as f64, vel as f64, target as f64);
