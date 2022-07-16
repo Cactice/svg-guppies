@@ -2,6 +2,8 @@ use concept::spring::{MutCount, SpringMat4};
 use glam::{DVec2, Mat4, Vec2, Vec3};
 use regex::{Regex, RegexSet};
 use std::iter;
+use std::ops::DerefMut;
+use std::time::Instant;
 use std::{
     f32::consts::PI,
     hash::{BuildHasher, Hasher},
@@ -41,7 +43,7 @@ impl ViewModel for LifeGameView {
         self.player_texts.reset_mut_count();
         self.instruction_text.reset_mut_count();
     }
-    fn into_bytes(&self) -> Option<Vec<u8>> {
+    fn into_bytes(&mut self) -> Option<Vec<u8>> {
         let is_mutated = [
             self.player_avatar_transforms.mut_count,
             self.tip_transform.mut_count,
@@ -49,6 +51,12 @@ impl ViewModel for LifeGameView {
         .iter()
         .any(|x| x > &0);
 
+        self.player_avatar_transforms
+            .unwrapped
+            .iter_mut()
+            .for_each(|s| {
+                s.update();
+            });
         let mat_4: Vec<Mat4> = iter::empty::<Mat4>()
             .chain([self.global_transform.unwrapped])
             .chain(

@@ -2,7 +2,7 @@ mod setup;
 pub use pollster;
 use setup::Setup;
 pub use tesselation;
-use tesselation::geometry::{SvgSet};
+use tesselation::geometry::SvgSet;
 pub use tesselation::glam;
 use tesselation::glam::{Mat4, Vec2};
 pub use winit;
@@ -25,8 +25,8 @@ pub fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
     )
 }
 
-pub trait ViewModel {
-    fn into_bytes(&self) -> Option<Vec<u8>>;
+pub trait ViewModel: Send + Sync {
+    fn into_bytes(&mut self) -> Option<Vec<u8>>;
     fn into_texts(&self) -> Option<Vec<(String, String)>>;
     fn reset_mut_count(&mut self);
     fn on_event(&mut self, svg_set: &SvgSet, event: WindowEvent);
@@ -67,12 +67,8 @@ pub fn main<V: ViewModel + 'static>(svg_set: SvgSet<'static>, mut view_model: V)
                             })
                             .expect("Couldn't append canvas to document body");
                     }
-                    let setup = pollster::block_on(Setup::new(
-                        window,
-                        Mat4::IDENTITY,
-                        &vertices,
-                        &indices,
-                    ));
+                    let setup =
+                        pollster::block_on(Setup::new(window, Mat4::IDENTITY, &vertices, &indices));
                     let Setup {
                         redraw: some_redraw,
                         adapter: _,

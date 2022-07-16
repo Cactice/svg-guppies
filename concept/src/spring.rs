@@ -1,16 +1,11 @@
 use glam::Mat4;
 use natura::{AngularFrequency, DampingRatio, DeltaTime, Spring};
 use std::default::Default;
-use std::{
-    iter::zip,
-    ops::{Deref, DerefMut},
-    sync::{
-        mpsc::{channel, Sender},
-        RwLock,
-    },
-    thread::{sleep, spawn},
-    time::Duration,
-};
+use std::ops::{Deref, DerefMut};
+use std::sync::mpsc::{channel, sync_channel};
+use std::thread::spawn;
+use std::{iter::zip, sync::RwLock, time::Duration};
+use windowing::pollster::block_on;
 
 pub struct SpringMat4 {
     spring: Spring,
@@ -39,35 +34,31 @@ impl SpringMat4 {
     pub fn spring_to(&mut self, target: Mat4) {
         self.target = target;
         self.is_animating = true;
-        self.update();
-        self.is_animating = false;
     }
-    fn update(&mut self) {
-        let current = self.current.get_mut().unwrap();
-        let mut current_position_vec = vec![];
-        let mut vel_vec = vec![];
-        zip(
-            zip(current.to_cols_array(), self.velocity.to_cols_array()),
-            self.target.to_cols_array(),
-        )
-        .for_each(|((mut current_position, mut vel), target)| {
-            let (new_current_position, new_vel) =
-                self.spring
-                    .update(current_position as f64, vel as f64, target as f64);
-            current_position_vec.push(new_current_position as f32);
-            vel_vec.push(new_vel as f32);
-        });
+    pub fn update(&mut self) {
+        let animating_complete = {
+            let mut current = self.current.write().unwrap();
+            let mut current_position_vec = vec![];
+            let mut vel_vec = vec![];
+            zip(
+                zip(current.to_cols_array(), self.velocity.to_cols_array()),
+                self.target.to_cols_array(),
+            )
+            .for_each(|((mut current_position, mut vel), target)| {
+                let (new_current_position, new_vel) =
+                    self.spring
+                        .update(current_position as f64, vel as f64, target as f64);
+                current_position_vec.push(new_current_position as f32);
+                vel_vec.push(new_vel as f32);
+            });
 
-        *current = Mat4::from_cols_array(&current_position_vec.try_into().unwrap());
-        self.velocity = Mat4::from_cols_array(&vel_vec.try_into().unwrap());
+            *current = Mat4::from_cols_array(&current_position_vec.try_into().unwrap());
+            self.velocity = Mat4::from_cols_array(&vel_vec.try_into().unwrap());
 
-        let animating_complete = current.abs_diff_eq(self.target, 0.1);
-        // && self.velocity.abs_diff_eq(Mat4::IDENTITY, 0.01);
-        // dbg!(self.velocity.abs_diff_eq(Mat4::IDENTITY, 0.1));
-        dbg!(current.abs_diff_eq(self.target, 0.1));
-        if !animating_complete {
-            sleep(Duration::from_millis(17));
-            self.update();
+            current.abs_diff_eq(self.target, 0.1) && self.velocity.abs_diff_eq(Mat4::ZERO, 0.01)
+        };
+        if animating_complete {
+            self.is_animating = false;
         }
     }
 }
