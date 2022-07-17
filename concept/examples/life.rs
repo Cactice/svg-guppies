@@ -57,6 +57,7 @@ impl ViewModel for LifeGameView {
             });
         let mat_4: Vec<Mat4> = iter::empty::<Mat4>()
             .chain([self.global_transform.unwrapped])
+            .chain([Mat4::IDENTITY])
             .chain(
                 self.player_avatar_transforms
                     .iter()

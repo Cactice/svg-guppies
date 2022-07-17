@@ -44,7 +44,6 @@ impl From<&PathBbox> for Rect {
         }
     }
 }
-
 pub const FALLBACK_COLOR: Vec4 = Vec4::ONE;
 
 #[repr(C)]
@@ -62,24 +61,6 @@ impl From<&DVec2> for Vertex {
         }
     }
 }
-impl From<(&FillVertex<'_>, &Vec4)> for Vertex {
-    fn from((v, c): (&FillVertex, &Vec4)) -> Self {
-        Self {
-            position: [v.position().x, v.position().y, 0.],
-            color: c.to_array(),
-            ..Default::default()
-        }
-    }
-}
-impl From<(&StrokeVertex<'_, '_>, &Vec4)> for Vertex {
-    fn from((v, c): (&StrokeVertex, &Vec4)) -> Self {
-        Self {
-            position: [v.position().x, v.position().y, 0.],
-            color: c.to_array(),
-            ..Default::default()
-        }
-    }
-}
 
 impl From<(&DVec2, &Vec4)> for Vertex {
     fn from((v, c): (&DVec2, &Vec4)) -> Self {
@@ -87,6 +68,15 @@ impl From<(&DVec2, &Vec4)> for Vertex {
             position: [(v.x) as f32, (v.y) as f32, 0.0],
             color: [c.x, c.y, c.z, c.w],
             ..Default::default()
+        }
+    }
+}
+impl From<(&DVec2, &Vec4, u32)> for Vertex {
+    fn from((v, c, transform_matrix_index): (&DVec2, &Vec4, u32)) -> Self {
+        Self {
+            position: [(v.x) as f32, (v.y) as f32, 0.0],
+            color: [c.x, c.y, c.z, c.w],
+            transform_matrix_index,
         }
     }
 }
@@ -98,6 +88,7 @@ pub struct GeometrySet {
     fixed_geometries_vertices_len: usize,
     variable_geometries_vertices_len: usize,
     variable_geometries_id_range: HashMap<String, Range<usize>>,
+    transform_count: u32,
 }
 
 impl GeometrySet {
@@ -223,7 +214,7 @@ impl Geometry {
             .map(|index| index + self.index_base as u32)
             .collect()
     }
-    pub fn prepare_vertex_buffer(p: &Path) -> VertexBuffers<Vertex, Index> {
+    pub fn prepare_vertex_buffer(p: &Path, transform_index: u32) -> VertexBuffers<Vertex, Index> {
         let mut vertex_buffer = VertexBuffers::<Vertex, Index>::new();
         if let Some(ref stroke) = p.stroke {
             let color = match stroke.paint {
@@ -235,7 +226,7 @@ impl Geometry {
                 ),
                 _ => FALLBACK_COLOR,
             };
-            iterate_stroke(stroke, p, &mut vertex_buffer, color);
+            iterate_stroke(stroke, p, &mut vertex_buffer, color, transform_index);
         }
         if let Some(ref fill) = p.fill {
             let color = match fill.paint {
@@ -248,12 +239,12 @@ impl Geometry {
                 _ => FALLBACK_COLOR,
             };
 
-            iterate_fill(p, &color, &mut vertex_buffer);
+            iterate_fill(p, &color, &mut vertex_buffer, transform_index);
         };
         vertex_buffer
     }
-    pub fn new(p: &Path, index_base: usize, ids: Vec<String>) -> Self {
-        let v = Self::prepare_vertex_buffer(p);
+    pub fn new(p: &Path, index_base: usize, ids: Vec<String>, transform_index: u32) -> Self {
+        let v = Self::prepare_vertex_buffer(p, transform_index);
         Self {
             ids,
             vertices: v.vertices,
@@ -280,7 +271,19 @@ fn recursive_svg(
     }
 
     if let usvg::NodeKind::Path(ref p) = *node.borrow() {
-        let geometry = Geometry::new(p, geometry_set.get_vertices_len(priority), ids.to_vec());
+        let transform_id = if ids.iter().any(|id| id.ends_with("#dynamic")) {
+            geometry_set.transform_count += 1;
+            dbg!(&ids, &geometry_set.transform_count);
+            geometry_set.transform_count
+        } else {
+            1
+        };
+        let geometry = Geometry::new(
+            p,
+            geometry_set.get_vertices_len(priority),
+            ids.to_vec(),
+            transform_id,
+        );
         geometry_set.push_with_priority(geometry, priority);
     }
     for child in node.children() {
@@ -349,7 +352,10 @@ impl<'a> SvgSet<'a> {
             .load_font_source(Source::Binary(Arc::new(font.as_ref())));
         opt.font_family = "Roboto Medium".to_string();
         opt.keep_named_groups = true;
-        let mut geometry_set = GeometrySet::default();
+        let mut geometry_set = GeometrySet {
+            transform_count: 1,
+            ..Default::default()
+        };
         let document = Document::parse(xml).unwrap();
         let tree = Tree::from_xmltree(&document, &opt.to_ref()).unwrap();
         let id_map =
@@ -419,7 +425,6 @@ impl<'a> SvgSet<'a> {
         writer.write_text(new_text);
 
         let xml = writer.end_document();
-        println!("{}", &xml);
         let tree = Tree::from_str(&xml, &self.usvg_options.to_ref()).unwrap();
         let mut geometry_set = GeometrySet::default();
         recursive_svg(

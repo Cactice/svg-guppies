@@ -22,13 +22,20 @@ fn vs_main(
     var out: VertexOutput;
     out.color = model.color;
 
-    var transform_index = i32(model.transforms);
-    var t1 = textureLoad(transform_texture, transform_index + 0, 0);
+    var g_t1 = textureLoad(transform_texture, 0, 0);
+    var g_t2 = textureLoad(transform_texture, 1, 0);
+    var g_t3 = textureLoad(transform_texture, 2, 0);
+    var g_t4 = textureLoad(transform_texture, 3, 0);
+
+    var transform_index = i32(model.transforms) * 4;
+    var t1 = textureLoad(transform_texture, transform_index, 0);
     var t2 = textureLoad(transform_texture, transform_index + 1, 0);
     var t3 = textureLoad(transform_texture, transform_index + 2, 0);
     var t4 = textureLoad(transform_texture, transform_index + 3, 0);
+
     var texture_transform = mat4x4<f32>(t1, t2, t3, t4);
-    out.clip_position = texture_transform * vec4< f32 >(model.position, 1.0);
+    var global_texture_transform = mat4x4<f32>(g_t1, g_t2, g_t3, g_t4);
+    out.clip_position = global_texture_transform * texture_transform * vec4<f32>(model.position, 1.0);
     return out;
 }
 
