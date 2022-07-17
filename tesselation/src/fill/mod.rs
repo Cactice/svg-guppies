@@ -22,7 +22,7 @@ pub fn iterate_fill(
             &mut BuffersBuilder::new(geometry, |v: FillVertex| Vertex {
                 position: [v.position().x, v.position().y, 0.],
                 color: color.to_array(),
-                transform_matrix_index: id,
+                transform_id: id,
             }),
         )
         .expect("Error during tesselation!");

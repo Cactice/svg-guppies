@@ -39,7 +39,7 @@ pub fn iterate_stroke(
         &mut BuffersBuilder::new(geometry, |v: StrokeVertex| Vertex {
             position: [v.position().x, v.position().y, 0.],
             color: color.to_array(),
-            transform_matrix_index: id,
+            transform_id: id,
         }),
     );
 }

@@ -27,11 +27,11 @@ fn vs_main(
     var g_t3 = textureLoad(transform_texture, 2, 0);
     var g_t4 = textureLoad(transform_texture, 3, 0);
 
-    var transform_index = i32(model.transforms) * 4;
-    var t1 = textureLoad(transform_texture, transform_index, 0);
-    var t2 = textureLoad(transform_texture, transform_index + 1, 0);
-    var t3 = textureLoad(transform_texture, transform_index + 2, 0);
-    var t4 = textureLoad(transform_texture, transform_index + 3, 0);
+    var transform_id = i32(model.transforms) * 4;
+    var t1 = textureLoad(transform_texture, transform_id, 0);
+    var t2 = textureLoad(transform_texture, transform_id + 1, 0);
+    var t3 = textureLoad(transform_texture, transform_id + 2, 0);
+    var t4 = textureLoad(transform_texture, transform_id + 3, 0);
 
     var texture_transform = mat4x4<f32>(t1, t2, t3, t4);
     var global_texture_transform = mat4x4<f32>(g_t1, g_t2, g_t3, g_t4);

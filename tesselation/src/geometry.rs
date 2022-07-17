@@ -50,7 +50,7 @@ pub const FALLBACK_COLOR: Vec4 = Vec4::ONE;
 #[derive(Copy, Clone, Debug, Default, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vertex {
     pub position: [f32; 3],
-    pub transform_matrix_index: u32,
+    pub transform_id: u32,
     pub color: [f32; 4],
 }
 impl From<&DVec2> for Vertex {
@@ -72,11 +72,11 @@ impl From<(&DVec2, &Vec4)> for Vertex {
     }
 }
 impl From<(&DVec2, &Vec4, u32)> for Vertex {
-    fn from((v, c, transform_matrix_index): (&DVec2, &Vec4, u32)) -> Self {
+    fn from((v, c, transform_id): (&DVec2, &Vec4, u32)) -> Self {
         Self {
             position: [(v.x) as f32, (v.y) as f32, 0.0],
             color: [c.x, c.y, c.z, c.w],
-            transform_matrix_index,
+            transform_id,
         }
     }
 }
@@ -198,7 +198,7 @@ pub struct Geometry {
     vertices: Vertices,
     indices: Indices,
     index_base: usize,
-    transform_index: usize,
+    transform_id: usize,
     bbox: Rect,
 }
 impl Geometry {
@@ -214,7 +214,7 @@ impl Geometry {
             .map(|index| index + self.index_base as u32)
             .collect()
     }
-    pub fn prepare_vertex_buffer(p: &Path, transform_index: u32) -> VertexBuffers<Vertex, Index> {
+    pub fn prepare_vertex_buffer(p: &Path, transform_id: u32) -> VertexBuffers<Vertex, Index> {
         let mut vertex_buffer = VertexBuffers::<Vertex, Index>::new();
         if let Some(ref stroke) = p.stroke {
             let color = match stroke.paint {
@@ -226,7 +226,7 @@ impl Geometry {
                 ),
                 _ => FALLBACK_COLOR,
             };
-            iterate_stroke(stroke, p, &mut vertex_buffer, color, transform_index);
+            iterate_stroke(stroke, p, &mut vertex_buffer, color, transform_id);
         }
         if let Some(ref fill) = p.fill {
             let color = match fill.paint {
@@ -239,18 +239,18 @@ impl Geometry {
                 _ => FALLBACK_COLOR,
             };
 
-            iterate_fill(p, &color, &mut vertex_buffer, transform_index);
+            iterate_fill(p, &color, &mut vertex_buffer, transform_id);
         };
         vertex_buffer
     }
-    pub fn new(p: &Path, index_base: usize, ids: Vec<String>, transform_index: u32) -> Self {
-        let v = Self::prepare_vertex_buffer(p, transform_index);
+    pub fn new(p: &Path, index_base: usize, ids: Vec<String>, transform_id: u32) -> Self {
+        let v = Self::prepare_vertex_buffer(p, transform_id);
         Self {
             ids,
             vertices: v.vertices,
             indices: v.indices,
             index_base,
-            transform_index: 0,
+            transform_id: 0,
             bbox: Rect::from(&p.data.bbox().unwrap()),
         }
     }
@@ -262,6 +262,7 @@ fn recursive_svg(
     callback: &mut InitCallback,
     geometry_set: &mut GeometrySet,
     mut ids: Vec<String>,
+    parent_transform_id: u32,
 ) {
     let priority = parent_priority.max(callback.process_events(&node).indices_priority);
     let node_ref = &node.borrow();
@@ -270,14 +271,13 @@ fn recursive_svg(
         ids.push(id.to_string());
     }
 
+    let transform_id = if id.ends_with("#dynamic") {
+        geometry_set.transform_count += 1;
+        geometry_set.transform_count
+    } else {
+        parent_transform_id
+    };
     if let usvg::NodeKind::Path(ref p) = *node.borrow() {
-        let transform_id = if ids.iter().any(|id| id.ends_with("#dynamic")) {
-            geometry_set.transform_count += 1;
-            dbg!(&ids, &geometry_set.transform_count);
-            geometry_set.transform_count
-        } else {
-            1
-        };
         let geometry = Geometry::new(
             p,
             geometry_set.get_vertices_len(priority),
@@ -287,7 +287,14 @@ fn recursive_svg(
         geometry_set.push_with_priority(geometry, priority);
     }
     for child in node.children() {
-        recursive_svg(child, priority, callback, geometry_set, ids.clone());
+        recursive_svg(
+            child,
+            priority,
+            callback,
+            geometry_set,
+            ids.clone(),
+            transform_id,
+        );
     }
 }
 
@@ -373,6 +380,7 @@ impl<'a> SvgSet<'a> {
             &mut callback,
             &mut geometry_set,
             vec![],
+            1,
         );
         let view_box = tree.svg_node().view_box;
         let bbox: Rect = Rect::new(
@@ -433,6 +441,7 @@ impl<'a> SvgSet<'a> {
             &mut InitCallback::new(|_| Initialization::default()),
             &mut geometry_set,
             vec![],
+            1,
         );
         let Geometry {
             indices, vertices, ..
