@@ -2,10 +2,12 @@ use concept::spring::{MutCount, SpringMat4};
 use glam::{DVec2, Mat4, Vec2, Vec3};
 use regex::{Regex, RegexSet};
 use std::iter;
+use std::thread::spawn;
 use std::{
     f32::consts::PI,
     hash::{BuildHasher, Hasher},
 };
+use windowing::crossbeam::scope;
 use windowing::tesselation::callback::{IndicesPriority, InitCallback, Initialization};
 use windowing::tesselation::geometry::SvgSet;
 use windowing::tesselation::usvg::{Node, NodeExt, NodeKind};
@@ -49,21 +51,15 @@ impl ViewModel for LifeGameView {
         .iter()
         .any(|x| x > &0);
 
-        self.player_avatar_transforms
-            .unwrapped
-            .iter_mut()
-            .for_each(|s| {
-                s.update();
-            });
         let mat_4: Vec<Mat4> = iter::empty::<Mat4>()
             .chain([self.global_transform.unwrapped])
             .chain([Mat4::IDENTITY])
             .chain(
                 self.player_avatar_transforms
                     .iter()
-                    .map(|m| m.current.read().unwrap().to_owned()),
+                    .map(|m| m.get_inner().current),
             )
-            .chain([self.tip_transform.current.read().unwrap().to_owned()])
+            .chain([self.tip_transform.get_inner().current])
             .collect();
         Some(bytemuck::cast_slice(mat_4.as_slice()).to_vec())
     }
@@ -131,29 +127,36 @@ impl ViewModel for LifeGameView {
 impl LifeGameView {
     fn tip_clicked(&mut self) {
         let life_game = &mut self.life_game;
-        if self.tip_transform.is_animating
+        if self.tip_transform.get_inner().is_animating
             || self
                 .player_avatar_transforms
                 .iter()
-                .any(|spring| spring.is_animating)
+                .any(|spring| spring.get_inner().is_animating)
         {
             return;
         }
 
         let one_sixths_spins = LifeGame::spin_roulette();
-        self.tip_transform
-            .spring_to(Mat4::from_rotation_z(one_sixths_spins as f32 * PI / 3.));
+        scope(|s| {
+            s.spawn(|_| {
+                self.tip_transform
+                    .spring_to(Mat4::from_rotation_z(one_sixths_spins as f32 * PI / 3.));
 
-        life_game.proceed(one_sixths_spins);
-        self.player_avatar_transforms[life_game.current_player].spring_to(Mat4::from_translation(
-            (
-                life_game.position_to_coordinates[life_game.position[life_game.current_player]]
-                    .as_vec2(),
-                0.0_f32,
-            )
-                .into(),
-        ));
-        life_game.finish_turn()
+                life_game.proceed(one_sixths_spins);
+                self.player_avatar_transforms[life_game.current_player].spring_to(
+                    Mat4::from_translation(
+                        (
+                            life_game.position_to_coordinates
+                                [life_game.position[life_game.current_player]]
+                                .as_vec2(),
+                            0.0_f32,
+                        )
+                            .into(),
+                    ),
+                );
+                life_game.finish_turn()
+            });
+        });
     }
 }
 

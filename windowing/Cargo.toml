@@ -9,6 +9,8 @@ wgpu = "0.13.0"                                       #0.13
 pollster = "0.2"
 bytemuck = { version = "1.8", features = ["derive"] }
 tesselation = { path = "../tesselation" }
+crossbeam = "0.8.1"
+
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wgpu = { version = "0.13.0", features = ["webgl"] } #0.13

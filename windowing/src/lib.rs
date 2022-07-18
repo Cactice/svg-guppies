@@ -1,6 +1,9 @@
 mod setup;
+pub use crossbeam;
+use crossbeam::scope;
 pub use pollster;
 use setup::Setup;
+use std::thread::{self, spawn};
 pub use tesselation;
 use tesselation::geometry::SvgSet;
 pub use tesselation::glam;
