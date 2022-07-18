@@ -75,7 +75,7 @@
 <text id='4' fill='black' xml:space='preserve' style='white-space: pre' font-family='Alata' font-size='36' letter-spacing='0em'><tspan x='536' y='724.76'>4</tspan></text>
 <text id='5' fill='black' xml:space='preserve' style='white-space: pre' font-family='Alata' font-size='36' letter-spacing='0em'><tspan x='479' y='641.76'>5</tspan></text>
 <text id='6' fill='black' xml:space='preserve' style='white-space: pre' font-family='Alata' font-size='36' letter-spacing='0em'><tspan x='536' y='560.76'>6</tspan></text>
-<path id='Tip #dynamic' d='M593 591L606.856 651H579.144L593 591Z' fill='black'/>
+<path id='Tip #coord #dynamic' d='M593 591L606.856 651H579.144L593 591Z' fill='black'/>
 </g>
 </g>
 <defs>

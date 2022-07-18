@@ -5,10 +5,10 @@ use std::ops::{Deref, DerefMut};
 use std::{iter::zip, sync::RwLock};
 
 pub struct SpringMat4 {
-    spring: Spring,
-    target: Mat4,
+    pub spring: Spring,
+    pub target: Mat4,
     pub current: RwLock<Mat4>,
-    velocity: Mat4,
+    pub velocity: Mat4,
     pub is_animating: bool,
 }
 impl Default for SpringMat4 {
@@ -16,8 +16,8 @@ impl Default for SpringMat4 {
         Self {
             spring: Spring::new(
                 DeltaTime(natura::fps(60)),
-                AngularFrequency(6.0),
-                DampingRatio(0.5),
+                AngularFrequency(10.0),
+                DampingRatio(1.),
             ),
             is_animating: false,
             current: Default::default(),
