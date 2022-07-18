@@ -198,7 +198,7 @@ pub struct Geometry {
     vertices: Vertices,
     indices: Indices,
     index_base: usize,
-    transform_id: usize,
+    transform_id: u32,
     bbox: Rect,
 }
 impl Geometry {
@@ -250,7 +250,7 @@ impl Geometry {
             vertices: v.vertices,
             indices: v.indices,
             index_base,
-            transform_id: 0,
+            transform_id,
             bbox: Rect::from(&p.data.bbox().unwrap()),
         }
     }
@@ -273,6 +273,7 @@ fn recursive_svg(
 
     let transform_id = if id.ends_with("#dynamic") {
         geometry_set.transform_count += 1;
+        dbg!(&id, &geometry_set.transform_count);
         geometry_set.transform_count
     } else {
         parent_transform_id
@@ -351,7 +352,6 @@ impl<'a> SvgSet<'a> {
         let node = self.document.get_node(*node_id).ok_or("Not in document")?;
         Ok(node)
     }
-
     pub fn new(xml: &'a str, mut callback: InitCallback) -> Self {
         let font = include_bytes!("../fallback_font/Roboto-Medium.ttf");
         let mut opt = Options::default();
