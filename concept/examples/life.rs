@@ -147,7 +147,6 @@ impl LifeGameView {
         let one_sixths_spins = LifeGame::spin_roulette();
         let curr = self.tip_transform.current.read().unwrap().to_owned();
 
-        // dbg!(&one_sixths_spins);
         self.tip_transform.spring_to(
             self.tip_center
                 * Mat4::from_rotation_z(PI / 3. * one_sixths_spins as f32)
@@ -156,15 +155,7 @@ impl LifeGameView {
 
         let pre = life_game.position_to_coordinates[life_game.position[life_game.current_player]]
             .as_vec2();
-        dbg!(
-            life_game.current_player,
-            &life_game.position[life_game.current_player]
-        );
         life_game.proceed(one_sixths_spins);
-        dbg!(
-            life_game.current_player,
-            &life_game.position[life_game.current_player]
-        );
         let post = life_game.position_to_coordinates[life_game.position[life_game.current_player]]
             .as_vec2();
         let mat4 = self.player_avatar_transforms[life_game.current_player]
