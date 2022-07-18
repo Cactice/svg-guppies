@@ -12,7 +12,7 @@ pub use usvg;
 
 struct TransformVariable {
     transform: DMat4,
-    transform_index: u16,
+    transform_id: u16,
 }
 
 pub fn init(callback: InitCallback) -> SvgSet {

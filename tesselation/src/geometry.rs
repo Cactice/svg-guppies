@@ -44,38 +44,19 @@ impl From<&PathBbox> for Rect {
         }
     }
 }
-
 pub const FALLBACK_COLOR: Vec4 = Vec4::ONE;
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Default, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vertex {
     pub position: [f32; 3],
-    pub transform_matrix_index: u32,
+    pub transform_id: u32,
     pub color: [f32; 4],
 }
 impl From<&DVec2> for Vertex {
     fn from(v: &DVec2) -> Self {
         Self {
             position: [(v.x) as f32, (v.y) as f32, 0.0],
-            ..Default::default()
-        }
-    }
-}
-impl From<(&FillVertex<'_>, &Vec4)> for Vertex {
-    fn from((v, c): (&FillVertex, &Vec4)) -> Self {
-        Self {
-            position: [v.position().x, v.position().y, 0.],
-            color: c.to_array(),
-            ..Default::default()
-        }
-    }
-}
-impl From<(&StrokeVertex<'_, '_>, &Vec4)> for Vertex {
-    fn from((v, c): (&StrokeVertex, &Vec4)) -> Self {
-        Self {
-            position: [v.position().x, v.position().y, 0.],
-            color: c.to_array(),
             ..Default::default()
         }
     }
@@ -90,6 +71,15 @@ impl From<(&DVec2, &Vec4)> for Vertex {
         }
     }
 }
+impl From<(&DVec2, &Vec4, u32)> for Vertex {
+    fn from((v, c, transform_id): (&DVec2, &Vec4, u32)) -> Self {
+        Self {
+            position: [(v.x) as f32, (v.y) as f32, 0.0],
+            color: [c.x, c.y, c.z, c.w],
+            transform_id,
+        }
+    }
+}
 
 #[derive(Clone, Default, Debug)]
 pub struct GeometrySet {
@@ -98,6 +88,7 @@ pub struct GeometrySet {
     fixed_geometries_vertices_len: usize,
     variable_geometries_vertices_len: usize,
     variable_geometries_id_range: HashMap<String, Range<usize>>,
+    transform_count: u32,
 }
 
 impl GeometrySet {
@@ -207,7 +198,7 @@ pub struct Geometry {
     vertices: Vertices,
     indices: Indices,
     index_base: usize,
-    transform_index: usize,
+    transform_id: usize,
     bbox: Rect,
 }
 impl Geometry {
@@ -223,7 +214,7 @@ impl Geometry {
             .map(|index| index + self.index_base as u32)
             .collect()
     }
-    pub fn prepare_vertex_buffer(p: &Path) -> VertexBuffers<Vertex, Index> {
+    pub fn prepare_vertex_buffer(p: &Path, transform_id: u32) -> VertexBuffers<Vertex, Index> {
         let mut vertex_buffer = VertexBuffers::<Vertex, Index>::new();
         if let Some(ref stroke) = p.stroke {
             let color = match stroke.paint {
@@ -235,7 +226,7 @@ impl Geometry {
                 ),
                 _ => FALLBACK_COLOR,
             };
-            iterate_stroke(stroke, p, &mut vertex_buffer, color);
+            iterate_stroke(stroke, p, &mut vertex_buffer, color, transform_id);
         }
         if let Some(ref fill) = p.fill {
             let color = match fill.paint {
@@ -248,18 +239,18 @@ impl Geometry {
                 _ => FALLBACK_COLOR,
             };
 
-            iterate_fill(p, &color, &mut vertex_buffer);
+            iterate_fill(p, &color, &mut vertex_buffer, transform_id);
         };
         vertex_buffer
     }
-    pub fn new(p: &Path, index_base: usize, ids: Vec<String>) -> Self {
-        let v = Self::prepare_vertex_buffer(p);
+    pub fn new(p: &Path, index_base: usize, ids: Vec<String>, transform_id: u32) -> Self {
+        let v = Self::prepare_vertex_buffer(p, transform_id);
         Self {
             ids,
             vertices: v.vertices,
             indices: v.indices,
             index_base,
-            transform_index: 0,
+            transform_id: 0,
             bbox: Rect::from(&p.data.bbox().unwrap()),
         }
     }
@@ -271,6 +262,7 @@ fn recursive_svg(
     callback: &mut InitCallback,
     geometry_set: &mut GeometrySet,
     mut ids: Vec<String>,
+    parent_transform_id: u32,
 ) {
     let priority = parent_priority.max(callback.process_events(&node).indices_priority);
     let node_ref = &node.borrow();
@@ -279,12 +271,30 @@ fn recursive_svg(
         ids.push(id.to_string());
     }
 
+    let transform_id = if id.ends_with("#dynamic") {
+        geometry_set.transform_count += 1;
+        geometry_set.transform_count
+    } else {
+        parent_transform_id
+    };
     if let usvg::NodeKind::Path(ref p) = *node.borrow() {
-        let geometry = Geometry::new(p, geometry_set.get_vertices_len(priority), ids.to_vec());
+        let geometry = Geometry::new(
+            p,
+            geometry_set.get_vertices_len(priority),
+            ids.to_vec(),
+            transform_id,
+        );
         geometry_set.push_with_priority(geometry, priority);
     }
     for child in node.children() {
-        recursive_svg(child, priority, callback, geometry_set, ids.clone());
+        recursive_svg(
+            child,
+            priority,
+            callback,
+            geometry_set,
+            ids.clone(),
+            transform_id,
+        );
     }
 }
 
@@ -349,7 +359,10 @@ impl<'a> SvgSet<'a> {
             .load_font_source(Source::Binary(Arc::new(font.as_ref())));
         opt.font_family = "Roboto Medium".to_string();
         opt.keep_named_groups = true;
-        let mut geometry_set = GeometrySet::default();
+        let mut geometry_set = GeometrySet {
+            transform_count: 1,
+            ..Default::default()
+        };
         let document = Document::parse(xml).unwrap();
         let tree = Tree::from_xmltree(&document, &opt.to_ref()).unwrap();
         let id_map =
@@ -367,6 +380,7 @@ impl<'a> SvgSet<'a> {
             &mut callback,
             &mut geometry_set,
             vec![],
+            1,
         );
         let view_box = tree.svg_node().view_box;
         let bbox: Rect = Rect::new(
@@ -419,7 +433,6 @@ impl<'a> SvgSet<'a> {
         writer.write_text(new_text);
 
         let xml = writer.end_document();
-        println!("{}", &xml);
         let tree = Tree::from_str(&xml, &self.usvg_options.to_ref()).unwrap();
         let mut geometry_set = GeometrySet::default();
         recursive_svg(
@@ -428,6 +441,7 @@ impl<'a> SvgSet<'a> {
             &mut InitCallback::new(|_| Initialization::default()),
             &mut geometry_set,
             vec![],
+            1,
         );
         let Geometry {
             indices, vertices, ..

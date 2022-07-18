@@ -2,8 +2,6 @@ use concept::spring::{MutCount, SpringMat4};
 use glam::{DVec2, Mat4, Vec2, Vec3};
 use regex::{Regex, RegexSet};
 use std::iter;
-
-
 use std::{
     f32::consts::PI,
     hash::{BuildHasher, Hasher},
@@ -43,21 +41,29 @@ impl ViewModel for LifeGameView {
         self.player_texts.reset_mut_count();
         self.instruction_text.reset_mut_count();
     }
-    fn into_bytes(&self) -> Option<Vec<u8>> {
-        let is_mutated = [
+    fn into_bytes(&mut self) -> Option<Vec<u8>> {
+        let _is_mutated = [
             self.player_avatar_transforms.mut_count,
             self.tip_transform.mut_count,
         ]
         .iter()
         .any(|x| x > &0);
-        if is_mutated {
-            return None;
-        }
 
+        self.player_avatar_transforms
+            .unwrapped
+            .iter_mut()
+            .for_each(|s| {
+                s.update();
+            });
         let mat_4: Vec<Mat4> = iter::empty::<Mat4>()
             .chain([self.global_transform.unwrapped])
-            .chain(self.player_avatar_transforms.iter().map(|m| m.current))
-            .chain([self.tip_transform.current])
+            .chain([Mat4::IDENTITY])
+            .chain(
+                self.player_avatar_transforms
+                    .iter()
+                    .map(|m| m.current.read().unwrap().to_owned()),
+            )
+            .chain([self.tip_transform.current.read().unwrap().to_owned()])
             .collect();
         Some(bytemuck::cast_slice(mat_4.as_slice()).to_vec())
     }
@@ -105,6 +111,7 @@ impl ViewModel for LifeGameView {
                 ..
             } => {
                 self.mouse_down = Some(self.mouse_position);
+                self.tip_clicked();
             }
             WindowEvent::MouseWheel {
                 delta: MouseScrollDelta::PixelDelta(p),
@@ -112,12 +119,7 @@ impl ViewModel for LifeGameView {
             } => {
                 if p.y != 0. {
                     self.global_transform.unwrapped = Mat4::from_scale(
-                        [
-                            1. + (1. / (p.y as f32)),
-                            1. + (1. / (p.y as f32)),
-                            1_f32,
-                        ]
-                        .into(),
+                        [1. + (1. / (p.y as f32)), 1. + (1. / (p.y as f32)), 1_f32].into(),
                     ) * self.global_transform.unwrapped;
                 }
             }
@@ -127,33 +129,30 @@ impl ViewModel for LifeGameView {
 }
 
 impl LifeGameView {
-    async fn tip_clicked(&mut self) {
+    fn tip_clicked(&mut self) {
         let life_game = &mut self.life_game;
-        if self.tip_transform.complete_animation.is_some()
+        if self.tip_transform.is_animating
             || self
                 .player_avatar_transforms
                 .iter()
-                .any(|spring| spring.complete_animation.is_some())
+                .any(|spring| spring.is_animating)
         {
             return;
         }
 
         let one_sixths_spins = LifeGame::spin_roulette();
         self.tip_transform
-            .spring_to(Mat4::from_rotation_z(one_sixths_spins as f32 * PI / 3.))
-            .await;
+            .spring_to(Mat4::from_rotation_z(one_sixths_spins as f32 * PI / 3.));
 
         life_game.proceed(one_sixths_spins);
-        self.player_avatar_transforms[life_game.current_player]
-            .spring_to(Mat4::from_translation(
-                (
-                    life_game.position_to_coordinates[life_game.position[life_game.current_player]]
-                        .as_vec2(),
-                    0.0_f32,
-                )
-                    .into(),
-            ))
-            .await;
+        self.player_avatar_transforms[life_game.current_player].spring_to(Mat4::from_translation(
+            (
+                life_game.position_to_coordinates[life_game.position[life_game.current_player]]
+                    .as_vec2(),
+                0.0_f32,
+            )
+                .into(),
+        ));
         life_game.finish_turn()
     }
 }
@@ -257,6 +256,11 @@ fn main() {
     let translate = Mat4::from_translation([-1., 1.0, 0.0].into());
     let life_view = LifeGameView {
         global_transform: (translate * scale).into(),
+        life_game: LifeGame {
+            position_to_coordinates,
+            position_to_dollar,
+            ..Default::default()
+        },
         ..Default::default()
     };
     windowing::main::<LifeGameView>(svg_set, life_view);

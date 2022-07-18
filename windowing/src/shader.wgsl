@@ -1,6 +1,7 @@
 struct VertexInput {
     @location(0) position: vec3<f32>,
-    @location(1) color: vec4<f32>
+    @location(1) transforms: u32,
+    @location(2) color: vec4<f32>,
 };
 struct Uniform {
     transform: mat4x4<f32>
@@ -16,16 +17,25 @@ struct VertexOutput {
 
 @vertex
 fn vs_main(
-        model: VertexInput,
+    model: VertexInput,
 ) -> VertexOutput {
     var out: VertexOutput;
     out.color = model.color;
-    var t1 = textureLoad(transform_texture,0,0);
-    var t2 = textureLoad(transform_texture,1,0);
-    var t3 = textureLoad(transform_texture,2,0);
-    var t4 = textureLoad(transform_texture,3,0);
-    var texture_transform = mat4x4<f32>(t1,t2,t3,t4);
-    out.clip_position =texture_transform*vec4<f32>(model.position, 1.0);
+
+    var g_t1 = textureLoad(transform_texture, 0, 0);
+    var g_t2 = textureLoad(transform_texture, 1, 0);
+    var g_t3 = textureLoad(transform_texture, 2, 0);
+    var g_t4 = textureLoad(transform_texture, 3, 0);
+
+    var transform_id = i32(model.transforms) * 4;
+    var t1 = textureLoad(transform_texture, transform_id, 0);
+    var t2 = textureLoad(transform_texture, transform_id + 1, 0);
+    var t3 = textureLoad(transform_texture, transform_id + 2, 0);
+    var t4 = textureLoad(transform_texture, transform_id + 3, 0);
+
+    var texture_transform = mat4x4<f32>(t1, t2, t3, t4);
+    var global_texture_transform = mat4x4<f32>(g_t1, g_t2, g_t3, g_t4);
+    out.clip_position = global_texture_transform * texture_transform * vec4<f32>(model.position, 1.0);
     return out;
 }
 

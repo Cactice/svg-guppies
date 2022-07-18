@@ -29,14 +29,17 @@ pub fn iterate_stroke(
     p: &Path,
     geometry: &mut VertexBuffers<Vertex, Index>,
     color: Vec4,
+    id: u32,
 ) {
     let mut stroke_tess = StrokeTessellator::new();
     let stroke_opts = convert_stroke(s);
     let _ = stroke_tess.tessellate(
         convert_path(p),
         &stroke_opts,
-        &mut BuffersBuilder::new(geometry, |vertex: StrokeVertex| {
-            Vertex::from((&vertex, &color))
+        &mut BuffersBuilder::new(geometry, |v: StrokeVertex| Vertex {
+            position: [v.position().x, v.position().y, 0.],
+            color: color.to_array(),
+            transform_id: id,
         }),
     );
 }
