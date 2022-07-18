@@ -1,13 +1,9 @@
 use concept::spring::{MutCount, SpringMat4};
-use glam::{DVec2, Mat4, Quat, Vec2, Vec3};
+use glam::{DVec2, Mat4, Vec2, Vec3};
 use regex::{Regex, RegexSet};
+use std::f32::consts::PI;
 use std::iter;
-use std::sync::RwLock;
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
-use std::{
-    f32::consts::PI,
-    hash::{BuildHasher, Hasher},
-};
+use std::time::{SystemTime, UNIX_EPOCH};
 use windowing::tesselation::callback::{IndicesPriority, InitCallback, Initialization};
 use windowing::tesselation::geometry::SvgSet;
 use windowing::tesselation::usvg::{Node, NodeExt, NodeKind};
@@ -145,7 +141,6 @@ impl LifeGameView {
         }
 
         let one_sixths_spins = LifeGame::spin_roulette();
-        let curr = self.tip_transform.current.read().unwrap().to_owned();
 
         self.tip_transform.spring_to(
             self.tip_center
@@ -164,7 +159,7 @@ impl LifeGameView {
             .unwrap()
             .to_owned();
         self.player_avatar_transforms[life_game.current_player]
-            .spring_to(mat4 * Mat4::from_translation((post - pre, 0. as f32).into()));
+            .spring_to(mat4 * Mat4::from_translation((post - pre, 0_f32).into()));
         life_game.finish_turn()
     }
 }
