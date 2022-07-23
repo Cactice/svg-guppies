@@ -4,7 +4,7 @@ use std::default::Default;
 use std::iter::zip;
 use std::ops::{Deref, DerefMut};
 use std::sync::{Arc, Mutex, MutexGuard};
-use std::thread::{sleep, spawn};
+use std::thread::{sleep};
 use std::time::Duration;
 
 pub struct SpringMat4NonAtomic {
