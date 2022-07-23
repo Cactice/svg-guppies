@@ -4,7 +4,7 @@ use std::default::Default;
 use std::iter::zip;
 use std::ops::{Deref, DerefMut};
 use std::sync::{Arc, Mutex, MutexGuard};
-use std::thread::{sleep};
+use std::thread::{sleep, spawn};
 use std::time::Duration;
 
 pub struct SpringMat4NonAtomic {
@@ -41,8 +41,6 @@ impl SpringMat4 {
             self.0.lock().unwrap().target = target
         }
         self.update();
-        // let arc = self.0.clone();
-        // Self(arc).update();
     }
     pub fn update(&mut self) {
         let animating_complete = {
@@ -62,17 +60,20 @@ impl SpringMat4 {
                 current_position_vec.push(new_current_position as f32);
                 vel_vec.push(new_vel as f32);
             });
-
             current = Mat4::from_cols_array(&current_position_vec.try_into().unwrap());
             mutable.velocity = Mat4::from_cols_array(&vel_vec.try_into().unwrap());
 
+            dbg!(current.abs_diff_eq(mutable.target, 0.1));
+            dbg!(mutable.velocity.abs_diff_eq(Mat4::ZERO, 0.01));
             current.abs_diff_eq(mutable.target, 0.1)
                 && mutable.velocity.abs_diff_eq(Mat4::ZERO, 0.01)
         };
         if !animating_complete {
-            dbg!("fu");
-            sleep(Duration::from_millis(1000));
-            self.update()
+            let arc = self.0.clone();
+            spawn(|| {
+                sleep(Duration::from_millis(1));
+                Self(arc).update();
+            });
         } else {
             self.0.lock().unwrap().is_animating = false;
         }
