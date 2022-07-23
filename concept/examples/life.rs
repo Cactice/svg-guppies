@@ -24,6 +24,7 @@ struct LifeGame {
 struct LifeGameView {
     player_avatar_transforms: MutCount<[SpringMat4; 4]>,
     tip_center: Mat4,
+    start_center: Mat4,
     global_transform: MutCount<Mat4>,
     tip_transform: MutCount<SpringMat4>,
     player_texts: MutCount<[String; 4]>,
@@ -136,23 +137,15 @@ impl LifeGameView {
         let one_sixths_spins = LifeGame::spin_roulette();
         let life_game = &mut self.life_game;
         let avatar_mat4 = {
-            let pre = life_game.position_to_coordinates
-                [life_game.position[life_game.current_player]]
-                .as_vec2();
             life_game.proceed(one_sixths_spins);
-            let post = life_game.position_to_coordinates
+            let target = life_game.position_to_coordinates
                 [life_game.position[life_game.current_player]]
                 .as_vec2();
-            let current = self.player_avatar_transforms[life_game.current_player]
-                .get_inner()
-                .current
-                .to_owned();
-            let diff = post - pre;
-            current * Mat4::from_translation((diff, 0. as f32).into())
+            Mat4::IDENTITY + Mat4::from_translation((target, 0.).into()) - self.start_center
         };
         life_game.finish_turn();
-        let mut arc = self.player_avatar_transforms[life_game.current_player].clone();
 
+        let mut arc = self.player_avatar_transforms[life_game.current_player].clone();
         self.tip_transform.spring_to(
             self.tip_center
                 * Mat4::from_rotation_z(PI / 3. * one_sixths_spins as f32)
@@ -230,7 +223,7 @@ fn main() {
     let mut position_to_coordinates: Vec<DVec2> = vec![];
     let mut regex_patterns = RegexPatterns::default();
     let mut tip_center = Mat4::IDENTITY;
-    let mut initial_avatar_origin = Mat4::IDENTITY;
+    let mut start_center = Mat4::IDENTITY;
     let _clickable_regex_pattern = regex_patterns.add(r"#clickable(?:$| |#)");
     let _dynamic_regex_pattern = regex_patterns.add(r"#dynamic(?:$| |#)");
     let coord_regex_pattern = regex_patterns.add(r"#coord(?:$| |#)");
@@ -255,17 +248,19 @@ fn main() {
         }
         let default_matches = defaults.matches(id);
         if default_matches.matched(coord_regex_pattern.index) {
+            let bbox = node.calculate_bbox().unwrap();
+            let center = Mat4::from_translation(
+                [
+                    (bbox.x() + bbox.width() / 2.) as f32,
+                    (bbox.y() + bbox.height() / 2.) as f32,
+                    0.,
+                ]
+                .into(),
+            );
             if id.starts_with("Tip") {
-                let tip_bbox = node.calculate_bbox().unwrap();
-                tip_center = Mat4::from_translation(
-                    [
-                        (tip_bbox.x() + tip_bbox.width() / 2.) as f32,
-                        (tip_bbox.y() + tip_bbox.height() / 2.) as f32,
-                        0.,
-                    ]
-                    .into(),
-                )
+                tip_center = center
             } else {
+                start_center = center
             }
         }
         if !default_matches.matched(dynamic_text_regex_pattern.index) {
@@ -284,6 +279,7 @@ fn main() {
     let life_view = LifeGameView {
         global_transform: (translate * scale).into(),
         tip_center,
+        start_center,
         life_game: LifeGame {
             position_to_coordinates,
             position_to_dollar,

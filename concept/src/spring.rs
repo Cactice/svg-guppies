@@ -66,7 +66,7 @@ impl SpringMat4 {
             mutable.current = Mat4::from_cols_array(&current_position_vec.try_into().unwrap());
             mutable.velocity = Mat4::from_cols_array(&vel_vec.try_into().unwrap());
 
-            mutable.current.abs_diff_eq(mutable.target, 10.0)
+            mutable.current.abs_diff_eq(mutable.target, 1.0)
                 && mutable.velocity.abs_diff_eq(Mat4::ZERO, 100.0)
         };
         if !animating_complete {
