@@ -3,7 +3,8 @@ pub use crossbeam;
 use crossbeam::scope;
 pub use pollster;
 use setup::Setup;
-use std::thread::{self, spawn};
+use std::sync::{Arc, Mutex};
+use std::thread::{self};
 pub use tesselation;
 use tesselation::geometry::SvgSet;
 pub use tesselation::glam;
@@ -32,7 +33,7 @@ pub trait ViewModel: Send + Sync {
     fn into_bytes(&mut self) -> Option<Vec<u8>>;
     fn into_texts(&self) -> Option<Vec<(String, String)>>;
     fn reset_mut_count(&mut self);
-    fn on_event(&mut self, svg_set: &SvgSet, event: WindowEvent);
+    fn on_event(&mut self, event: WindowEvent);
 }
 
 pub fn main<V: ViewModel + 'static>(svg_set: SvgSet<'static>, mut view_model: V) {
@@ -92,7 +93,7 @@ pub fn main<V: ViewModel + 'static>(svg_set: SvgSet<'static>, mut view_model: V)
                     }
                     _ => {}
                 }
-                view_model.on_event(&svg_set, event);
+                view_model.on_event(event);
             }
             Event::RedrawRequested(_) => {
                 if let (Some(redraw), Some(window)) = (redraw.as_mut(), window.as_mut()) {

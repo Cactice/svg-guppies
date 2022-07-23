@@ -21,8 +21,8 @@ impl Default for SpringMat4NonAtomic {
         Self {
             spring: Spring::new(
                 DeltaTime(natura::fps(60)),
-                AngularFrequency(6.0),
-                DampingRatio(0.5),
+                AngularFrequency(10.0),
+                DampingRatio(1.),
             ),
             is_animating: false,
             current: Default::default(),

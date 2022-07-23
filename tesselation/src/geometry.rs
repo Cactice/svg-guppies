@@ -4,7 +4,7 @@ use crate::{
     stroke::iterate_stroke,
 };
 use glam::{DVec2, Vec2, Vec4};
-use lyon::lyon_tessellation::{FillVertex, StrokeVertex, VertexBuffers};
+use lyon::lyon_tessellation::VertexBuffers;
 use roxmltree::{Document, NodeId};
 use std::{collections::HashMap, iter, ops::Range, sync::Arc};
 use usvg::{fontdb::Source, NodeKind, Options, Path, PathBbox, Tree};
@@ -198,7 +198,7 @@ pub struct Geometry {
     vertices: Vertices,
     indices: Indices,
     index_base: usize,
-    transform_id: usize,
+    transform_id: u32,
     bbox: Rect,
 }
 impl Geometry {
@@ -250,7 +250,7 @@ impl Geometry {
             vertices: v.vertices,
             indices: v.indices,
             index_base,
-            transform_id: 0,
+            transform_id,
             bbox: Rect::from(&p.data.bbox().unwrap()),
         }
     }
@@ -351,7 +351,6 @@ impl<'a> SvgSet<'a> {
         let node = self.document.get_node(*node_id).ok_or("Not in document")?;
         Ok(node)
     }
-
     pub fn new(xml: &'a str, mut callback: InitCallback) -> Self {
         let font = include_bytes!("../fallback_font/Roboto-Medium.ttf");
         let mut opt = Options::default();

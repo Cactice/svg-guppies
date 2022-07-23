@@ -1,12 +1,11 @@
 use concept::spring::{MutCount, SpringMat4};
 use glam::{DVec2, Mat4, Vec2, Vec3};
 use regex::{Regex, RegexSet};
+use std::f32::consts::PI;
+use std::hash::{BuildHasher, Hasher};
 use std::iter;
 use std::thread::spawn;
-use std::{
-    f32::consts::PI,
-    hash::{BuildHasher, Hasher},
-};
+use std::time::{SystemTime, UNIX_EPOCH};
 use windowing::crossbeam::scope;
 use windowing::tesselation::callback::{IndicesPriority, InitCallback, Initialization};
 use windowing::tesselation::geometry::SvgSet;
@@ -27,6 +26,7 @@ struct LifeGame {
 #[derive(Default)]
 struct LifeGameView {
     player_avatar_transforms: MutCount<[SpringMat4; 4]>,
+    tip_center: Mat4,
     global_transform: MutCount<Mat4>,
     tip_transform: MutCount<SpringMat4>,
     player_texts: MutCount<[String; 4]>,
@@ -85,7 +85,7 @@ impl ViewModel for LifeGameView {
             .collect();
         Some(texts)
     }
-    fn on_event(&mut self, _svg_set: &SvgSet, event: WindowEvent) {
+    fn on_event(&mut self, event: WindowEvent) {
         match event {
             WindowEvent::CursorMoved { position, .. } => {
                 let new_position = Vec2::new(position.x as f32, position.y as f32);
@@ -109,6 +109,7 @@ impl ViewModel for LifeGameView {
                 self.mouse_down = Some(self.mouse_position);
                 self.tip_clicked();
             }
+
             WindowEvent::MouseWheel {
                 delta: MouseScrollDelta::PixelDelta(p),
                 ..
@@ -160,12 +161,11 @@ impl LifeGameView {
     }
 }
 
-pub(crate) fn rand_u64() -> u64 {
-    std::collections::hash_map::RandomState::new()
-        .build_hasher()
-        .finish()
-        % u64::MAX
-        / u64::MAX
+pub(crate) fn rand_u128() -> u128 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis()
 }
 
 const RANDOM_VARIANCE: u64 = 12;
@@ -174,12 +174,13 @@ const ROULETTE_MAX: u64 = 6;
 
 impl LifeGame {
     fn spin_roulette() -> u64 {
-        RANDOM_BASE + (rand_u64() % RANDOM_VARIANCE)
+        RANDOM_BASE + (rand_u128() as u64 % RANDOM_VARIANCE)
     }
     fn proceed(&mut self, steps: u64) {
-        let proceed = steps % ROULETTE_MAX;
-        self.position[self.current_player] =
-            (self.position[self.current_player] + proceed as usize).min(self.position.len() - 1);
+        let proceed = steps % ROULETTE_MAX + 1;
+        self.position[self.current_player] = (self.position[self.current_player]
+            + proceed as usize)
+            .min(self.position_to_coordinates.len() - 1);
     }
     fn finish_turn(&mut self) {
         let dollar_delta = self
@@ -192,7 +193,11 @@ impl LifeGame {
                 todo!("game finished")
             } else {
                 self.current_player += n;
-                break;
+                self.current_player %= 4;
+                let length_of_positions = self.position_to_dollar.len() - 1;
+                if self.position[self.current_player] < length_of_positions {
+                    break;
+                }
             }
         }
     }
@@ -221,8 +226,10 @@ fn main() {
     let mut position_to_dollar: Vec<i32> = vec![];
     let mut position_to_coordinates: Vec<DVec2> = vec![];
     let mut regex_patterns = RegexPatterns::default();
+    let mut tip_center = Mat4::IDENTITY;
     let _clickable_regex_pattern = regex_patterns.add(r"#clickable(?:$| |#)");
     let _dynamic_regex_pattern = regex_patterns.add(r"#dynamic(?:$| |#)");
+    let coord_regex_pattern = regex_patterns.add(r"#coord(?:$| |#)");
     let dynamic_text_regex_pattern = regex_patterns.add(r"#dynamicText(?:$| |#)");
     let defaults = RegexSet::new(regex_patterns.0.iter().map(|r| &r.regex_pattern)).unwrap();
     let stops = Regex::new(r"^(\d+)\.((?:\+|-)\d+):").unwrap();
@@ -243,6 +250,17 @@ fn main() {
             position_to_coordinates.insert(stop, coordinate);
         }
         let default_matches = defaults.matches(id);
+        if default_matches.matched(coord_regex_pattern.index) {
+            let tip_bbox = node.calculate_bbox().unwrap();
+            tip_center = Mat4::from_translation(
+                [
+                    (tip_bbox.x() + tip_bbox.width() / 2.) as f32,
+                    (tip_bbox.y() + tip_bbox.height() / 2.) as f32,
+                    0.,
+                ]
+                .into(),
+            )
+        }
         if !default_matches.matched(dynamic_text_regex_pattern.index) {
             return Initialization {
                 indices_priority: IndicesPriority::Fixed,
@@ -252,13 +270,14 @@ fn main() {
         Initialization::default()
     };
     let callback = InitCallback::new(callback_fn);
-    let svg_set = SvgSet::new(include_str!("../../svg/life_text.svg"), callback);
+    let svg_set = SvgSet::new(include_str!("../../svg/life.svg"), callback);
     let svg_scale = svg_set.bbox.size;
 
     let scale: Mat4 = get_scale(PhysicalSize::<u32>::new(1600, 1200), svg_scale);
     let translate = Mat4::from_translation([-1., 1.0, 0.0].into());
     let life_view = LifeGameView {
         global_transform: (translate * scale).into(),
+        tip_center,
         life_game: LifeGame {
             position_to_coordinates,
             position_to_dollar,
