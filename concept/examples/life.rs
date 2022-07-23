@@ -1,14 +1,10 @@
-use concept::spring::{MutCount, SpringMat4};
-use glam::{DVec2, Mat4, Quat, Vec2, Vec3};
+use concept::spring::{MutCount, SpringMat4, StaticCallback};
+use glam::{DVec2, Mat4, Vec2, Vec3};
 use regex::{Regex, RegexSet};
+use std::f32::consts::PI;
 use std::iter;
-use std::sync::RwLock;
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
-use std::{
-    f32::consts::PI,
-    hash::{BuildHasher, Hasher},
-};
-use windowing::tesselation::callback::{IndicesPriority, InitCallback, Initialization};
+use std::time::{SystemTime, UNIX_EPOCH};
+use windowing::tesselation::callback::{Callback, IndicesPriority, InitCallback, Initialization};
 use windowing::tesselation::geometry::SvgSet;
 use windowing::tesselation::usvg::{Node, NodeExt, NodeKind};
 use windowing::winit::dpi::PhysicalSize;
@@ -28,6 +24,7 @@ struct LifeGame {
 struct LifeGameView {
     player_avatar_transforms: MutCount<[SpringMat4; 4]>,
     tip_center: Mat4,
+    start_center: Mat4,
     global_transform: MutCount<Mat4>,
     tip_transform: MutCount<SpringMat4>,
     player_texts: MutCount<[String; 4]>,
@@ -52,22 +49,15 @@ impl ViewModel for LifeGameView {
         .iter()
         .any(|x| x > &0);
 
-        self.player_avatar_transforms
-            .unwrapped
-            .iter_mut()
-            .for_each(|s| {
-                s.update();
-            });
-        self.tip_transform.unwrapped.update();
         let mat_4: Vec<Mat4> = iter::empty::<Mat4>()
             .chain([self.global_transform.unwrapped])
             .chain([Mat4::IDENTITY])
             .chain(
                 self.player_avatar_transforms
                     .iter()
-                    .map(|m| m.current.read().unwrap().to_owned()),
+                    .map(|m| m.get_inner().current),
             )
-            .chain([self.tip_transform.current.read().unwrap().to_owned()])
+            .chain([self.tip_transform.get_inner().current])
             .collect();
         Some(bytemuck::cast_slice(mat_4.as_slice()).to_vec())
     }
@@ -93,7 +83,7 @@ impl ViewModel for LifeGameView {
             .collect();
         Some(texts)
     }
-    fn on_event(&mut self, _svg_set: &SvgSet, event: WindowEvent) {
+    fn on_event(&mut self, event: WindowEvent) {
         match event {
             WindowEvent::CursorMoved { position, .. } => {
                 let new_position = Vec2::new(position.x as f32, position.y as f32);
@@ -117,6 +107,7 @@ impl ViewModel for LifeGameView {
                 self.mouse_down = Some(self.mouse_position);
                 self.tip_clicked();
             }
+
             WindowEvent::MouseWheel {
                 delta: MouseScrollDelta::PixelDelta(p),
                 ..
@@ -134,38 +125,35 @@ impl ViewModel for LifeGameView {
 
 impl LifeGameView {
     fn tip_clicked(&mut self) {
-        let life_game = &mut self.life_game;
-        if self.tip_transform.is_animating
+        if self.tip_transform.get_inner().is_animating
             || self
                 .player_avatar_transforms
                 .iter()
-                .any(|spring| spring.is_animating)
+                .any(|spring| spring.get_inner().is_animating)
         {
             return;
         }
 
         let one_sixths_spins = LifeGame::spin_roulette();
-        let curr = self.tip_transform.current.read().unwrap().to_owned();
+        let life_game = &mut self.life_game;
+        let avatar_mat4 = {
+            life_game.proceed(one_sixths_spins);
+            let target = life_game.position_to_coordinates
+                [life_game.position[life_game.current_player]]
+                .as_vec2();
+            Mat4::IDENTITY + Mat4::from_translation((target, 0.).into()) - self.start_center
+        };
+        life_game.finish_turn();
 
+        let mut arc = self.player_avatar_transforms[life_game.current_player].clone();
         self.tip_transform.spring_to(
             self.tip_center
                 * Mat4::from_rotation_z(PI / 3. * one_sixths_spins as f32)
                 * self.tip_center.inverse(),
+            Some(StaticCallback::new(move |_| {
+                arc.spring_to(avatar_mat4, None);
+            })),
         );
-
-        let pre = life_game.position_to_coordinates[life_game.position[life_game.current_player]]
-            .as_vec2();
-        life_game.proceed(one_sixths_spins);
-        let post = life_game.position_to_coordinates[life_game.position[life_game.current_player]]
-            .as_vec2();
-        let mat4 = self.player_avatar_transforms[life_game.current_player]
-            .current
-            .read()
-            .unwrap()
-            .to_owned();
-        self.player_avatar_transforms[life_game.current_player]
-            .spring_to(mat4 * Mat4::from_translation((post - pre, 0. as f32).into()));
-        life_game.finish_turn()
     }
 }
 
@@ -235,6 +223,7 @@ fn main() {
     let mut position_to_coordinates: Vec<DVec2> = vec![];
     let mut regex_patterns = RegexPatterns::default();
     let mut tip_center = Mat4::IDENTITY;
+    let mut start_center = Mat4::IDENTITY;
     let _clickable_regex_pattern = regex_patterns.add(r"#clickable(?:$| |#)");
     let _dynamic_regex_pattern = regex_patterns.add(r"#dynamic(?:$| |#)");
     let coord_regex_pattern = regex_patterns.add(r"#coord(?:$| |#)");
@@ -259,20 +248,24 @@ fn main() {
         }
         let default_matches = defaults.matches(id);
         if default_matches.matched(coord_regex_pattern.index) {
-            let tip_bbox = node.calculate_bbox().unwrap();
-            tip_center = Mat4::from_translation(
+            let bbox = node.calculate_bbox().unwrap();
+            let center = Mat4::from_translation(
                 [
-                    (tip_bbox.x() + tip_bbox.width() / 2.) as f32,
-                    (tip_bbox.y() + tip_bbox.height() / 2.) as f32,
+                    (bbox.x() + bbox.width() / 2.) as f32,
+                    (bbox.y() + bbox.height() / 2.) as f32,
                     0.,
                 ]
                 .into(),
-            )
+            );
+            if id.starts_with("Tip") {
+                tip_center = center
+            } else {
+                start_center = center
+            }
         }
         if !default_matches.matched(dynamic_text_regex_pattern.index) {
             return Initialization {
                 indices_priority: IndicesPriority::Fixed,
-                ..Default::default()
             };
         }
         Initialization::default()
@@ -286,6 +279,7 @@ fn main() {
     let life_view = LifeGameView {
         global_transform: (translate * scale).into(),
         tip_center,
+        start_center,
         life_game: LifeGame {
             position_to_coordinates,
             position_to_dollar,

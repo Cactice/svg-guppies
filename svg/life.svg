@@ -33,7 +33,7 @@
 <g id="Road" filter="url(#filter2_d_7_15)">
 <path d="M183.751 423.94C201.798 402.457 306.922 401.434 525.894 402.15H722.006C806.527 402.15 1076.93 552.423 1069.86 683.464C1062.8 814.506 583.795 858.697 472.204 858.697C378.058 862.278 319.886 834.044 336.249 775.94L363.32 652.571C366.729 634.396 366.087 592.83 336.249 571.962C298.952 545.876 207.513 574.315 183.751 547.411C159.989 520.507 165.704 445.422 183.751 423.94Z" stroke="white" stroke-width="91" shape-rendering="crispEdges"/>
 </g>
-<text id="0.+0: Start" fill="black" xml:space="preserve" style="white-space: pre" font-family="Alata" font-size="24" letter-spacing="0em"><tspan x="501.043" y="411.84">START</tspan></text>
+<text id="0.+0: Start #coord" fill="black" xml:space="preserve" style="white-space: pre" font-family="Alata" font-size="24" letter-spacing="0em"><tspan x="501.043" y="411.84">START</tspan></text>
 <text id="1.+500: You get a bonus" fill="black" xml:space="preserve" style="white-space: pre" font-family="Alata" font-size="12" letter-spacing="0em"><tspan x="362.023" y="404.92">You get a bonus</tspan></text>
 <text id="2.-200: A car hits you" fill="black" xml:space="preserve" style="white-space: pre" font-family="Alata" font-size="12" letter-spacing="0em"><tspan x="228.768" y="411.92">A car hits you</tspan></text>
 <text id="3.-100: You buy a &#226;&#128;&#168;lot of junk foo" fill="black" xml:space="preserve" style="white-space: pre" font-family="Alata" font-size="12" letter-spacing="0em"><tspan x="140.516" y="461.92">You buy a &#x2028;</tspan><tspan x="152.891" y="478.92">lot of &#10;</tspan><tspan x="146.557" y="495.92">junk foo</tspan></text>
