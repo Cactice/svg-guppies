@@ -89,7 +89,7 @@ impl ViewModel for LifeGameView {
             .collect();
         Some(texts)
     }
-    fn on_event(&mut self, _svg_set: &SvgSet, event: WindowEvent) {
+    fn on_event(&mut self, event: WindowEvent) {
         match event {
             WindowEvent::CursorMoved { position, .. } => {
                 let new_position = Vec2::new(position.x as f32, position.y as f32);
@@ -113,6 +113,7 @@ impl ViewModel for LifeGameView {
                 self.mouse_down = Some(self.mouse_position);
                 self.tip_clicked();
             }
+
             WindowEvent::MouseWheel {
                 delta: MouseScrollDelta::PixelDelta(p),
                 ..
@@ -141,7 +142,6 @@ impl LifeGameView {
         }
 
         let one_sixths_spins = LifeGame::spin_roulette();
-
         self.tip_transform.spring_to(
             self.tip_center
                 * Mat4::from_rotation_z(PI / 3. * one_sixths_spins as f32)
