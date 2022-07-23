@@ -4,7 +4,7 @@ use regex::{Regex, RegexSet};
 use std::f32::consts::PI;
 use std::iter;
 use std::time::{SystemTime, UNIX_EPOCH};
-use windowing::tesselation::callback::{IndicesPriority, InitCallback, Initialization};
+use windowing::tesselation::callback::{Callback, IndicesPriority, InitCallback, Initialization};
 use windowing::tesselation::geometry::SvgSet;
 use windowing::tesselation::usvg::{Node, NodeExt, NodeKind};
 use windowing::winit::dpi::PhysicalSize;
@@ -123,34 +123,44 @@ impl ViewModel for LifeGameView {
 }
 
 impl LifeGameView {
-    fn tip_clicked(&mut self) -> u64 {
-        let _life_game = &mut self.life_game;
+    fn tip_clicked(&mut self) {
         if self.tip_transform.get_inner().is_animating
             || self
                 .player_avatar_transforms
                 .iter()
                 .any(|spring| spring.get_inner().is_animating)
         {
-            return 0;
+            return;
         }
 
         let one_sixths_spins = LifeGame::spin_roulette();
-        self.tip_transform
-            .spring_to(Mat4::from_rotation_z(one_sixths_spins as f32 * PI / 3.));
-        one_sixths_spins
-    }
-    fn proceed(&mut self, one_sixths_spins: u64) {
         let life_game = &mut self.life_game;
-        life_game.proceed(one_sixths_spins);
-        self.player_avatar_transforms[life_game.current_player].spring_to(Mat4::from_translation(
-            (
-                life_game.position_to_coordinates[life_game.position[life_game.current_player]]
-                    .as_vec2(),
-                0.0_f32,
-            )
-                .into(),
-        ));
-        life_game.finish_turn()
+        let avatar_mat4 = {
+            let pre = life_game.position_to_coordinates
+                [life_game.position[life_game.current_player]]
+                .as_vec2();
+            life_game.proceed(one_sixths_spins);
+            let post = life_game.position_to_coordinates
+                [life_game.position[life_game.current_player]]
+                .as_vec2();
+            let current = self.player_avatar_transforms[life_game.current_player]
+                .get_inner()
+                .current
+                .to_owned();
+            let diff = post - pre;
+            current * Mat4::from_translation((diff, 0. as f32).into())
+        };
+        life_game.finish_turn();
+        let mut arc = self.player_avatar_transforms[life_game.current_player].clone();
+
+        self.tip_transform.spring_to(
+            self.tip_center
+                * Mat4::from_rotation_z(PI / 3. * one_sixths_spins as f32)
+                * self.tip_center.inverse(),
+            Callback::<'static, (), ()>::new(move |_| {
+                arc.spring_to(avatar_mat4, Callback::<'static, (), ()>::new(|_| {}));
+            }),
+        );
     }
 }
 
@@ -220,6 +230,7 @@ fn main() {
     let mut position_to_coordinates: Vec<DVec2> = vec![];
     let mut regex_patterns = RegexPatterns::default();
     let mut tip_center = Mat4::IDENTITY;
+    let mut initial_avatar_origin = Mat4::IDENTITY;
     let _clickable_regex_pattern = regex_patterns.add(r"#clickable(?:$| |#)");
     let _dynamic_regex_pattern = regex_patterns.add(r"#dynamic(?:$| |#)");
     let coord_regex_pattern = regex_patterns.add(r"#coord(?:$| |#)");
@@ -244,15 +255,18 @@ fn main() {
         }
         let default_matches = defaults.matches(id);
         if default_matches.matched(coord_regex_pattern.index) {
-            let tip_bbox = node.calculate_bbox().unwrap();
-            tip_center = Mat4::from_translation(
-                [
-                    (tip_bbox.x() + tip_bbox.width() / 2.) as f32,
-                    (tip_bbox.y() + tip_bbox.height() / 2.) as f32,
-                    0.,
-                ]
-                .into(),
-            )
+            if id.starts_with("Tip") {
+                let tip_bbox = node.calculate_bbox().unwrap();
+                tip_center = Mat4::from_translation(
+                    [
+                        (tip_bbox.x() + tip_bbox.width() / 2.) as f32,
+                        (tip_bbox.y() + tip_bbox.height() / 2.) as f32,
+                        0.,
+                    ]
+                    .into(),
+                )
+            } else {
+            }
         }
         if !default_matches.matched(dynamic_text_regex_pattern.index) {
             return Initialization {

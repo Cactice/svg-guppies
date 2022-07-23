@@ -6,6 +6,7 @@ use std::ops::{Deref, DerefMut};
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::thread::{sleep, spawn};
 use std::time::Duration;
+use windowing::tesselation::callback::{self, Callback};
 
 pub struct SpringMat4NonAtomic {
     spring: Spring,
@@ -14,8 +15,8 @@ pub struct SpringMat4NonAtomic {
     velocity: Mat4,
     pub is_animating: bool,
 }
-#[derive(Default)]
-pub struct SpringMat4(Arc<Mutex<SpringMat4NonAtomic>>);
+#[derive(Default, Clone)]
+pub struct SpringMat4(pub Arc<Mutex<SpringMat4NonAtomic>>);
 impl Default for SpringMat4NonAtomic {
     fn default() -> Self {
         Self {
@@ -34,22 +35,24 @@ impl Default for SpringMat4NonAtomic {
 
 impl SpringMat4 {
     pub fn get_inner(&self) -> MutexGuard<'_, SpringMat4NonAtomic> {
-        self.0.lock().unwrap()
+        self.0.lock().expect("SpringMat4 mutex unwrap failed")
     }
-    pub fn spring_to(&mut self, target: Mat4) {
+    pub fn spring_to(&mut self, target: Mat4, on_complete: Callback<'static, (), ()>) {
         {
-            self.0.lock().unwrap().target = target
+            self.get_inner().target = target
         }
-        self.update();
+        self.update(on_complete);
     }
-    pub fn update(&mut self) {
+    pub fn update(&mut self, mut on_complete: Callback<'static, (), ()>) {
         let animating_complete = {
-            let mut mutable = self.0.lock().unwrap();
-            let mut current = mutable.current;
+            let mut mutable = self.get_inner();
             let mut current_position_vec = vec![];
             let mut vel_vec = vec![];
             zip(
-                zip(current.to_cols_array(), mutable.velocity.to_cols_array()),
+                zip(
+                    mutable.current.to_cols_array(),
+                    mutable.velocity.to_cols_array(),
+                ),
                 mutable.target.to_cols_array(),
             )
             .for_each(|((current_position, vel), target)| {
@@ -60,21 +63,20 @@ impl SpringMat4 {
                 current_position_vec.push(new_current_position as f32);
                 vel_vec.push(new_vel as f32);
             });
-            current = Mat4::from_cols_array(&current_position_vec.try_into().unwrap());
+            mutable.current = Mat4::from_cols_array(&current_position_vec.try_into().unwrap());
             mutable.velocity = Mat4::from_cols_array(&vel_vec.try_into().unwrap());
 
-            dbg!(current.abs_diff_eq(mutable.target, 0.1));
-            dbg!(mutable.velocity.abs_diff_eq(Mat4::ZERO, 0.01));
-            current.abs_diff_eq(mutable.target, 0.1)
-                && mutable.velocity.abs_diff_eq(Mat4::ZERO, 0.01)
+            mutable.current.abs_diff_eq(mutable.target, 10.0)
+                && mutable.velocity.abs_diff_eq(Mat4::ZERO, 100.0)
         };
         if !animating_complete {
             let arc = self.0.clone();
-            spawn(|| {
-                sleep(Duration::from_millis(1));
-                Self(arc).update();
+            spawn(move || {
+                sleep(Duration::from_millis(16));
+                Self(arc).update(on_complete);
             });
         } else {
+            on_complete.process_events(&());
             self.0.lock().unwrap().is_animating = false;
         }
     }
