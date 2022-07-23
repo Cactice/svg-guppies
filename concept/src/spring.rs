@@ -8,6 +8,7 @@ use std::thread::{sleep, spawn};
 use std::time::Duration;
 use windowing::tesselation::callback::{self, Callback};
 
+pub type StaticCallback = Callback<'static, (), ()>;
 pub struct SpringMat4NonAtomic {
     spring: Spring,
     target: Mat4,
@@ -37,13 +38,13 @@ impl SpringMat4 {
     pub fn get_inner(&self) -> MutexGuard<'_, SpringMat4NonAtomic> {
         self.0.lock().expect("SpringMat4 mutex unwrap failed")
     }
-    pub fn spring_to(&mut self, target: Mat4, on_complete: Callback<'static, (), ()>) {
+    pub fn spring_to(&mut self, target: Mat4, on_complete: Option<StaticCallback>) {
         {
             self.get_inner().target = target
         }
         self.update(on_complete);
     }
-    pub fn update(&mut self, mut on_complete: Callback<'static, (), ()>) {
+    pub fn update(&mut self, mut on_complete: StaticCallback) {
         let animating_complete = {
             let mut mutable = self.get_inner();
             let mut current_position_vec = vec![];

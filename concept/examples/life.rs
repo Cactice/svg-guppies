@@ -1,4 +1,4 @@
-use concept::spring::{MutCount, SpringMat4};
+use concept::spring::{MutCount, SpringMat4, StaticCallback};
 use glam::{DVec2, Mat4, Vec2, Vec3};
 use regex::{Regex, RegexSet};
 use std::f32::consts::PI;
@@ -150,9 +150,9 @@ impl LifeGameView {
             self.tip_center
                 * Mat4::from_rotation_z(PI / 3. * one_sixths_spins as f32)
                 * self.tip_center.inverse(),
-            Callback::<'static, (), ()>::new(move |_| {
-                arc.spring_to(avatar_mat4, Callback::<'static, (), ()>::new(|_| {}));
-            }),
+            Some(StaticCallback::new(move |_| {
+                arc.spring_to(avatar_mat4, None);
+            })),
         );
     }
 }
