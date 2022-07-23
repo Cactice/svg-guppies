@@ -42,7 +42,7 @@ impl SpringMat4 {
         {
             self.get_inner().target = target
         }
-        self.update(on_complete);
+        self.update(on_complete.unwrap_or(StaticCallback::new(|_| ())));
     }
     pub fn update(&mut self, mut on_complete: StaticCallback) {
         let animating_complete = {
