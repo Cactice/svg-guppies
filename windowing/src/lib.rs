@@ -1,5 +1,4 @@
 mod setup;
-pub use crossbeam;
 pub use pollster;
 use setup::Setup;
 pub use tesselation;
@@ -33,7 +32,7 @@ pub trait ViewModel: Send + Sync {
     fn on_event(&mut self, event: WindowEvent);
 }
 
-pub fn main<V: ViewModel + 'static>(svg_set: SvgSet<'static>, mut view_model: V) {
+pub fn main<V: ViewModel + 'static>(mut svg_set: SvgSet<'static>, mut view_model: V) {
     let event_loop = EventLoop::new();
     let vertices = svg_set.geometry_set.get_vertices();
     let indices = svg_set.geometry_set.get_indices();
@@ -94,9 +93,21 @@ pub fn main<V: ViewModel + 'static>(svg_set: SvgSet<'static>, mut view_model: V)
             }
             Event::RedrawRequested(_) => {
                 if let (Some(redraw), Some(window)) = (redraw.as_mut(), window.as_mut()) {
-                    if let Some(mut texture) = view_model.into_bytes() {
+                    if let (Some(mut texture), Some(new_texts)) =
+                        (view_model.into_bytes(), view_model.into_texts())
+                    {
+                        for (id, new_text) in new_texts {
+                            dbg!(&id, &new_text);
+                            svg_set.update_text(&id, &new_text);
+                        }
+                        svg_set.geometry_set.get_vertices();
                         texture.resize(8192 * 16, 0);
-                        Setup::redraw(redraw, &texture[..]);
+                        Setup::redraw(
+                            redraw,
+                            &texture[..],
+                            &svg_set.geometry_set.get_vertices(),
+                            &svg_set.geometry_set.get_indices(),
+                        );
                         window.request_redraw();
                     }
                 }

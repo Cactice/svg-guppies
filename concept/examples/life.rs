@@ -3,8 +3,8 @@ use glam::{DVec2, Mat4, Vec2, Vec3};
 use regex::{Regex, RegexSet};
 use std::f32::consts::PI;
 use std::iter;
-use std::time::{SystemTime, UNIX_EPOCH};
-use windowing::tesselation::callback::{Callback, IndicesPriority, InitCallback, Initialization};
+use std::time::{Instant, UNIX_EPOCH};
+use windowing::tesselation::callback::{IndicesPriority, InitCallback, Initialization};
 use windowing::tesselation::geometry::SvgSet;
 use windowing::tesselation::usvg::{Node, NodeExt, NodeKind};
 use windowing::winit::dpi::PhysicalSize;
@@ -62,19 +62,19 @@ impl ViewModel for LifeGameView {
         Some(bytemuck::cast_slice(mat_4.as_slice()).to_vec())
     }
     fn into_texts(&self) -> Option<Vec<(String, String)>> {
-        let is_mutated = [self.player_texts.mut_count, self.instruction_text.mut_count]
-            .iter()
-            .any(|x| x > &0);
-        if is_mutated {
-            return None;
-        }
+        // let is_mutated = [self.player_texts.mut_count, self.instruction_text.mut_count]
+        //     .iter()
+        //     .any(|x| x > &0);
+        // if is_mutated {
+        //     return None;
+        // }
 
         let texts = iter::empty::<(String, String)>()
             .chain(
                 self.player_texts
                     .iter()
                     .enumerate()
-                    .map(|(i, m)| (format!("{}. Player #dynamicText", i), m.to_owned())),
+                    .map(|(i, m)| (format!("{}. Player #dynamicText", i + 1), m.to_owned())),
             )
             .chain([(
                 "instruction #dynamicText".to_string(),
@@ -158,10 +158,8 @@ impl LifeGameView {
 }
 
 pub(crate) fn rand_u128() -> u128 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_millis()
+    let now = Instant::now();
+    Instant::now().duration_since(now).as_nanos()
 }
 
 const RANDOM_VARIANCE: u64 = 12;
@@ -170,7 +168,7 @@ const ROULETTE_MAX: u64 = 6;
 
 impl LifeGame {
     fn spin_roulette() -> u64 {
-        RANDOM_BASE + (rand_u128() as u64 % RANDOM_VARIANCE)
+        RANDOM_BASE + (fastrand::u64(..) % RANDOM_VARIANCE)
     }
     fn proceed(&mut self, steps: u64) {
         let proceed = steps % ROULETTE_MAX + 1;

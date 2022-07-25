@@ -2,16 +2,16 @@
 <g id="Life" filter="url(#filter0_d_7_15)">
 <rect width="1920" height="1080" fill="white"/>
 <rect id="Background" width="1920" height="1080" fill="#004500"/>
-<text id="Life, I guess" fill="white" xml:space="preserve" style="white-space: pre" font-family="Fascinate" font-size="128" font-weight="900" letter-spacing="0em"><tspan x="532" y="244.938">Life, I guess</tspan></text>
+<text id="instruction #dynamicText" fill="white" xml:space="preserve" style="white-space: pre" font-family="Fascinate" font-size="128" font-weight="900" letter-spacing="0em"><tspan x="532" y="244.938">Life, I guess</tspan></text>
 <g id="Players">
 <g id="PlayerBackground" filter="url(#filter1_d_7_15)">
 <rect x="1201" y="309" width="600" height="669" rx="30" fill="white"/>
 </g>
 <text id="Players_2" fill="black" xml:space="preserve" style="white-space: pre" font-family="Epilogue" font-size="64" font-weight="bold" letter-spacing="0em"><tspan x="1381.44" y="418.26">Players</tspan></text>
-<text id="Player1 #dynamicText" fill="black" xml:space="preserve" style="white-space: pre" font-family="Alata" font-size="36" letter-spacing="0em"><tspan x="1330" y="524.76">Player1: $1040</tspan></text>
-<text id="Player2 #dynamicText" fill="black" xml:space="preserve" style="white-space: pre" font-family="Alata" font-size="36" letter-spacing="0em"><tspan x="1330" y="613.76">Player2: $1040</tspan></text>
-<text id="Player3 #dynamicText" fill="black" xml:space="preserve" style="white-space: pre" font-family="Alata" font-size="36" letter-spacing="0em"><tspan x="1330" y="702.76">Player3: -$30</tspan></text>
-<text id="Player4 #dynamicText" fill="black" xml:space="preserve" style="white-space: pre" font-family="Alata" font-size="36" letter-spacing="0em"><tspan x="1330" y="791.76">Player4: $100</tspan></text>
+<text id="1. Player #dynamicText" fill="black" xml:space="preserve" style="white-space: pre" font-family="Alata" font-size="36" letter-spacing="0em"><tspan x="1330" y="524.76">Player1: $1040</tspan></text>
+<text id="2. Player #dynamicText" fill="black" xml:space="preserve" style="white-space: pre" font-family="Alata" font-size="36" letter-spacing="0em"><tspan x="1330" y="613.76">Player2: $1040</tspan></text>
+<text id="3. Player #dynamicText" fill="black" xml:space="preserve" style="white-space: pre" font-family="Alata" font-size="36" letter-spacing="0em"><tspan x="1330" y="702.76">Player3: -$30</tspan></text>
+<text id="4. Player #dynamicText" fill="black" xml:space="preserve" style="white-space: pre" font-family="Alata" font-size="36" letter-spacing="0em"><tspan x="1330" y="791.76">Player4: $100</tspan></text>
 <g id="Player1 Avatar Static">
 <circle id="Ellipse 2" cx="1290.5" cy="499.5" r="10.5" fill="#000077"/>
 <path id="Polygon 1" d="M1290.5 502L1299.59 531.25H1281.41L1290.5 502Z" fill="#000077"/>

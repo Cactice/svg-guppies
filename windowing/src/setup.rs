@@ -127,7 +127,7 @@ impl Setup {
         config.height = size.height;
         surface.configure(device, config);
     }
-    pub fn redraw(redraw: &Redraw, texture: &[u8]) {
+    pub fn redraw(redraw: &Redraw, texture: &[u8], vertices: &Vertices, indices: &Indices) {
         let Redraw {
             transform,
             device,
@@ -192,6 +192,8 @@ impl Setup {
                 transform: *transform,
             }]),
         );
+        queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(vertices));
+        queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(indices));
         queue.write_texture(
             transform_texture.as_image_copy(),
             texture,
@@ -300,13 +302,13 @@ impl Setup {
         let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Index Buffer"),
             contents: bytemuck::cast_slice(indices),
-            usage: wgpu::BufferUsages::INDEX,
+            usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
         });
 
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("SVG-GUI Vertex Buffer"),
             contents: (bytemuck::cast_slice(vertices)),
-            usage: wgpu::BufferUsages::VERTEX,
+            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         });
         let redraw = Redraw {
             device,

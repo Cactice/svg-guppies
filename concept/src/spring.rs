@@ -6,7 +6,7 @@ use std::ops::{Deref, DerefMut};
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::thread::{sleep, spawn};
 use std::time::Duration;
-use windowing::tesselation::callback::{self, Callback};
+use windowing::tesselation::callback::Callback;
 
 pub type StaticCallback = Callback<'static, (), ()>;
 pub struct SpringMat4NonAtomic {
