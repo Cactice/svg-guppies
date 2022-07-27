@@ -15,6 +15,7 @@ pub struct SpringMat4NonAtomic {
     pub current: Mat4,
     velocity: Mat4,
     pub is_animating: bool,
+    on_complete: Option<StaticCallback>,
 }
 #[derive(Default, Clone)]
 pub struct SpringMat4(pub Arc<Mutex<SpringMat4NonAtomic>>);
@@ -23,13 +24,14 @@ impl Default for SpringMat4NonAtomic {
         Self {
             spring: Spring::new(
                 DeltaTime(natura::fps(60)),
-                AngularFrequency(10.0),
-                DampingRatio(1.),
+                AngularFrequency(20.0),
+                DampingRatio(0.7),
             ),
             is_animating: false,
             current: Default::default(),
             target: Default::default(),
             velocity: Default::default(),
+            on_complete: None,
         }
     }
 }
@@ -38,13 +40,22 @@ impl SpringMat4 {
     pub fn get_inner(&self) -> MutexGuard<'_, SpringMat4NonAtomic> {
         self.0.lock().expect("SpringMat4 mutex unwrap failed")
     }
-    pub fn spring_to(&mut self, target: Mat4, on_complete: Option<StaticCallback>) {
+    pub fn spring_to(
+        &mut self,
+        target: Mat4,
+        register: Arc<Mutex<Vec<SpringMat4>>>,
+        on_complete: Option<StaticCallback>,
+    ) {
         {
-            self.get_inner().target = target
+            register.lock().unwrap().push(self.clone());
+            let mut mutable = self.get_inner();
+            mutable.is_animating = true;
+            mutable.target = target;
+            mutable.on_complete = on_complete;
         }
-        self.update(on_complete.unwrap_or(StaticCallback::new(|_| ())));
+        self.update();
     }
-    pub fn update(&mut self, mut on_complete: StaticCallback) {
+    pub fn update(&mut self) -> bool {
         let animating_complete = {
             let mut mutable = self.get_inner();
             let mut current_position_vec = vec![];
@@ -70,16 +81,14 @@ impl SpringMat4 {
             mutable.current.abs_diff_eq(mutable.target, 1.0)
                 && mutable.velocity.abs_diff_eq(Mat4::ZERO, 100.0)
         };
-        if !animating_complete {
-            let arc = self.0.clone();
-            spawn(move || {
-                sleep(Duration::from_millis(16));
-                Self(arc).update(on_complete);
-            });
-        } else {
-            on_complete.process_events(&());
-            self.0.lock().unwrap().is_animating = false;
+        if animating_complete {
+            let mut inner = self.get_inner();
+            inner.is_animating = false;
+            if let Some(on_complete) = inner.on_complete.as_mut() {
+                on_complete.process_events(&());
+            }
         }
+        animating_complete
     }
 }
 
