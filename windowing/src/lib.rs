@@ -39,7 +39,7 @@ pub fn main<V: ViewModel + 'static>(mut svg_set: SvgSet<'static>, mut view_model
     let mut window = None;
 
     event_loop.run(move |event, event_loop, control_flow| {
-        *control_flow = ControlFlow::Wait;
+        *control_flow = ControlFlow::Poll;
         match event {
             Event::NewEvents(start_cause) => match start_cause {
                 winit::event::StartCause::Init => {

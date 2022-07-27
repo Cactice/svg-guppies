@@ -151,7 +151,6 @@ impl LifeGameView {
         {
             return;
         }
-        dbg!(self.life_game.current_player);
 
         let one_sixths_spins = LifeGame::spin_roulette();
         let life_game = &mut self.life_game;
