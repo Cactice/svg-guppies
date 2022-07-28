@@ -8,7 +8,6 @@ winit = "0.26.1"
 wgpu = "0.13.0"                                       #0.13
 pollster = "0.2"
 bytemuck = { version = "1.8", features = ["derive"] }
-tesselation = { path = "../tesselation" }
 
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
