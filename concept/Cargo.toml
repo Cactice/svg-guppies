@@ -13,6 +13,7 @@ natura = { git = "https://github.com/ziyasal/natura" }
 [dev-dependencies]
 regex = "1"
 bytemuck = "1.9.1"
+fastrand = "1.8.0"
 
 [[example]]
 name = "life"

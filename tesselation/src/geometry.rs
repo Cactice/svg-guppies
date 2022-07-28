@@ -442,15 +442,12 @@ impl<'a> SvgSet<'a> {
             vec![],
             1,
         );
-        let Geometry {
+        if let Some(Geometry {
             indices, vertices, ..
-        } = geometry_set
-            .variable_geometries
-            .0
-            .first()
-            .expect("No geometry in geometry_set");
-
-        self.geometry_set
-            .update_geometry(id, vertices.to_vec(), indices.to_vec());
+        }) = geometry_set.variable_geometries.0.first()
+        {
+            self.geometry_set
+                .update_geometry(id, vertices.to_vec(), indices.to_vec());
+        }
     }
 }

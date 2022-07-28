@@ -3,8 +3,8 @@ use glam::{DVec2, Mat4, Vec2, Vec3};
 use regex::{Regex, RegexSet};
 use std::f32::consts::PI;
 use std::iter;
-use std::time::{SystemTime, UNIX_EPOCH};
-use windowing::tesselation::callback::{Callback, IndicesPriority, InitCallback, Initialization};
+use std::sync::{Arc, Mutex};
+use windowing::tesselation::callback::{IndicesPriority, InitCallback, Initialization};
 use windowing::tesselation::geometry::SvgSet;
 use windowing::tesselation::usvg::{Node, NodeExt, NodeKind};
 use windowing::winit::dpi::PhysicalSize;
@@ -22,6 +22,7 @@ struct LifeGame {
 
 #[derive(Default)]
 struct LifeGameView {
+    animation_register: Arc<Mutex<Vec<SpringMat4>>>,
     player_avatar_transforms: MutCount<[SpringMat4; 4]>,
     tip_center: Mat4,
     start_center: Mat4,
@@ -41,7 +42,25 @@ impl ViewModel for LifeGameView {
         self.player_texts.reset_mut_count();
         self.instruction_text.reset_mut_count();
     }
-    fn into_bytes(&mut self) -> Option<Vec<u8>> {
+    fn on_redraw(&mut self) -> (Option<Vec<u8>>, Option<Vec<(String, String)>>) {
+        {
+            let mut r = self.animation_register.lock().unwrap().clone();
+            let mut vec: Vec<SpringMat4> = r
+                .iter_mut()
+                .filter_map(|spring| {
+                    let is_animating = !spring.update();
+                    if is_animating {
+                        Some(spring.clone())
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+            // r2 is necessary because spring.update above will add new elements not in r
+            let mut r2 = self.animation_register.lock().unwrap();
+            vec.extend_from_slice(&r2[r.len()..]);
+            *r2 = vec;
+        }
         let _is_mutated = [
             self.player_avatar_transforms.mut_count,
             self.tip_transform.mut_count,
@@ -59,29 +78,28 @@ impl ViewModel for LifeGameView {
             )
             .chain([self.tip_transform.get_inner().current])
             .collect();
-        Some(bytemuck::cast_slice(mat_4.as_slice()).to_vec())
-    }
-    fn into_texts(&self) -> Option<Vec<(String, String)>> {
-        let is_mutated = [self.player_texts.mut_count, self.instruction_text.mut_count]
-            .iter()
-            .any(|x| x > &0);
-        if is_mutated {
-            return None;
-        }
-
+        // let is_mutated = [self.player_texts.mut_count, self.instruction_text.mut_count]
+        //     .iter()
+        //     .any(|x| x > &0);
+        // if is_mutated {
+        //     return None;
+        // }
         let texts = iter::empty::<(String, String)>()
             .chain(
                 self.player_texts
                     .iter()
                     .enumerate()
-                    .map(|(i, m)| (format!("{}. Player #dynamicText", i), m.to_owned())),
+                    .map(|(i, m)| (format!("{}. Player #dynamicText", i + 1), m.to_owned())),
             )
             .chain([(
                 "instruction #dynamicText".to_string(),
                 self.instruction_text.clone(),
             )])
             .collect();
-        Some(texts)
+        (
+            Some(bytemuck::cast_slice(mat_4.as_slice()).to_vec()),
+            Some(texts),
+        )
     }
     fn on_event(&mut self, event: WindowEvent) {
         match event {
@@ -143,25 +161,20 @@ impl LifeGameView {
                 .as_vec2();
             Mat4::IDENTITY + Mat4::from_translation((target, 0.).into()) - self.start_center
         };
-        life_game.finish_turn();
 
         let mut arc = self.player_avatar_transforms[life_game.current_player].clone();
+        let arc2 = self.animation_register.clone();
+        life_game.finish_turn();
         self.tip_transform.spring_to(
             self.tip_center
                 * Mat4::from_rotation_z(PI / 3. * one_sixths_spins as f32)
                 * self.tip_center.inverse(),
+            self.animation_register.clone(),
             Some(StaticCallback::new(move |_| {
-                arc.spring_to(avatar_mat4, None);
+                arc.spring_to(avatar_mat4, arc2.clone(), None);
             })),
         );
     }
-}
-
-pub(crate) fn rand_u128() -> u128 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_millis()
 }
 
 const RANDOM_VARIANCE: u64 = 12;
@@ -170,7 +183,7 @@ const ROULETTE_MAX: u64 = 6;
 
 impl LifeGame {
     fn spin_roulette() -> u64 {
-        RANDOM_BASE + (rand_u128() as u64 % RANDOM_VARIANCE)
+        RANDOM_BASE + (fastrand::u64(..) % RANDOM_VARIANCE)
     }
     fn proceed(&mut self, steps: u64) {
         let proceed = steps % ROULETTE_MAX + 1;

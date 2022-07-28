@@ -1,5 +1,4 @@
 mod setup;
-pub use crossbeam;
 pub use pollster;
 use setup::Setup;
 pub use tesselation;
@@ -27,13 +26,12 @@ pub fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
 }
 
 pub trait ViewModel: Send + Sync {
-    fn into_bytes(&mut self) -> Option<Vec<u8>>;
-    fn into_texts(&self) -> Option<Vec<(String, String)>>;
+    fn on_redraw(&mut self) -> (Option<Vec<u8>>, Option<Vec<(String, String)>>);
     fn reset_mut_count(&mut self);
     fn on_event(&mut self, event: WindowEvent);
 }
 
-pub fn main<V: ViewModel + 'static>(svg_set: SvgSet<'static>, mut view_model: V) {
+pub fn main<V: ViewModel + 'static>(mut svg_set: SvgSet<'static>, mut view_model: V) {
     let event_loop = EventLoop::new();
     let vertices = svg_set.geometry_set.get_vertices();
     let indices = svg_set.geometry_set.get_indices();
@@ -41,7 +39,7 @@ pub fn main<V: ViewModel + 'static>(svg_set: SvgSet<'static>, mut view_model: V)
     let mut window = None;
 
     event_loop.run(move |event, event_loop, control_flow| {
-        *control_flow = ControlFlow::Wait;
+        *control_flow = ControlFlow::Poll;
         match event {
             Event::NewEvents(start_cause) => match start_cause {
                 winit::event::StartCause::Init => {
@@ -94,9 +92,18 @@ pub fn main<V: ViewModel + 'static>(svg_set: SvgSet<'static>, mut view_model: V)
             }
             Event::RedrawRequested(_) => {
                 if let (Some(redraw), Some(window)) = (redraw.as_mut(), window.as_mut()) {
-                    if let Some(mut texture) = view_model.into_bytes() {
+                    if let (Some(mut texture), Some(new_texts)) = view_model.on_redraw() {
+                        for (id, new_text) in new_texts {
+                            svg_set.update_text(&id, &new_text);
+                        }
+                        svg_set.geometry_set.get_vertices();
                         texture.resize(8192 * 16, 0);
-                        Setup::redraw(redraw, &texture[..]);
+                        Setup::redraw(
+                            redraw,
+                            &texture[..],
+                            &svg_set.geometry_set.get_vertices(),
+                            &svg_set.geometry_set.get_indices(),
+                        );
                         window.request_redraw();
                     }
                 }

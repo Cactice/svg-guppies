@@ -18,7 +18,7 @@ struct TransformVariable {
 pub fn init(callback: InitCallback) -> SvgSet {
     // Parse and tessellate the geometry
 
-    let mut s = SvgSet::new(include_str!("../../svg/life_text.svg"), callback);
+    let mut s = SvgSet::new(include_str!("../../svg/life.svg"), callback);
     s.update_text(
         &"Player3 #dynamicText".to_string(),
         &"Player3: $1000a dkfj".to_string(),
