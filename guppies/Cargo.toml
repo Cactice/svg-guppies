@@ -5,9 +5,10 @@ edition = "2021"
 
 [dependencies]
 winit = "0.26.1"
-wgpu = "0.13.0"                                       #0.13
+wgpu = "0.13.0"                                        #0.13
 pollster = "0.2"
 bytemuck = { version = "1.8", features = ["derive"] }
+glam = { version = "0.21.2", features = ["bytemuck"] }
 
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]

@@ -1,10 +1,10 @@
+pub mod callback;
+pub mod primitives;
 mod setup;
-pub use pollster;
+pub use glam;
+use glam::{Mat4, Vec2};
+use primitives::DrawPrimitives;
 use setup::Setup;
-pub use tesselation;
-use tesselation::geometry::SvgSet;
-pub use tesselation::glam;
-use tesselation::glam::{Mat4, Vec2};
 pub use winit;
 use winit::dpi::PhysicalSize;
 use winit::window::WindowBuilder;
@@ -26,15 +26,17 @@ pub fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
 }
 
 pub trait ViewModel: Send + Sync {
-    fn on_redraw(&mut self) -> (Option<Vec<u8>>, Option<Vec<(String, String)>>);
+    fn on_redraw(&mut self) -> (Option<Vec<u8>>, Option<DrawPrimitives>);
     fn reset_mut_count(&mut self);
     fn on_event(&mut self, event: WindowEvent);
 }
 
-pub fn main<V: ViewModel + 'static>(mut svg_set: SvgSet<'static>, mut view_model: V) {
+pub fn main<V: ViewModel + 'static>(mut view_model: V) {
     let event_loop = EventLoop::new();
-    let vertices = svg_set.geometry_set.get_vertices();
-    let indices = svg_set.geometry_set.get_indices();
+    let (vertices, indices) = view_model
+        .on_redraw()
+        .1
+        .expect("initial draw must not be none");
     let mut redraw = None;
     let mut window = None;
 
@@ -92,18 +94,9 @@ pub fn main<V: ViewModel + 'static>(mut svg_set: SvgSet<'static>, mut view_model
             }
             Event::RedrawRequested(_) => {
                 if let (Some(redraw), Some(window)) = (redraw.as_mut(), window.as_mut()) {
-                    if let (Some(mut texture), Some(new_texts)) = view_model.on_redraw() {
-                        for (id, new_text) in new_texts {
-                            svg_set.update_text(&id, &new_text);
-                        }
-                        svg_set.geometry_set.get_vertices();
+                    if let (Some(mut texture), Some((vertices, indices))) = view_model.on_redraw() {
                         texture.resize(8192 * 16, 0);
-                        Setup::redraw(
-                            redraw,
-                            &texture[..],
-                            &svg_set.geometry_set.get_vertices(),
-                            &svg_set.geometry_set.get_indices(),
-                        );
+                        Setup::redraw(redraw, &texture[..], &vertices, &indices);
                         window.request_redraw();
                     }
                 }

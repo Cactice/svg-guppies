@@ -5,9 +5,7 @@ pub mod geometry;
 mod stroke;
 use callback::InitCallback;
 use geometry::SvgSet;
-pub use glam;
-use glam::DMat4;
-
+use guppies::glam::DMat4;
 pub use usvg;
 
 struct TransformVariable {

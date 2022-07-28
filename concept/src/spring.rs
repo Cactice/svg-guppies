@@ -1,12 +1,10 @@
-use glam::Mat4;
+use guppies::callback::Callback;
+use guppies::glam::Mat4;
 use natura::{AngularFrequency, DampingRatio, DeltaTime, Spring};
 use std::default::Default;
 use std::iter::zip;
 use std::ops::{Deref, DerefMut};
 use std::sync::{Arc, Mutex, MutexGuard};
-use std::thread::{sleep, spawn};
-use std::time::Duration;
-use windowing::tesselation::callback::Callback;
 
 pub type StaticCallback = Callback<'static, (), ()>;
 pub struct SpringMat4NonAtomic {

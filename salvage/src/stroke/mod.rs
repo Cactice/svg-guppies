@@ -1,6 +1,6 @@
 use crate::convert_path::convert_path;
-use crate::geometry::{Index, Vertex};
-use glam::Vec4;
+use guppies::glam::Vec4;
+use guppies::primitives::{Index, Vertex};
 use lyon::lyon_tessellation::{StrokeOptions, StrokeTessellator, StrokeVertex};
 use lyon::tessellation::geometry_builder::*;
 use lyon::tessellation::{self};

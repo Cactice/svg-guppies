@@ -1,15 +1,16 @@
 use concept::spring::{MutCount, SpringMat4, StaticCallback};
-use glam::{DVec2, Mat4, Vec2, Vec3};
+use guppies::glam::{DVec2, Mat4, Vec2, Vec3};
+use guppies::primitives::DrawPrimitives;
+use guppies::winit::dpi::PhysicalSize;
+use guppies::winit::event::{ElementState, MouseScrollDelta, WindowEvent};
+use guppies::{get_scale, ViewModel};
 use regex::{Regex, RegexSet};
+use salvage::callback::{IndicesPriority, InitCallback, Initialization};
+use salvage::geometry::SvgSet;
+use salvage::usvg::{Node, NodeExt, NodeKind};
 use std::f32::consts::PI;
 use std::iter;
 use std::sync::{Arc, Mutex};
-use windowing::tesselation::callback::{IndicesPriority, InitCallback, Initialization};
-use windowing::tesselation::geometry::SvgSet;
-use windowing::tesselation::usvg::{Node, NodeExt, NodeKind};
-use windowing::winit::dpi::PhysicalSize;
-use windowing::winit::event::{ElementState, MouseScrollDelta, WindowEvent};
-use windowing::{get_scale, ViewModel};
 
 #[derive(Default)]
 struct LifeGame {
@@ -42,7 +43,7 @@ impl ViewModel for LifeGameView {
         self.player_texts.reset_mut_count();
         self.instruction_text.reset_mut_count();
     }
-    fn on_redraw(&mut self) -> (Option<Vec<u8>>, Option<Vec<(String, String)>>) {
+    fn on_redraw(&mut self) -> (Option<Vec<u8>>, Option<DrawPrimitives>) {
         {
             let mut r = self.animation_register.lock().unwrap().clone();
             let mut vec: Vec<SpringMat4> = r
@@ -84,7 +85,7 @@ impl ViewModel for LifeGameView {
         // if is_mutated {
         //     return None;
         // }
-        let texts = iter::empty::<(String, String)>()
+        let texts: Vec<(String, String)> = iter::empty::<(String, String)>()
             .chain(
                 self.player_texts
                     .iter()
@@ -98,7 +99,7 @@ impl ViewModel for LifeGameView {
             .collect();
         (
             Some(bytemuck::cast_slice(mat_4.as_slice()).to_vec()),
-            Some(texts),
+            Some(todo!()),
         )
     }
     fn on_event(&mut self, event: WindowEvent) {
@@ -300,5 +301,5 @@ fn main() {
         },
         ..Default::default()
     };
-    windowing::main::<LifeGameView>(svg_set, life_view);
+    guppies::main::<LifeGameView>(life_view);
 }
