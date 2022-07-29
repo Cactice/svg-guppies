@@ -22,7 +22,7 @@ struct LifeGame {
 }
 
 #[derive(Default)]
-struct LifeGameView {
+struct LifeGameView<'a> {
     animation_register: Arc<Mutex<Vec<SpringMat4>>>,
     player_avatar_transforms: MutCount<[SpringMat4; 4]>,
     tip_center: Mat4,
@@ -34,9 +34,10 @@ struct LifeGameView {
     life_game: LifeGame,
     mouse_position: Vec2,
     mouse_down: Option<Vec2>,
+    svg_set: SvgSet<'a>,
 }
 
-impl ViewModel for LifeGameView {
+impl ViewModel for LifeGameView<'_> {
     fn reset_mut_count(&mut self) {
         self.player_avatar_transforms.reset_mut_count();
         self.tip_transform.reset_mut_count();
@@ -85,7 +86,7 @@ impl ViewModel for LifeGameView {
         // if is_mutated {
         //     return None;
         // }
-        let texts: Vec<(String, String)> = iter::empty::<(String, String)>()
+        iter::empty::<(String, String)>()
             .chain(
                 self.player_texts
                     .iter()
@@ -96,10 +97,15 @@ impl ViewModel for LifeGameView {
                 "instruction #dynamicText".to_string(),
                 self.instruction_text.clone(),
             )])
-            .collect();
+            .for_each(|(id, new_text)| {
+                self.svg_set.update_text(&id, &new_text);
+            });
         (
             Some(bytemuck::cast_slice(mat_4.as_slice()).to_vec()),
-            Some(todo!()),
+            Some((
+                self.svg_set.geometry_set.get_vertices(),
+                self.svg_set.geometry_set.get_indices(),
+            )),
         )
     }
     fn on_event(&mut self, event: WindowEvent) {
@@ -142,7 +148,7 @@ impl ViewModel for LifeGameView {
     }
 }
 
-impl LifeGameView {
+impl LifeGameView<'_> {
     fn tip_clicked(&mut self) {
         if self.tip_transform.get_inner().is_animating
             || self
@@ -299,6 +305,7 @@ fn main() {
             position_to_dollar,
             ..Default::default()
         },
+        svg_set,
         ..Default::default()
     };
     guppies::main::<LifeGameView>(life_view);

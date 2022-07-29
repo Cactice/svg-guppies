@@ -261,6 +261,17 @@ pub struct SvgSet<'a> {
     pub bbox: Rect,
     usvg_options: Options,
 }
+impl<'a> Default for SvgSet<'a> {
+    fn default() -> Self {
+        Self {
+            geometry_set: Default::default(),
+            document: Document::parse("<e/>").unwrap(),
+            id_map: Default::default(),
+            bbox: Default::default(),
+            usvg_options: Default::default(),
+        }
+    }
+}
 impl<'a> SvgSet<'a> {
     fn copy_element_recursively(&self, node: &roxmltree::Node, writer: &mut XmlWriter) {
         if node.is_element() {
