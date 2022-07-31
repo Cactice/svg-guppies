@@ -275,17 +275,6 @@ impl<'a> Default for SvgSet<'a> {
     }
 }
 impl<'a> SvgSet<'a> {
-    fn copy_element_recursively(&self, node: &roxmltree::Node, writer: &mut XmlWriter) {
-        if node.is_element() {
-            self.copy_element(node, writer);
-        }
-        for child in node.children() {
-            self.copy_element_recursively(&child, writer)
-        }
-        if node.is_element() {
-            writer.end_element()
-        }
-    }
     fn copy_element(&self, node: &roxmltree::Node, writer: &mut XmlWriter) {
         writer.start_element(node.tag_name().name());
         for a in node.attributes() {
@@ -398,7 +387,6 @@ impl<'a> SvgSet<'a> {
             indices, vertices, ..
         }) = geometry_set.variable_geometries.0.first()
         {
-            dbg!();
             self.geometry_set
                 .update_geometry(id, vertices.to_vec(), indices.to_vec());
         }

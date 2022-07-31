@@ -298,6 +298,7 @@ fn main() {
     let life_view = LifeGameView {
         global_transform: (translate * scale).into(),
         tip_center,
+        instruction_text: MutCount::from("Please click".to_string()),
         start_center,
         life_game: LifeGame {
             position_to_coordinates,
