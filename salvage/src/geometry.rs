@@ -132,6 +132,7 @@ impl Geometries {
             .collect()
     }
 }
+
 #[derive(Clone, Debug, Default)]
 pub struct Geometry {
     ids: Vec<String>,
@@ -211,6 +212,7 @@ fn recursive_svg(
         ids.push(id.to_string());
     }
 
+    // TODO: DI
     let transform_id = if id.ends_with("#dynamic") {
         geometry_set.transform_count += 1;
         geometry_set.transform_count
@@ -364,7 +366,6 @@ impl<'a> SvgSet<'a> {
         let mut current_node = node;
         while let Some(parent) = current_node.parent() {
             if !parent.is_element() {
-                // FIXME: why doesn't simple continue not work..?
                 if parent.parent().is_none() {
                     break;
                 }
@@ -397,6 +398,7 @@ impl<'a> SvgSet<'a> {
             indices, vertices, ..
         }) = geometry_set.variable_geometries.0.first()
         {
+            dbg!();
             self.geometry_set
                 .update_geometry(id, vertices.to_vec(), indices.to_vec());
         }

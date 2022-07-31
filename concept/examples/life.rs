@@ -80,12 +80,9 @@ impl ViewModel for LifeGameView<'_> {
             )
             .chain([self.tip_transform.get_inner().current])
             .collect();
-        // let is_mutated = [self.player_texts.mut_count, self.instruction_text.mut_count]
-        //     .iter()
-        //     .any(|x| x > &0);
-        // if is_mutated {
-        //     return None;
-        // }
+        let _is_mutated = [self.player_texts.mut_count, self.instruction_text.mut_count]
+            .iter()
+            .any(|x| x > &0);
         iter::empty::<(String, String)>()
             .chain(
                 self.player_texts
@@ -171,6 +168,8 @@ impl LifeGameView<'_> {
 
         let mut arc = self.player_avatar_transforms[life_game.current_player].clone();
         let arc2 = self.animation_register.clone();
+        let current = life_game.current_player;
+        self.instruction_text = MutCount::from(format!("Player: {current}"));
         life_game.finish_turn();
         self.tip_transform.spring_to(
             self.tip_center
