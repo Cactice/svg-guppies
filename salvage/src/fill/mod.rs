@@ -1,8 +1,8 @@
-use crate::{
-    convert_path::convert_path,
-    geometry::{Index, Vertex},
+use crate::convert_path::convert_path;
+use guppies::{
+    glam::Vec4,
+    primitives::{Index, Vertex},
 };
-use glam::Vec4;
 use lyon::lyon_tessellation::{
     BuffersBuilder, FillOptions, FillTessellator, FillVertex, VertexBuffers,
 };

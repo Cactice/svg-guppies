@@ -1,8 +1,6 @@
+use crate::primitives::{Indices, Vertex, Vertices};
+use glam::Mat4;
 use std::borrow::Cow;
-use tesselation::{
-    geometry::{Indices, Vertex, Vertices},
-    glam::Mat4,
-};
 use wgpu::{
     util::DeviceExt, BindGroup, Buffer, Device, Extent3d, RenderPipeline, Surface,
     SurfaceConfiguration, Texture,

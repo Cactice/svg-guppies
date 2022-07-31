@@ -1,15 +1,16 @@
 use concept::spring::{MutCount, SpringMat4, StaticCallback};
-use glam::{DVec2, Mat4, Vec2, Vec3};
+use guppies::glam::{DVec2, Mat4, Vec2, Vec3};
+use guppies::primitives::DrawPrimitives;
+use guppies::winit::dpi::PhysicalSize;
+use guppies::winit::event::{ElementState, MouseScrollDelta, WindowEvent};
+use guppies::{get_scale, ViewModel};
 use regex::{Regex, RegexSet};
+use salvage::callback::{IndicesPriority, InitCallback, Initialization};
+use salvage::geometry::SvgSet;
+use salvage::usvg::{Node, NodeExt, NodeKind};
 use std::f32::consts::PI;
 use std::iter;
 use std::sync::{Arc, Mutex};
-use windowing::tesselation::callback::{IndicesPriority, InitCallback, Initialization};
-use windowing::tesselation::geometry::SvgSet;
-use windowing::tesselation::usvg::{Node, NodeExt, NodeKind};
-use windowing::winit::dpi::PhysicalSize;
-use windowing::winit::event::{ElementState, MouseScrollDelta, WindowEvent};
-use windowing::{get_scale, ViewModel};
 
 #[derive(Default)]
 struct LifeGame {
@@ -21,7 +22,7 @@ struct LifeGame {
 }
 
 #[derive(Default)]
-struct LifeGameView {
+struct LifeGameView<'a> {
     animation_register: Arc<Mutex<Vec<SpringMat4>>>,
     player_avatar_transforms: MutCount<[SpringMat4; 4]>,
     tip_center: Mat4,
@@ -33,16 +34,17 @@ struct LifeGameView {
     life_game: LifeGame,
     mouse_position: Vec2,
     mouse_down: Option<Vec2>,
+    svg_set: SvgSet<'a>,
 }
 
-impl ViewModel for LifeGameView {
+impl ViewModel for LifeGameView<'_> {
     fn reset_mut_count(&mut self) {
         self.player_avatar_transforms.reset_mut_count();
         self.tip_transform.reset_mut_count();
         self.player_texts.reset_mut_count();
         self.instruction_text.reset_mut_count();
     }
-    fn on_redraw(&mut self) -> (Option<Vec<u8>>, Option<Vec<(String, String)>>) {
+    fn on_redraw(&mut self) -> (Option<Vec<u8>>, Option<DrawPrimitives>) {
         {
             let mut r = self.animation_register.lock().unwrap().clone();
             let mut vec: Vec<SpringMat4> = r
@@ -84,7 +86,7 @@ impl ViewModel for LifeGameView {
         // if is_mutated {
         //     return None;
         // }
-        let texts = iter::empty::<(String, String)>()
+        iter::empty::<(String, String)>()
             .chain(
                 self.player_texts
                     .iter()
@@ -95,10 +97,15 @@ impl ViewModel for LifeGameView {
                 "instruction #dynamicText".to_string(),
                 self.instruction_text.clone(),
             )])
-            .collect();
+            .for_each(|(id, new_text)| {
+                self.svg_set.update_text(&id, &new_text);
+            });
         (
             Some(bytemuck::cast_slice(mat_4.as_slice()).to_vec()),
-            Some(texts),
+            Some((
+                self.svg_set.geometry_set.get_vertices(),
+                self.svg_set.geometry_set.get_indices(),
+            )),
         )
     }
     fn on_event(&mut self, event: WindowEvent) {
@@ -141,7 +148,7 @@ impl ViewModel for LifeGameView {
     }
 }
 
-impl LifeGameView {
+impl LifeGameView<'_> {
     fn tip_clicked(&mut self) {
         if self.tip_transform.get_inner().is_animating
             || self
@@ -298,7 +305,8 @@ fn main() {
             position_to_dollar,
             ..Default::default()
         },
+        svg_set,
         ..Default::default()
     };
-    windowing::main::<LifeGameView>(svg_set, life_view);
+    guppies::main::<LifeGameView>(life_view);
 }

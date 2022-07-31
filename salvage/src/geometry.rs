@@ -3,81 +3,21 @@ use crate::{
     fill::iterate_fill,
     stroke::iterate_stroke,
 };
-use glam::{DVec2, Vec2, Vec4};
+use guppies::{
+    glam::{Vec2, Vec4},
+    primitives::{Index, Indices, Rect, Vertex, Vertices},
+};
 use lyon::lyon_tessellation::VertexBuffers;
 use roxmltree::{Document, NodeId};
 use std::{collections::HashMap, iter, ops::Range, sync::Arc};
 use usvg::{fontdb::Source, NodeKind, Options, Path, PathBbox, Tree};
 use xmlwriter::XmlWriter;
-pub type Index = u32;
-pub type Vertices = Vec<Vertex>;
-pub type Indices = Vec<Index>;
-pub type DrawPrimitives = (Vertices, Indices);
-pub type Size = Vec2;
-pub type Position = Vec2;
-
-#[derive(Copy, Clone, Debug, Default)]
-pub struct Rect {
-    pub position: Position,
-    pub size: Size,
-}
-impl Rect {
-    fn new(position: Vec2, size: Vec2) -> Self {
-        Self { position, size }
-    }
-    fn contains_point(self, position: &Vec2) -> bool {
-        if self.position.x < position.x
-            && self.position.y < position.y
-            && position.x < self.position.x + self.size.x
-            && position.y < self.position.y + self.size.y
-        {
-            return true;
-        }
-        false
-    }
-}
-impl From<&PathBbox> for Rect {
-    fn from(bbox: &PathBbox) -> Self {
-        Rect {
-            position: Vec2::new(bbox.x() as f32, bbox.y() as f32),
-            size: Vec2::new(bbox.width() as f32, bbox.height() as f32),
-        }
-    }
-}
 pub const FALLBACK_COLOR: Vec4 = Vec4::ONE;
 
-#[repr(C)]
-#[derive(Copy, Clone, Debug, Default, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct Vertex {
-    pub position: [f32; 3],
-    pub transform_id: u32,
-    pub color: [f32; 4],
-}
-impl From<&DVec2> for Vertex {
-    fn from(v: &DVec2) -> Self {
-        Self {
-            position: [(v.x) as f32, (v.y) as f32, 0.0],
-            ..Default::default()
-        }
-    }
-}
-
-impl From<(&DVec2, &Vec4)> for Vertex {
-    fn from((v, c): (&DVec2, &Vec4)) -> Self {
-        Self {
-            position: [(v.x) as f32, (v.y) as f32, 0.0],
-            color: [c.x, c.y, c.z, c.w],
-            ..Default::default()
-        }
-    }
-}
-impl From<(&DVec2, &Vec4, u32)> for Vertex {
-    fn from((v, c, transform_id): (&DVec2, &Vec4, u32)) -> Self {
-        Self {
-            position: [(v.x) as f32, (v.y) as f32, 0.0],
-            color: [c.x, c.y, c.z, c.w],
-            transform_id,
-        }
+fn rect_from_bbox(bbox: &PathBbox) -> Rect {
+    Rect {
+        position: Vec2::new(bbox.x() as f32, bbox.y() as f32),
+        size: Vec2::new(bbox.width() as f32, bbox.height() as f32),
     }
 }
 
@@ -251,7 +191,7 @@ impl Geometry {
             indices: v.indices,
             index_base,
             transform_id,
-            bbox: Rect::from(&p.data.bbox().unwrap()),
+            bbox: rect_from_bbox(&p.data.bbox().unwrap()),
         }
     }
 }
@@ -320,6 +260,17 @@ pub struct SvgSet<'a> {
     pub id_map: HashMap<String, NodeId>,
     pub bbox: Rect,
     usvg_options: Options,
+}
+impl<'a> Default for SvgSet<'a> {
+    fn default() -> Self {
+        Self {
+            geometry_set: Default::default(),
+            document: Document::parse("<e/>").unwrap(),
+            id_map: Default::default(),
+            bbox: Default::default(),
+            usvg_options: Default::default(),
+        }
+    }
 }
 impl<'a> SvgSet<'a> {
     fn copy_element_recursively(&self, node: &roxmltree::Node, writer: &mut XmlWriter) {
