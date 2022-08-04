@@ -132,6 +132,7 @@ impl Geometries {
             .collect()
     }
 }
+
 #[derive(Clone, Debug, Default)]
 pub struct Geometry {
     ids: Vec<String>,
@@ -211,6 +212,7 @@ fn recursive_svg(
         ids.push(id.to_string());
     }
 
+    // TODO: DI
     let transform_id = if id.ends_with("#dynamic") {
         geometry_set.transform_count += 1;
         geometry_set.transform_count
@@ -273,17 +275,6 @@ impl<'a> Default for SvgSet<'a> {
     }
 }
 impl<'a> SvgSet<'a> {
-    fn copy_element_recursively(&self, node: &roxmltree::Node, writer: &mut XmlWriter) {
-        if node.is_element() {
-            self.copy_element(node, writer);
-        }
-        for child in node.children() {
-            self.copy_element_recursively(&child, writer)
-        }
-        if node.is_element() {
-            writer.end_element()
-        }
-    }
     fn copy_element(&self, node: &roxmltree::Node, writer: &mut XmlWriter) {
         writer.start_element(node.tag_name().name());
         for a in node.attributes() {
@@ -364,7 +355,6 @@ impl<'a> SvgSet<'a> {
         let mut current_node = node;
         while let Some(parent) = current_node.parent() {
             if !parent.is_element() {
-                // FIXME: why doesn't simple continue not work..?
                 if parent.parent().is_none() {
                     break;
                 }

@@ -29,7 +29,6 @@ struct LifeGameView<'a> {
     start_center: Mat4,
     global_transform: MutCount<Mat4>,
     tip_transform: MutCount<SpringMat4>,
-    player_texts: MutCount<[String; 4]>,
     instruction_text: MutCount<String>,
     life_game: LifeGame,
     mouse_position: Vec2,
@@ -41,7 +40,6 @@ impl ViewModel for LifeGameView<'_> {
     fn reset_mut_count(&mut self) {
         self.player_avatar_transforms.reset_mut_count();
         self.tip_transform.reset_mut_count();
-        self.player_texts.reset_mut_count();
         self.instruction_text.reset_mut_count();
     }
     fn on_redraw(&mut self) -> (Option<Vec<u8>>, Option<DrawPrimitives>) {
@@ -80,18 +78,14 @@ impl ViewModel for LifeGameView<'_> {
             )
             .chain([self.tip_transform.get_inner().current])
             .collect();
-        // let is_mutated = [self.player_texts.mut_count, self.instruction_text.mut_count]
-        //     .iter()
-        //     .any(|x| x > &0);
-        // if is_mutated {
-        //     return None;
-        // }
+        let _is_mutated = [self.instruction_text.mut_count].iter().any(|x| x > &0);
         iter::empty::<(String, String)>()
             .chain(
-                self.player_texts
+                self.life_game
+                    .dollars
                     .iter()
                     .enumerate()
-                    .map(|(i, m)| (format!("{}. Player #dynamicText", i + 1), m.to_owned())),
+                    .map(|(i, m)| (format!("{}. Player #dynamicText", i + 1), format!("${}", m))),
             )
             .chain([(
                 "instruction #dynamicText".to_string(),
@@ -171,6 +165,8 @@ impl LifeGameView<'_> {
 
         let mut arc = self.player_avatar_transforms[life_game.current_player].clone();
         let arc2 = self.animation_register.clone();
+        let current = life_game.current_player;
+        self.instruction_text = MutCount::from(format!("Player: {current}"));
         life_game.finish_turn();
         self.tip_transform.spring_to(
             self.tip_center
@@ -299,6 +295,7 @@ fn main() {
     let life_view = LifeGameView {
         global_transform: (translate * scale).into(),
         tip_center,
+        instruction_text: MutCount::from("Please click".to_string()),
         start_center,
         life_game: LifeGame {
             position_to_coordinates,

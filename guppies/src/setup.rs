@@ -25,7 +25,6 @@ pub struct Redraw {
     pub uniform_buffer: Buffer,
     pub vertex_buffer: Buffer,
     pub index_buffer: Buffer,
-    pub indices: Indices,
     pub transform_texture: Texture,
 }
 
@@ -137,8 +136,8 @@ impl Setup {
             uniform_buffer,
             vertex_buffer,
             index_buffer,
-            indices,
             transform_texture,
+            ..
         } = redraw;
         let frame = surface
             .get_current_texture()
@@ -318,7 +317,6 @@ impl Setup {
             uniform_buffer,
             vertex_buffer,
             index_buffer,
-            indices: indices.to_vec(),
             transform: default_transform,
             transform_texture,
         };
