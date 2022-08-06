@@ -3,6 +3,13 @@ name = "salvage"
 version = "0.1.0"
 edition = "2021"
 
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "geometry_bench"
+harness = false
+
 [dependencies]
 usvg = { git = "https://github.com/Cactice/resvg" }
 guppies = { path = "../guppies" }
