@@ -1,6 +1,7 @@
 use crate::{
     callback::{IndicesPriority, InitCallback, Initialization},
     fill::iterate_fill,
+    prepare_vertex_buffer::prepare_vertex_buffer,
     stroke::iterate_stroke,
 };
 use guppies::{
@@ -31,97 +32,9 @@ pub struct GeometrySet {
     transform_count: u32,
 }
 
-impl GeometrySet {
-    pub fn get_geometries_at_position(&self, position: &Vec2) -> Geometries {
-        // TODO: The performance can be improved so much by only checking clickable
-        // but IDK how to keep a reference of such Geometries and I imagine this is fast enough
-        Geometries(
-            iter::empty::<&Geometry>()
-                .chain(self.fixed_geometries.0.iter())
-                .chain(self.variable_geometries.0.iter())
-                .filter(|g| g.bbox.contains_point(position))
-                .cloned()
-                .collect(),
-        )
-    }
-    fn update_geometry(&mut self, id: &String, vertices: Vertices, indices: Indices) {
-        let variable_geometry_index = self
-            .variable_geometries_id_range
-            .get(id)
-            .expect("Invalid id for variable_geometries_id_range")
-            .start;
-        let geometry = self
-            .variable_geometries
-            .0
-            .get_mut(variable_geometry_index)
-            .expect("variable_geometry_index is out of bounds");
-
-        let index_base_offset = vertices.len() as i32 - geometry.vertices.len() as i32;
-        geometry.vertices = vertices;
-        geometry.indices = indices;
-        self.variable_geometries.0[variable_geometry_index + 1..]
-            .iter_mut()
-            .for_each(|geometry: &mut Geometry| {
-                geometry.index_base =
-                    (geometry.index_base as i32 + index_base_offset as i32) as usize;
-            });
-    }
-    pub fn get_indices(&self) -> Indices {
-        [
-            self.fixed_geometries.get_indices_with_offset(0),
-            self.variable_geometries
-                .get_indices_with_offset(self.fixed_geometries_vertices_len as u32),
-        ]
-        .concat()
-    }
-    pub fn get_vertices(&self) -> Vertices {
-        [
-            self.fixed_geometries.get_vertices(),
-            self.variable_geometries.get_vertices(),
-        ]
-        .concat()
-    }
-    pub fn get_vertices_len(&self, priority: IndicesPriority) -> usize {
-        match priority {
-            IndicesPriority::Fixed => self.fixed_geometries_vertices_len,
-            IndicesPriority::Variable => self.variable_geometries_vertices_len,
-        }
-    }
-    pub fn push_with_priority(&mut self, geometry: Geometry, priority: IndicesPriority) {
-        if priority == IndicesPriority::Variable {
-            geometry.ids.iter().for_each(|id| {
-                let start = if let Some(range) = self.variable_geometries_id_range.get(id) {
-                    range.start
-                } else {
-                    self.variable_geometries.0.len()
-                };
-                let end = self.variable_geometries.0.len() + 1;
-                let new_range = start..end;
-                self.variable_geometries_id_range
-                    .insert(id.to_string(), new_range);
-            });
-        }
-        let (geometries, vertices_len) = match priority {
-            IndicesPriority::Fixed => (
-                &mut self.fixed_geometries,
-                &mut self.fixed_geometries_vertices_len,
-            ),
-            IndicesPriority::Variable => (
-                &mut self.variable_geometries,
-                &mut self.variable_geometries_vertices_len,
-            ),
-        };
-        *vertices_len += geometry.get_vertices_len();
-        geometries.0.push(geometry);
-    }
-}
-
 #[derive(Clone, Default, Debug)]
 pub struct Geometries(pub Vec<Geometry>);
 impl Geometries {
-    pub fn get_tag_names(&self) -> Vec<Vec<String>> {
-        self.0.iter().map(|a| a.ids.clone()).collect()
-    }
     pub fn get_vertices(&self) -> Vertices {
         self.0.iter().flat_map(|v| v.get_v()).collect()
     }
@@ -139,7 +52,6 @@ pub struct Geometry {
     vertices: Vertices,
     indices: Indices,
     index_base: usize,
-    transform_id: u32,
     bbox: Rect,
 }
 impl Geometry {
@@ -155,43 +67,13 @@ impl Geometry {
             .map(|index| index + self.index_base as u32)
             .collect()
     }
-    pub fn prepare_vertex_buffer(p: &Path, transform_id: u32) -> VertexBuffers<Vertex, Index> {
-        let mut vertex_buffer = VertexBuffers::<Vertex, Index>::new();
-        if let Some(ref stroke) = p.stroke {
-            let color = match stroke.paint {
-                usvg::Paint::Color(c) => Vec4::new(
-                    c.red as f32 / u8::MAX as f32,
-                    c.green as f32 / u8::MAX as f32,
-                    c.blue as f32 / u8::MAX as f32,
-                    stroke.opacity.value() as f32,
-                ),
-                _ => FALLBACK_COLOR,
-            };
-            iterate_stroke(stroke, p, &mut vertex_buffer, color, transform_id);
-        }
-        if let Some(ref fill) = p.fill {
-            let color = match fill.paint {
-                usvg::Paint::Color(c) => Vec4::new(
-                    c.red as f32 / u8::MAX as f32,
-                    c.green as f32 / u8::MAX as f32,
-                    c.blue as f32 / u8::MAX as f32,
-                    fill.opacity.value() as f32,
-                ),
-                _ => FALLBACK_COLOR,
-            };
-
-            iterate_fill(p, &color, &mut vertex_buffer, transform_id);
-        };
-        vertex_buffer
-    }
-    pub fn new(p: &Path, index_base: usize, ids: Vec<String>, transform_id: u32) -> Self {
-        let v = Self::prepare_vertex_buffer(p, transform_id);
+    pub fn new(p: &Path, index_base: usize, ids: Vec<String>) -> Self {
+        let v = prepare_vertex_buffer(p, transform_id);
         Self {
             ids,
             vertices: v.vertices,
             indices: v.indices,
             index_base,
-            transform_id,
             bbox: rect_from_bbox(&p.data.bbox().unwrap()),
         }
     }
@@ -220,12 +102,7 @@ fn recursive_svg(
         parent_transform_id
     };
     if let usvg::NodeKind::Path(ref p) = *node.borrow() {
-        let geometry = Geometry::new(
-            p,
-            geometry_set.get_vertices_len(priority),
-            ids.to_vec(),
-            transform_id,
-        );
+        let geometry = Geometry::new(p, geometry_set.get_vertices_len(priority), ids.to_vec());
         geometry_set.push_with_priority(geometry, priority);
     }
     for child in node.children() {
