@@ -1,22 +1,18 @@
 use guppies::callback::Callback;
 use usvg::Node;
 
-#[derive(PartialEq, PartialOrd, Eq, Ord, Clone, Copy, Debug)]
+#[derive(PartialEq, PartialOrd, Eq, Ord, Clone, Copy, Debug, Default)]
 pub enum IndicesPriority {
+    #[default]
     Fixed,
     Variable,
 }
 
-pub struct Initialization {
+#[derive(PartialEq, PartialOrd, Eq, Ord, Clone, Copy, Debug, Default)]
+pub struct PassDown {
     pub indices_priority: IndicesPriority,
-}
-impl Default for Initialization {
-    fn default() -> Self {
-        Self {
-            indices_priority: IndicesPriority::Variable,
-        }
-    }
+    pub transform_id: u32,
 }
 
-pub type InitCallback<'a> = Callback<'a, Node, Initialization>;
-pub type OnClickCallback<'a> = Callback<'a, Node, Initialization>;
+pub type InitCallback<'a> = Callback<'a, Node, PassDown>;
+pub type OnClickCallback<'a> = Callback<'a, Node, PassDown>;

@@ -1,19 +1,15 @@
 use crate::{
     callback::{IndicesPriority, InitCallback, Initialization},
-    fill::iterate_fill,
     prepare_vertex_buffer::prepare_vertex_buffer,
-    stroke::iterate_stroke,
 };
 use guppies::{
     glam::{Vec2, Vec4},
     primitives::{Index, Indices, Rect, Vertex, Vertices},
 };
-use lyon::lyon_tessellation::VertexBuffers;
 use roxmltree::{Document, NodeId};
 use std::{collections::HashMap, iter, ops::Range, sync::Arc};
 use usvg::{fontdb::Source, NodeKind, Options, Path, PathBbox, Tree};
 use xmlwriter::XmlWriter;
-pub const FALLBACK_COLOR: Vec4 = Vec4::ONE;
 
 fn rect_from_bbox(bbox: &PathBbox) -> Rect {
     Rect {
@@ -30,20 +26,6 @@ pub struct GeometrySet {
     variable_geometries_vertices_len: usize,
     variable_geometries_id_range: HashMap<String, Range<usize>>,
     transform_count: u32,
-}
-
-#[derive(Clone, Default, Debug)]
-pub struct Geometries(pub Vec<Geometry>);
-impl Geometries {
-    pub fn get_vertices(&self) -> Vertices {
-        self.0.iter().flat_map(|v| v.get_v()).collect()
-    }
-    pub fn get_indices_with_offset(&self, offset: u32) -> Indices {
-        self.0
-            .iter()
-            .flat_map(|v| v.get_i().iter().map(|i| i + offset).collect::<Indices>())
-            .collect()
-    }
 }
 
 #[derive(Clone, Debug, Default)]

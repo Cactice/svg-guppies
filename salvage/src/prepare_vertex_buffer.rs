@@ -1,7 +1,6 @@
 use crate::{
-    callback::{IndicesPriority, InitCallback, Initialization},
+    callback::{IndicesPriority, InitCallback},
     fill::iterate_fill,
-    prepare_vertex_buffer::prepare_vertex_buffer,
     stroke::iterate_stroke,
 };
 use guppies::{
@@ -12,6 +11,7 @@ use lyon::lyon_tessellation::VertexBuffers;
 use roxmltree::{Document, NodeId};
 use std::{collections::HashMap, iter, ops::Range, sync::Arc};
 use usvg::{fontdb::Source, NodeKind, Options, Path, PathBbox, Tree};
+pub const FALLBACK_COLOR: Vec4 = Vec4::ONE;
 
 pub fn prepare_vertex_buffer(p: &Path, transform_id: u32) -> VertexBuffers<Vertex, Index> {
     let mut vertex_buffer = VertexBuffers::<Vertex, Index>::new();
