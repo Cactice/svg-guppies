@@ -5,9 +5,9 @@ use guppies::winit::dpi::PhysicalSize;
 use guppies::winit::event::{ElementState, MouseScrollDelta, WindowEvent};
 use guppies::{get_scale, ViewModel};
 use regex::{Regex, RegexSet};
-use salvage::callback::{IndicesPriority, InitCallback, Initialization};
-use salvage::geometry::SvgSet;
-use salvage::usvg::{Node, NodeExt, NodeKind};
+use salvage::callback::{IndicesPriority, InitCallback, PassDown};
+use salvage::geometry::{Geometry, SvgSet};
+use salvage::usvg::{self, Node, NodeExt, NodeKind};
 use std::f32::consts::PI;
 use std::iter;
 use std::sync::{Arc, Mutex};
@@ -96,10 +96,7 @@ impl ViewModel for LifeGameView<'_> {
             });
         (
             Some(bytemuck::cast_slice(mat_4.as_slice()).to_vec()),
-            Some((
-                self.svg_set.geometry_set.get_vertices(),
-                self.svg_set.geometry_set.get_indices(),
-            )),
+            Some((self.svg_set.get_vertices(), self.svg_set.get_indices())),
         )
     }
     fn on_event(&mut self, event: WindowEvent) {
@@ -246,9 +243,20 @@ fn main() {
     let dynamic_text_regex_pattern = regex_patterns.add(r"#dynamicText(?:$| |#)");
     let defaults = RegexSet::new(regex_patterns.0.iter().map(|r| &r.regex_pattern)).unwrap();
     let stops = Regex::new(r"^(\d+)\.((?:\+|-)\d+):").unwrap();
-    let callback_fn = |node: &Node| -> Initialization {
+    let mut transform_count = 1;
+    let callback = InitCallback::new(|(node, pass_down)| {
+        let PassDown {
+            transform_id: parent_transform_id,
+            indices_priority: parent_priority,
+        } = pass_down;
         let node_ref = node.borrow();
         let id = NodeKind::id(&node_ref);
+        let transform_id = if id.ends_with("#dynamic") {
+            transform_count += 1;
+            transform_count
+        } else {
+            *parent_transform_id
+        };
         for captures in stops.captures_iter(id) {
             let stop: usize = captures[1].parse().unwrap();
             let dollar: i32 = captures[2].parse().unwrap();
@@ -279,14 +287,27 @@ fn main() {
                 start_center = center
             }
         }
-        if !default_matches.matched(dynamic_text_regex_pattern.index) {
-            return Initialization {
-                indices_priority: IndicesPriority::Fixed,
-            };
-        }
-        Initialization::default()
-    };
-    let callback = InitCallback::new(callback_fn);
+        let indices_priority = if !default_matches.matched(dynamic_text_regex_pattern.index) {
+            IndicesPriority::Variable
+        } else {
+            IndicesPriority::Fixed
+        };
+        let geometry = {
+            if let usvg::NodeKind::Path(ref p) = *node.borrow() {
+                Some(Geometry::new(p, transform_id, indices_priority))
+            } else {
+                None
+            }
+        };
+        let indices_priority = *parent_priority.max(&indices_priority);
+        (
+            None,
+            PassDown {
+                indices_priority,
+                transform_id,
+            },
+        )
+    });
     let svg_set = SvgSet::new(include_str!("../../svg/life.svg"), callback);
     let svg_scale = svg_set.bbox.size;
 

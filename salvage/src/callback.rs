@@ -15,4 +15,4 @@ pub struct PassDown {
     pub transform_id: u32,
 }
 
-pub type InitCallback<'a> = Callback<'a, (Node, PassDown), (Geometry, PassDown)>;
+pub type InitCallback<'a> = Callback<'a, (Node, PassDown), (Option<Geometry>, PassDown)>;

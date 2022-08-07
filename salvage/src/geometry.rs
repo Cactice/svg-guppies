@@ -20,11 +20,9 @@ fn rect_from_bbox(bbox: &PathBbox) -> Rect {
 
 #[derive(Clone, Debug, Default)]
 pub struct Geometry {
-    ids: Vec<String>,
     vertices: Vertices,
     indices: Indices,
     priority: IndicesPriority,
-    bbox: Rect,
 }
 impl Geometry {
     pub fn get_vertices_len(&self) -> usize {
@@ -36,48 +34,29 @@ impl Geometry {
     pub fn get_i_with_offset(&self, offset: u32) -> Indices {
         self.indices.iter().map(|index| index + offset).collect()
     }
+    pub fn new(p: &Path, transform_id: u32, priority: IndicesPriority) -> Self {
+        let v = prepare_vertex_buffer(p, transform_id);
+        Self {
+            vertices: v.vertices,
+            indices: v.indices,
+            priority,
+        }
+    }
 }
 
 fn recursive_svg(
     node: usvg::Node,
     pass_down: PassDown,
+    geometries: &mut Vec<Geometry>,
     callback: &mut InitCallback,
-    transform_count: u32,
-    mut ids: Vec<String>,
 ) {
-    let PassDown {
-        indices_priority: parent_priority,
-        transform_id: parent_transform_id,
-    } = pass_down;
-    let indices_priority = parent_priority.max(callback.process_events(&node).indices_priority);
-    let node_ref = &node.borrow();
-    let id = NodeKind::id(node_ref);
-    if !id.is_empty() {
-        ids.push(id.to_string());
+    let (geometry, pass_down) = callback.process_events(&(node.clone(), pass_down));
+    if let Some(geometry) = geometry {
+        geometries.push(geometry);
     }
 
-    // TODO: DI
-    let transform_id = if id.ends_with("#dynamic") {
-        transform_count += 1;
-        transform_count
-    } else {
-        parent_transform_id
-    };
-    if let usvg::NodeKind::Path(ref p) = *node.borrow() {
-        // let geometry = Geometry::new(p, geometry_set.get_vertices_len(priority), ids.to_vec());
-        // geometry_set.push_with_priority(geometry, priority);
-    }
     for child in node.children() {
-        recursive_svg(
-            child,
-            PassDown {
-                indices_priority,
-                transform_id,
-            },
-            callback,
-            transform_count,
-            ids.clone(),
-        );
+        recursive_svg(child, pass_down.clone(), geometries, callback);
     }
 }
 
@@ -98,6 +77,7 @@ fn find_text_node_path(node: roxmltree::Node, path: &mut Vec<roxmltree::NodeId>)
 
 #[derive(Debug)]
 pub struct SvgSet<'a> {
+    pub geometries: Vec<Geometry>,
     pub document: roxmltree::Document<'a>,
     pub id_map: HashMap<String, NodeId>,
     pub bbox: Rect,
@@ -106,6 +86,7 @@ pub struct SvgSet<'a> {
 impl<'a> Default for SvgSet<'a> {
     fn default() -> Self {
         Self {
+            geometries: vec![],
             document: Document::parse("<e/>").unwrap(),
             id_map: Default::default(),
             bbox: Default::default(),
@@ -126,6 +107,12 @@ impl<'a> SvgSet<'a> {
                 writer.write_attribute(&name, a.value());
             }
         }
+    }
+    pub fn get_vertices(&self) -> Vertices {
+        todo!()
+    }
+    pub fn get_indices(&self) -> Indices {
+        todo!()
     }
     pub fn get_node_with_id(&self, id: &String) -> Result<roxmltree::Node, &str> {
         let node_id = self.id_map.get(id).ok_or("Not in node_id")?;
@@ -150,13 +137,20 @@ impl<'a> SvgSet<'a> {
                     }
                     acc
                 });
-        recursive_svg(tree.root(), PassDown::default(), &mut callback, 1, vec![]);
+        let mut geometries: Vec<Geometry> = vec![];
+        recursive_svg(
+            tree.root(),
+            PassDown::default(),
+            &mut geometries,
+            &mut callback,
+        );
         let view_box = tree.svg_node().view_box;
         let bbox: Rect = Rect::new(
             Vec2::new(view_box.rect.x() as f32, view_box.rect.y() as f32),
             Vec2::new(view_box.rect.width() as f32, view_box.rect.height() as f32),
         );
         Self {
+            geometries,
             document,
             id_map,
             bbox,
