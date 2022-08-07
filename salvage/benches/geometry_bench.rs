@@ -1,7 +1,7 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use salvage::{
     callback::{InitCallback, PassDown},
-    geometry::SvgSet,
+    svg_set::SvgSet,
 };
 
 fn criterion_benchmark(c: &mut Criterion) {
