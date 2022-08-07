@@ -1,5 +1,5 @@
 use crate::{
-    callback::{IndicesPriority, InitCallback, Initialization, PassDown},
+    callback::{IndicesPriority, InitCallback, PassDown},
     prepare_vertex_buffer::prepare_vertex_buffer,
 };
 use guppies::{
@@ -18,16 +18,6 @@ fn rect_from_bbox(bbox: &PathBbox) -> Rect {
     }
 }
 
-#[derive(Clone, Default, Debug)]
-pub struct GeometrySet {
-    fixed_geometries: Geometries,
-    variable_geometries: Geometries,
-    fixed_geometries_vertices_len: usize,
-    variable_geometries_vertices_len: usize,
-    variable_geometries_id_range: HashMap<String, Range<usize>>,
-    transform_count: u32,
-}
-
 #[derive(Clone, Debug, Default)]
 pub struct Geometry {
     ids: Vec<String>,
@@ -43,21 +33,8 @@ impl Geometry {
     pub fn get_v(&self) -> Vertices {
         self.vertices.clone()
     }
-    pub fn get_i(&self) -> Indices {
-        self.indices
-            .iter()
-            .map(|index| index + self.index_base as u32)
-            .collect()
-    }
-    pub fn new(p: &Path, index_base: usize, ids: Vec<String>) -> Self {
-        let v = prepare_vertex_buffer(p, transform_id);
-        Self {
-            ids,
-            vertices: v.vertices,
-            indices: v.indices,
-            index_base,
-            bbox: rect_from_bbox(&p.data.bbox().unwrap()),
-        }
+    pub fn get_i_with_offset(&self, offset: u32) -> Indices {
+        self.indices.iter().map(|index| index + offset).collect()
     }
 }
 
@@ -65,7 +42,7 @@ fn recursive_svg(
     node: usvg::Node,
     pass_down: PassDown,
     callback: &mut InitCallback,
-    geometry_set: &mut GeometrySet,
+    transform_count: u32,
     mut ids: Vec<String>,
 ) {
     let PassDown {
@@ -81,14 +58,14 @@ fn recursive_svg(
 
     // TODO: DI
     let transform_id = if id.ends_with("#dynamic") {
-        geometry_set.transform_count += 1;
-        geometry_set.transform_count
+        transform_count += 1;
+        transform_count
     } else {
         parent_transform_id
     };
     if let usvg::NodeKind::Path(ref p) = *node.borrow() {
-        let geometry = Geometry::new(p, geometry_set.get_vertices_len(priority), ids.to_vec());
-        geometry_set.push_with_priority(geometry, priority);
+        // let geometry = Geometry::new(p, geometry_set.get_vertices_len(priority), ids.to_vec());
+        // geometry_set.push_with_priority(geometry, priority);
     }
     for child in node.children() {
         recursive_svg(
@@ -98,7 +75,7 @@ fn recursive_svg(
                 transform_id,
             },
             callback,
-            geometry_set,
+            transform_count,
             ids.clone(),
         );
     }
@@ -121,7 +98,6 @@ fn find_text_node_path(node: roxmltree::Node, path: &mut Vec<roxmltree::NodeId>)
 
 #[derive(Debug)]
 pub struct SvgSet<'a> {
-    pub geometry_set: GeometrySet,
     pub document: roxmltree::Document<'a>,
     pub id_map: HashMap<String, NodeId>,
     pub bbox: Rect,
@@ -130,7 +106,6 @@ pub struct SvgSet<'a> {
 impl<'a> Default for SvgSet<'a> {
     fn default() -> Self {
         Self {
-            geometry_set: Default::default(),
             document: Document::parse("<e/>").unwrap(),
             id_map: Default::default(),
             bbox: Default::default(),
@@ -164,10 +139,6 @@ impl<'a> SvgSet<'a> {
             .load_font_source(Source::Binary(Arc::new(font.as_ref())));
         opt.font_family = "Roboto Medium".to_string();
         opt.keep_named_groups = true;
-        let mut geometry_set = GeometrySet {
-            transform_count: 1,
-            ..Default::default()
-        };
         let document = Document::parse(xml).unwrap();
         let tree = Tree::from_xmltree(&document, &opt.to_ref()).unwrap();
         let id_map =
@@ -179,20 +150,13 @@ impl<'a> SvgSet<'a> {
                     }
                     acc
                 });
-        recursive_svg(
-            tree.root(),
-            PassDown::default(),
-            &mut callback,
-            &mut geometry_set,
-            vec![],
-        );
+        recursive_svg(tree.root(), PassDown::default(), &mut callback, 1, vec![]);
         let view_box = tree.svg_node().view_box;
         let bbox: Rect = Rect::new(
             Vec2::new(view_box.rect.x() as f32, view_box.rect.y() as f32),
             Vec2::new(view_box.rect.width() as f32, view_box.rect.height() as f32),
         );
         Self {
-            geometry_set,
             document,
             id_map,
             bbox,
