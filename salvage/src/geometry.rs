@@ -7,8 +7,8 @@ use guppies::{
     primitives::{Indices, Rect, Vertices},
 };
 use roxmltree::{Document, NodeId};
-use std::{collections::HashMap, ops::Range, sync::Arc};
-use usvg::{fontdb::Source, NodeKind, Options, Path, PathBbox, Tree};
+use std::{collections::HashMap, sync::Arc};
+use usvg::{fontdb::Source, Options, Path, PathBbox, Tree};
 use xmlwriter::XmlWriter;
 
 fn rect_from_bbox(bbox: &PathBbox) -> Rect {
@@ -166,9 +166,9 @@ impl<'a> SvgSet<'a> {
         writer.set_preserve_whitespaces(true);
         writer
     }
-    pub fn update_text(&mut self, id: &String, new_text: &String) {
+    pub fn update_text(&mut self, id: &String, _new_text: &String) {
         let node = self.get_node_with_id(id).unwrap();
-        let mut writer = self.get_base_writer();
+        let _writer = self.get_base_writer();
         let mut parent_ids: Vec<roxmltree::NodeId> = vec![];
         find_text_node_path(node, &mut parent_ids);
     }

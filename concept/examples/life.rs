@@ -7,7 +7,7 @@ use guppies::{get_scale, ViewModel};
 use regex::{Regex, RegexSet};
 use salvage::callback::{IndicesPriority, InitCallback, PassDown};
 use salvage::geometry::{Geometry, SvgSet};
-use salvage::usvg::{self, Node, NodeExt, NodeKind};
+use salvage::usvg::{self, NodeExt, NodeKind};
 use std::f32::consts::PI;
 use std::iter;
 use std::sync::{Arc, Mutex};
@@ -301,7 +301,7 @@ fn main() {
         };
         let indices_priority = *parent_priority.max(&indices_priority);
         (
-            None,
+            geometry,
             PassDown {
                 indices_priority,
                 transform_id,
