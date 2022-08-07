@@ -1,3 +1,4 @@
+use crate::geometry::Geometry;
 use guppies::callback::Callback;
 use usvg::Node;
 
@@ -14,5 +15,4 @@ pub struct PassDown {
     pub transform_id: u32,
 }
 
-pub type InitCallback<'a> = Callback<'a, Node, PassDown>;
-pub type OnClickCallback<'a> = Callback<'a, Node, PassDown>;
+pub type InitCallback<'a> = Callback<'a, (Node, PassDown), (Geometry, PassDown)>;

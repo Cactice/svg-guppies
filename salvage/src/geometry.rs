@@ -1,13 +1,13 @@
 use crate::{
-    callback::{IndicesPriority, InitCallback, Initialization},
+    callback::{IndicesPriority, InitCallback, Initialization, PassDown},
     prepare_vertex_buffer::prepare_vertex_buffer,
 };
 use guppies::{
-    glam::{Vec2, Vec4},
-    primitives::{Index, Indices, Rect, Vertex, Vertices},
+    glam::Vec2,
+    primitives::{Indices, Rect, Vertices},
 };
 use roxmltree::{Document, NodeId};
-use std::{collections::HashMap, iter, ops::Range, sync::Arc};
+use std::{collections::HashMap, ops::Range, sync::Arc};
 use usvg::{fontdb::Source, NodeKind, Options, Path, PathBbox, Tree};
 use xmlwriter::XmlWriter;
 
@@ -33,7 +33,7 @@ pub struct Geometry {
     ids: Vec<String>,
     vertices: Vertices,
     indices: Indices,
-    index_base: usize,
+    priority: IndicesPriority,
     bbox: Rect,
 }
 impl Geometry {
@@ -63,13 +63,16 @@ impl Geometry {
 
 fn recursive_svg(
     node: usvg::Node,
-    parent_priority: IndicesPriority,
+    pass_down: PassDown,
     callback: &mut InitCallback,
     geometry_set: &mut GeometrySet,
     mut ids: Vec<String>,
-    parent_transform_id: u32,
 ) {
-    let priority = parent_priority.max(callback.process_events(&node).indices_priority);
+    let PassDown {
+        indices_priority: parent_priority,
+        transform_id: parent_transform_id,
+    } = pass_down;
+    let indices_priority = parent_priority.max(callback.process_events(&node).indices_priority);
     let node_ref = &node.borrow();
     let id = NodeKind::id(node_ref);
     if !id.is_empty() {
@@ -90,11 +93,13 @@ fn recursive_svg(
     for child in node.children() {
         recursive_svg(
             child,
-            priority,
+            PassDown {
+                indices_priority,
+                transform_id,
+            },
             callback,
             geometry_set,
             ids.clone(),
-            transform_id,
         );
     }
 }
@@ -176,11 +181,10 @@ impl<'a> SvgSet<'a> {
                 });
         recursive_svg(
             tree.root(),
-            IndicesPriority::Fixed,
+            PassDown::default(),
             &mut callback,
             &mut geometry_set,
             vec![],
-            1,
         );
         let view_box = tree.svg_node().view_box;
         let bbox: Rect = Rect::new(
@@ -228,26 +232,6 @@ impl<'a> SvgSet<'a> {
             if parent.has_tag_name("svg") {
                 writer.write_attribute("xmlns", "http://www.w3.org/2000/svg");
             }
-        }
-        writer.write_text(new_text);
-
-        let xml = writer.end_document();
-        let tree = Tree::from_str(&xml, &self.usvg_options.to_ref()).unwrap();
-        let mut geometry_set = GeometrySet::default();
-        recursive_svg(
-            tree.root(),
-            IndicesPriority::Variable,
-            &mut InitCallback::new(|_| Initialization::default()),
-            &mut geometry_set,
-            vec![],
-            1,
-        );
-        if let Some(Geometry {
-            indices, vertices, ..
-        }) = geometry_set.variable_geometries.0.first()
-        {
-            self.geometry_set
-                .update_geometry(id, vertices.to_vec(), indices.to_vec());
         }
     }
 }
