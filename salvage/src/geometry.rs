@@ -171,25 +171,5 @@ impl<'a> SvgSet<'a> {
         let mut writer = self.get_base_writer();
         let mut parent_ids: Vec<roxmltree::NodeId> = vec![];
         find_text_node_path(node, &mut parent_ids);
-
-        parent_ids.push(node.id());
-        let mut current_node = node;
-        while let Some(parent) = current_node.parent() {
-            if !parent.is_element() {
-                if parent.parent().is_none() {
-                    break;
-                }
-                continue;
-            }
-            parent_ids.push(parent.id());
-            current_node = parent;
-        }
-        while let Some(parent_id) = parent_ids.pop() {
-            let parent = self.document.get_node(parent_id).unwrap();
-            self.copy_element(&parent, &mut writer);
-            if parent.has_tag_name("svg") {
-                writer.write_attribute("xmlns", "http://www.w3.org/2000/svg");
-            }
-        }
     }
 }
