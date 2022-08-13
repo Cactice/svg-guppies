@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["concept", "guppies", "salvage", "run-wasm"]
+members = ["concept", "guppies", "salvage", "run-wasm", "mobile-winit"]
 
 [profile.release]
 lto = true
