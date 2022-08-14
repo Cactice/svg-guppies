@@ -1,12 +1,11 @@
 pub mod callback;
 pub mod primitives;
 mod setup;
-use std::time::Instant;
-
 pub use glam;
 use glam::{Mat4, Vec2};
 use primitives::DrawPrimitives;
 use setup::Setup;
+use std::time::Instant;
 pub use winit;
 use winit::dpi::PhysicalSize;
 use winit::event_loop::EventLoopWindowTarget;
@@ -87,7 +86,7 @@ pub fn main<V: ViewModel + 'static>(mut view_model: V) {
     let mut window: Option<Window> = None;
 
     event_loop.run(move |event, event_loop, control_flow| {
-        *control_flow = ControlFlow::Wait;
+        *control_flow = ControlFlow::Poll;
         match event {
             #[cfg(target_os = "android")]
             Event::Resumed => init(event_loop, &draw_primitive, &mut redraw, &mut window),
@@ -112,6 +111,7 @@ pub fn main<V: ViewModel + 'static>(mut view_model: V) {
                     if let (Some(mut texture), Some((vertices, indices))) = view_model.on_redraw() {
                         texture.resize(8192 * 16, 0);
                         Setup::redraw(redraw, &texture[..], &vertices, &indices);
+                        window.request_redraw();
                     }
                 }
             }
