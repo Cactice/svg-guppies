@@ -4,6 +4,7 @@ use guppies::primitives::DrawPrimitives;
 use guppies::winit::dpi::PhysicalSize;
 use guppies::winit::event::{ElementState, MouseScrollDelta, WindowEvent};
 use guppies::{get_scale, ViewModel};
+use log::info;
 use mobile_entry_point::mobile_entry_point;
 use regex::{Regex, RegexSet};
 use salvage::callback::{IndicesPriority, InitCallback, Initialization};
@@ -115,6 +116,7 @@ impl ViewModel for LifeGameView<'_> {
                 self.mouse_position = new_position
             }
             WindowEvent::Touch(touch) => {
+                info!("OI!");
                 self.tip_clicked();
             }
             WindowEvent::MouseInput {
@@ -239,6 +241,7 @@ impl RegexPatterns {
 
 #[mobile_entry_point]
 fn main() {
+    env_logger::init();
     let mut position_to_dollar: Vec<i32> = vec![];
     let mut position_to_coordinates: Vec<DVec2> = vec![];
     let mut regex_patterns = RegexPatterns::default();
