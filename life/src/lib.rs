@@ -80,15 +80,15 @@ impl ViewModel for LifeGameView<'_> {
             .chain([self.tip_transform.get_inner().current])
             .collect();
         // let _is_mutated = [self.instruction_text.mut_count].iter().any(|x| x > &0);
-        let x: Vec<(String, String)> = self
-            .life_game
-            .dollars
-            .iter()
-            .enumerate()
-            .map(|(i, m)| (format!("{}. Player #dynamicText", i + 1), format!("${}", m)))
-            .collect();
         iter::empty::<(String, String)>()
-            .chain(x)
+            .chain(
+                self.life_game
+                    .dollars
+                    .iter()
+                    .enumerate()
+                    .map(|(i, m)| (format!("{}. Player #dynamicText", i + 1), format!("${}", m)))
+                    .collect::<Vec<(String, String)>>(),
+            )
             .chain([(
                 "instruction #dynamicText".to_string(),
                 self.instruction_text.clone(),
