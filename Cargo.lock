@@ -252,6 +252,7 @@ dependencies = [
  "fastrand",
  "guppies",
  "natura",
+ "ndk-glue",
  "regex",
  "salvage",
 ]
@@ -810,6 +811,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "life"
+version = "0.1.0"
+dependencies = [
+ "android_logger",
+ "bytemuck",
+ "concept",
+ "fastrand",
+ "guppies",
+ "log",
+ "mobile-entry-point",
+ "natura",
+ "ndk-glue",
+ "regex",
+ "salvage",
+]
+
+[[package]]
 name = "lock_api"
 version = "0.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -975,23 +993,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "mobile-winit"
-version = "0.1.0"
-dependencies = [
- "android_logger",
- "bytemuck",
- "concept",
- "fastrand",
- "guppies",
- "log",
- "mobile-entry-point",
- "natura",
- "ndk-glue",
- "regex",
- "salvage",
 ]
 
 [[package]]

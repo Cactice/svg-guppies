@@ -1,8 +1,7 @@
 [app]
-name = "mobile-winit"
-stylized-name = "Mobile Winit"
+name = "life"
+stylized-name = "Life"
 domain = "users.noreply.github.com"
-template-pack = "winit"
 
 [apple]
 development-team = "29BWQ53ETH"

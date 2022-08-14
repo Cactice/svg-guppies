@@ -1,15 +1,11 @@
 [package]
-name = "mobile-winit"
+name = "life"
 version = "0.1.0"
 authors = ["cactice <14835424+Cactice@users.noreply.github.com>"]
 edition = "2018"
 
 [lib]
 crate-type = ["staticlib", "cdylib", "rlib"]
-
-[[bin]]
-name = "mobile-winit-desktop"
-path = "gen/bin/desktop.rs"
 
 [dependencies]
 mobile-entry-point = "0.1.0"
