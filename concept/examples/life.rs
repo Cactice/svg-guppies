@@ -2,7 +2,7 @@ use concept::spring::{MutCount, SpringMat4, StaticCallback};
 use guppies::glam::{DVec2, Mat4, Vec2, Vec3};
 use guppies::primitives::DrawPrimitives;
 use guppies::winit::dpi::PhysicalSize;
-use guppies::winit::event::{ElementState, MouseScrollDelta, WindowEvent};
+use guppies::winit::event::{ElementState, MouseScrollDelta, Touch, WindowEvent};
 use guppies::{get_scale, ViewModel};
 use regex::{Regex, RegexSet};
 use salvage::callback::{IndicesPriority, InitCallback, Initialization};
@@ -119,6 +119,9 @@ impl ViewModel for LifeGameView<'_> {
             } => {
                 self.mouse_down = None;
             }
+            WindowEvent::Touch(touch) => {
+                self.tip_clicked();
+            }
             WindowEvent::MouseInput {
                 state: ElementState::Pressed,
                 ..
@@ -126,7 +129,6 @@ impl ViewModel for LifeGameView<'_> {
                 self.mouse_down = Some(self.mouse_position);
                 self.tip_clicked();
             }
-
             WindowEvent::MouseWheel {
                 delta: MouseScrollDelta::PixelDelta(p),
                 ..

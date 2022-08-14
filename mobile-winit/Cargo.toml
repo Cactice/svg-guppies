@@ -24,4 +24,4 @@ fastrand = "1.8.0"
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.9.0"
 log = "0.4.11"
-ndk-glue = "0.2.1"
+ndk-glue = "0.5"
