@@ -84,6 +84,11 @@ pub fn main<V: ViewModel + 'static>(mut view_model: V) {
 
     event_loop.run(move |event, event_loop, control_flow| {
         *control_flow = ControlFlow::Poll;
+        // FIXME: why does ios not redraw automatically without explicit call
+        #[cfg(target_os = "ios")]
+        if let Some(window) = window.as_mut() {
+            window.request_redraw();
+        }
         match event {
             #[cfg(target_os = "android")]
             Event::Resumed => init(event_loop, &draw_primitive, &mut redraw, &mut window),
