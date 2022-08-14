@@ -263,7 +263,6 @@ dependencies = [
  "fastrand",
  "guppies",
  "natura",
- "ndk-glue",
  "regex",
  "salvage",
 ]

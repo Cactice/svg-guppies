@@ -14,4 +14,3 @@ natura = { git = "https://github.com/ziyasal/natura" }
 regex = "1"
 bytemuck = "1.9.1"
 fastrand = "1.8.0"
-ndk-glue= "0.5"
