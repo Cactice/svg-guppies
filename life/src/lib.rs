@@ -116,7 +116,6 @@ impl ViewModel for LifeGameView<'_> {
                 self.mouse_position = new_position
             }
             WindowEvent::Touch(touch) => {
-                info!("OI!");
                 self.tip_clicked();
             }
             WindowEvent::MouseInput {
