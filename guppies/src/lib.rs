@@ -5,7 +5,6 @@ pub use glam;
 use glam::{Mat4, Vec2};
 use primitives::DrawPrimitives;
 use setup::Setup;
-use std::time::Instant;
 pub use winit;
 use winit::dpi::PhysicalSize;
 use winit::event_loop::EventLoopWindowTarget;
@@ -14,8 +13,6 @@ use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
 };
-const TARGET_FPS: u64 = 60;
-
 pub fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
     let ratio = f32::min(1200_f32, 1600_f32) / f32::max(svg_scale.x, svg_scale.y);
     Mat4::from_scale(
@@ -116,24 +113,6 @@ pub fn main<V: ViewModel + 'static>(mut view_model: V) {
                 }
             }
             _ => {}
-        }
-        match *control_flow {
-            ControlFlow::Exit => (),
-            _ => {
-                if let Some(window) = &window {
-                    window.request_redraw();
-                }
-                let start_time = Instant::now();
-                let elapsed_time_millis =
-                    Instant::now().duration_since(start_time).as_millis() as u64;
-
-                let wait_millis = match 1000 / TARGET_FPS >= elapsed_time_millis {
-                    true => 1000 / TARGET_FPS - elapsed_time_millis,
-                    false => 0,
-                };
-                let new_inst = start_time + std::time::Duration::from_millis(wait_millis);
-                *control_flow = ControlFlow::WaitUntil(new_inst);
-            }
         }
     });
 }

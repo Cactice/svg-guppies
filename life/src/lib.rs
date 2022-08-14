@@ -114,6 +114,9 @@ impl ViewModel for LifeGameView<'_> {
                 }
                 self.mouse_position = new_position
             }
+            WindowEvent::Touch(touch) => {
+                self.tip_clicked();
+            }
             WindowEvent::MouseInput {
                 state: ElementState::Released,
                 ..
@@ -127,7 +130,6 @@ impl ViewModel for LifeGameView<'_> {
                 self.mouse_down = Some(self.mouse_position);
                 self.tip_clicked();
             }
-
             WindowEvent::MouseWheel {
                 delta: MouseScrollDelta::PixelDelta(p),
                 ..
@@ -237,14 +239,6 @@ impl RegexPatterns {
 
 #[mobile_entry_point]
 fn main() {
-    #[cfg(target_os = "android")]
-    {
-        android_logger::init_once(
-            android_logger::Config::default()
-                .with_min_level(log::Level::Trace)
-                .with_tag("mobile-winit"),
-        );
-    }
     let mut position_to_dollar: Vec<i32> = vec![];
     let mut position_to_coordinates: Vec<DVec2> = vec![];
     let mut regex_patterns = RegexPatterns::default();

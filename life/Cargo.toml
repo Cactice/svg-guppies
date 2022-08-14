@@ -16,8 +16,8 @@ natura = { git = "https://github.com/ziyasal/natura" }
 regex = "1"
 bytemuck = "1.9.1"
 fastrand = "1.8.0"
+log = "0.4.11"
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.9.0"
-log = "0.4.11"
 ndk-glue = "0.5"
