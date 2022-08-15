@@ -1,8 +1,8 @@
 use concept::spring::{MutCount, SpringMat4, StaticCallback};
-use guppies::glam::{DVec2, Mat4, Vec2, Vec3};
+use guppies::glam::{DVec2, Mat2, Mat4, Vec2, Vec3};
 use guppies::primitives::DrawPrimitives;
 use guppies::winit::dpi::PhysicalSize;
-use guppies::winit::event::{ElementState, MouseScrollDelta, WindowEvent};
+use guppies::winit::event::{ElementState, MouseScrollDelta, TouchPhase, WindowEvent};
 use guppies::{get_scale, ViewModel};
 use regex::{Regex, RegexSet};
 use salvage::callback::{IndicesPriority, InitCallback, Initialization};
@@ -22,7 +22,8 @@ struct LifeGame {
 
 #[derive(Default)]
 struct LifeGameView<'a> {
-    screen_size: SpringMat4,
+    screen_size: Mat4,
+    fingers: [Option<Vec2>; 2],
     animation_register: Arc<Mutex<Vec<SpringMat4>>>,
     player_avatar_transforms: MutCount<[SpringMat4; 4]>,
     tip_center: Mat4,
@@ -114,9 +115,48 @@ impl ViewModel for LifeGameView<'_> {
                 }
                 self.mouse_position = new_position
             }
-            WindowEvent::Touch(touch) => {
-                self.tip_clicked();
-            }
+            WindowEvent::Touch(touch) => match touch.phase {
+                TouchPhase::Started => {
+                    let new_position = Vec2::new(touch.location.x as f32, touch.location.y as f32);
+                    self.tip_clicked();
+                    self.fingers[touch.id as usize] = Some(new_position);
+                }
+                TouchPhase::Moved => {
+                    let other_finger_index = match touch.id {
+                        0 => 1,
+                        1 => 0,
+                        _ => 0,
+                    };
+                    let new_position = Vec2::new(touch.location.x as f32, touch.location.y as f32);
+                    if let Some(finger) = self.fingers[touch.id as usize] {
+                        if let Some(other_finger) = self.fingers[other_finger_index] {
+                            let original_distance = finger.distance(other_finger);
+                            let new_distance = new_position.distance(other_finger);
+                            let distance_delta = (original_distance - new_distance).abs();
+                            if distance_delta != 0. {
+                                self.global_transform.unwrapped =
+                                    Mat4::from_scale(
+                                        [
+                                            1. + (1. / (distance_delta as f32)),
+                                            1. + (1. / (distance_delta as f32)),
+                                            1_f32,
+                                        ]
+                                        .into(),
+                                    ) * self.global_transform.unwrapped;
+                            }
+                        } else {
+                            let motion = new_position - finger;
+                            self.global_transform.unwrapped *=
+                                Mat4::from_translation(Vec3::from((motion.x, motion.y, 0_f32)))
+                        }
+                    }
+                    self.fingers[touch.id as usize] = Some(new_position);
+                }
+                TouchPhase::Ended => {
+                    self.fingers[touch.id as usize] = None;
+                }
+                _ => {}
+            },
             WindowEvent::MouseInput {
                 state: ElementState::Released,
                 ..
