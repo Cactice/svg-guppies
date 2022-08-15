@@ -12,7 +12,6 @@ use salvage::usvg::{self, NodeExt, NodeKind};
 use std::f32::consts::PI;
 use std::iter;
 use std::sync::{Arc, Mutex};
-
 #[derive(Default)]
 struct LifeGame {
     dollars: [i32; 4],
@@ -24,6 +23,7 @@ struct LifeGame {
 
 #[derive(Default)]
 struct LifeGameView<'a> {
+    screen_size: SpringMat4,
     animation_register: Arc<Mutex<Vec<SpringMat4>>>,
     player_avatar_transforms: MutCount<[SpringMat4; 4]>,
     tip_center: Mat4,
@@ -79,14 +79,15 @@ impl ViewModel for LifeGameView<'_> {
             )
             .chain([self.tip_transform.get_inner().current])
             .collect();
-        let _is_mutated = [self.instruction_text.mut_count].iter().any(|x| x > &0);
+        // let _is_mutated = [self.instruction_text.mut_count].iter().any(|x| x > &0);
         iter::empty::<(String, String)>()
             .chain(
                 self.life_game
                     .dollars
                     .iter()
                     .enumerate()
-                    .map(|(i, m)| (format!("{}. Player #dynamicText", i + 1), format!("${}", m))),
+                    .map(|(i, m)| (format!("{}. Player #dynamicText", i + 1), format!("${}", m)))
+                    .collect::<Vec<(String, String)>>(),
             )
             .chain([(
                 "instruction #dynamicText".to_string(),
@@ -111,6 +112,9 @@ impl ViewModel for LifeGameView<'_> {
                 }
                 self.mouse_position = new_position
             }
+            WindowEvent::Touch(touch) => {
+                self.tip_clicked();
+            }
             WindowEvent::MouseInput {
                 state: ElementState::Released,
                 ..
@@ -124,7 +128,6 @@ impl ViewModel for LifeGameView<'_> {
                 self.mouse_down = Some(self.mouse_position);
                 self.tip_clicked();
             }
-
             WindowEvent::MouseWheel {
                 delta: MouseScrollDelta::PixelDelta(p),
                 ..
@@ -232,7 +235,8 @@ impl RegexPatterns {
     }
 }
 
-fn main() {
+pub fn main() {
+    env_logger::init();
     let mut position_to_dollar: Vec<i32> = vec![];
     let mut position_to_coordinates: Vec<DVec2> = vec![];
     let mut regex_patterns = RegexPatterns::default();

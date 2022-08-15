@@ -1,0 +1,24 @@
+[package]
+name = "life"
+version = "0.1.0"
+authors = ["cactice <14835424+Cactice@users.noreply.github.com>"]
+edition = "2018"
+
+[lib]
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[dependencies]
+mobile-entry-point = "0.1.0"
+guppies = { path = "../guppies" }
+salvage = { path = "../salvage" }
+concept = { path = "../concept" }
+natura = { git = "https://github.com/ziyasal/natura" }
+regex = "1"
+bytemuck = "1.9.1"
+fastrand = "1.8.0"
+log = "0.4.11"
+env_logger = "0.9.0"
+
+[target.'cfg(target_os = "android")'.dependencies]
+android_logger = "0.9.0"
+ndk-glue = "0.5"
