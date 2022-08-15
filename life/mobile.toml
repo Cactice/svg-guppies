@@ -2,6 +2,7 @@
 name = "life"
 stylized-name = "Life"
 domain = "users.noreply.github.com"
+template-pack = "wgpu"
 
 [apple]
 development-team = "29BWQ53ETH"
