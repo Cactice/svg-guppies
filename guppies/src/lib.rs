@@ -7,12 +7,12 @@ use primitives::DrawPrimitives;
 use setup::Setup;
 pub use winit;
 use winit::dpi::PhysicalSize;
-use winit::window::WindowBuilder;
+use winit::event_loop::EventLoopWindowTarget;
+use winit::window::{Window, WindowBuilder};
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
 };
-
 pub fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
     let ratio = f32::min(1200_f32, 1600_f32) / f32::max(svg_scale.x, svg_scale.y);
     Mat4::from_scale(
@@ -31,57 +31,73 @@ pub trait ViewModel: Send + Sync {
     fn on_event(&mut self, event: WindowEvent);
 }
 
+fn init(
+    event_loop: &EventLoopWindowTarget<()>,
+    draw_primitive: &DrawPrimitives,
+    redraw: &mut Option<setup::Redraw>,
+    window: &mut Option<winit::window::Window>,
+) {
+    *window = Some(
+        WindowBuilder::new()
+            .with_title("SVG-GUI")
+            .build(&event_loop)
+            .unwrap(),
+    );
+    let window = window.as_ref().expect("Window is None");
+    #[cfg(target_arch = "wasm32")]
+    {
+        std::panic::set_hook(Box::new(console_error_panic_hook::hook));
+        use winit::platform::web::WindowExtWebSys;
+
+        web_sys::window()
+            .and_then(|win| win.document())
+            .and_then(|doc| doc.body())
+            .and_then(|body| {
+                body.remove_child(&body.last_element_child().unwrap())
+                    .unwrap();
+                body.append_child(&web_sys::Element::from(window.canvas()))
+                    .ok()
+            })
+            .expect("Couldn't append canvas to document body");
+    }
+    let setup = pollster::block_on(Setup::new(
+        window,
+        Mat4::IDENTITY,
+        &draw_primitive.0,
+        &draw_primitive.1,
+    ));
+    let Setup {
+        redraw: some_redraw,
+        ..
+    } = setup;
+    *redraw = Some(some_redraw);
+}
+
 pub fn main<V: ViewModel + 'static>(mut view_model: V) {
     let event_loop = EventLoop::new();
-    let (vertices, indices) = view_model
+    let draw_primitive = view_model
         .on_redraw()
         .1
         .expect("initial draw must not be none");
     let mut redraw = None;
-    let mut window = None;
+    let mut window: Option<Window> = None;
 
     event_loop.run(move |event, event_loop, control_flow| {
         *control_flow = ControlFlow::Poll;
+        // FIXME: why does ios not redraw automatically without explicit call
+        #[cfg(target_os = "ios")]
+        if let Some(window) = window.as_mut() {
+            window.request_redraw();
+        }
         match event {
+            #[cfg(target_os = "android")]
+            Event::Resumed => init(event_loop, &draw_primitive, &mut redraw, &mut window),
+            #[cfg(not(target_os = "android"))]
             Event::NewEvents(start_cause) => match start_cause {
                 winit::event::StartCause::Init => {
-                    window = Some(
-                        WindowBuilder::new()
-                            .with_title("SVG-GUI")
-                            .build(event_loop)
-                            .unwrap(),
-                    );
-                    let window = window.as_ref().expect("Window is None");
-                    #[cfg(target_arch = "wasm32")]
-                    {
-                        std::panic::set_hook(Box::new(console_error_panic_hook::hook));
-                        use winit::platform::web::WindowExtWebSys;
-
-                        web_sys::window()
-                            .and_then(|win| win.document())
-                            .and_then(|doc| doc.body())
-                            .and_then(|body| {
-                                body.remove_child(&body.last_element_child().unwrap())
-                                    .unwrap();
-                                body.append_child(&web_sys::Element::from(window.canvas()))
-                                    .ok()
-                            })
-                            .expect("Couldn't append canvas to document body");
-                    }
-                    let setup =
-                        pollster::block_on(Setup::new(window, Mat4::IDENTITY, &vertices, &indices));
-                    let Setup {
-                        redraw: some_redraw,
-                        adapter: _,
-                        instance: _,
-                        pipeline_layout: _,
-                        shader: _,
-                    } = setup;
-                    redraw = Some(some_redraw);
-
-                    let _win_size = window.inner_size();
+                    init(event_loop, &draw_primitive, &mut redraw, &mut window)
                 }
-                _ => {}
+                _ => (),
             },
             Event::WindowEvent { event, .. } => {
                 match event {
