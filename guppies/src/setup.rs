@@ -113,16 +113,11 @@ fn get_uniform_buffer(
 }
 
 impl Setup {
-    pub fn resize(
-        size: PhysicalSize<u32>,
-        device: &Device,
-        surface: &Surface,
-        config: &mut SurfaceConfiguration,
-    ) {
+    pub fn resize(size: PhysicalSize<u32>, redraw: &mut Redraw) {
         // Reconfigure the surface with the new size
-        config.width = size.width;
-        config.height = size.height;
-        surface.configure(device, config);
+        redraw.config.width = size.width;
+        redraw.config.height = size.height;
+        redraw.surface.configure(&redraw.device, &redraw.config);
     }
     pub fn redraw(redraw: &Redraw, texture: &[u8], vertices: &Vertices, indices: &Indices) {
         let Redraw {

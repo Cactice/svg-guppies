@@ -95,7 +95,9 @@ pub fn main<V: ViewModel + 'static>(mut view_model: V) {
             #[cfg(not(target_os = "android"))]
             Event::NewEvents(start_cause) => match start_cause {
                 winit::event::StartCause::Init => {
-                    init(event_loop, &draw_primitive, &mut redraw, &mut window)
+                    init(event_loop, &draw_primitive, &mut redraw, &mut window);
+                    let size = window.as_ref().unwrap().inner_size();
+                    view_model.on_event(WindowEvent::Resized(size));
                 }
                 _ => (),
             },
@@ -103,6 +105,11 @@ pub fn main<V: ViewModel + 'static>(mut view_model: V) {
                 match event {
                     WindowEvent::CloseRequested => {
                         *control_flow = ControlFlow::Exit;
+                    }
+                    WindowEvent::Resized(p) => {
+                        if let Some(redraw) = redraw.as_mut() {
+                            Setup::resize(p, redraw);
+                        }
                     }
                     _ => {}
                 }

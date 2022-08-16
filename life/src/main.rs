@@ -22,7 +22,7 @@ struct LifeGame {
 
 #[derive(Default)]
 struct LifeGameView<'a> {
-    screen_size: Mat4,
+    screen_size_transform: Mat4,
     fingers: Vec<(u64, Vec2)>,
     animation_register: Arc<Mutex<Vec<SpringMat4>>>,
     player_avatar_transforms: MutCount<[SpringMat4; 4]>,
@@ -70,7 +70,7 @@ impl ViewModel for LifeGameView<'_> {
         .any(|x| x > &0);
 
         let mat_4: Vec<Mat4> = iter::empty::<Mat4>()
-            .chain([self.global_transform.unwrapped])
+            .chain([self.global_transform.unwrapped * self.screen_size_transform])
             .chain([Mat4::IDENTITY])
             .chain(
                 self.player_avatar_transforms
@@ -106,6 +106,9 @@ impl ViewModel for LifeGameView<'_> {
     }
     fn on_event(&mut self, event: WindowEvent) {
         match event {
+            WindowEvent::Resized(p) => {
+                self.screen_size_transform = get_scale(p, self.svg_set.bbox.size);
+            }
             WindowEvent::CursorMoved { position, .. } => {
                 let new_position = Vec2::new(position.x as f32, position.y as f32);
                 if self.mouse_down.is_some() {
@@ -355,7 +358,8 @@ pub fn main() {
     let scale: Mat4 = get_scale(PhysicalSize::<u32>::new(1600, 1200), svg_scale);
     let translate = Mat4::from_translation([-1., 1.0, 0.0].into());
     let life_view = LifeGameView {
-        global_transform: (translate * scale).into(),
+        global_transform: (translate).into(),
+        screen_size_transform: scale,
         tip_center,
         instruction_text: MutCount::from("Please click".to_string()),
         start_center,
