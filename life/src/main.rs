@@ -1,5 +1,5 @@
 use concept::spring::{MutCount, SpringMat4, StaticCallback};
-use guppies::glam::{DVec2, Mat2, Mat4, Vec2, Vec3};
+use guppies::glam::{DVec2, Mat4, Vec2, Vec3};
 use guppies::primitives::DrawPrimitives;
 use guppies::winit::dpi::PhysicalSize;
 use guppies::winit::event::{ElementState, MouseScrollDelta, TouchPhase, WindowEvent};
@@ -23,7 +23,7 @@ struct LifeGame {
 #[derive(Default)]
 struct LifeGameView<'a> {
     screen_size: Mat4,
-    fingers: [Option<Vec2>; 2],
+    fingers: Vec<(u64, Vec2)>,
     animation_register: Arc<Mutex<Vec<SpringMat4>>>,
     player_avatar_transforms: MutCount<[SpringMat4; 4]>,
     tip_center: Mat4,
@@ -119,20 +119,32 @@ impl ViewModel for LifeGameView<'_> {
                 TouchPhase::Started => {
                     let new_position = Vec2::new(touch.location.x as f32, touch.location.y as f32);
                     self.tip_clicked();
-                    self.fingers[touch.id as usize] = Some(new_position);
+                    let fingers_len = self.fingers.len();
+                    if fingers_len < 2 {
+                        self.fingers.push((touch.id, new_position));
+                    }
                 }
                 TouchPhase::Moved => {
-                    let other_finger_index = match touch.id {
-                        0 => 1,
-                        1 => 0,
-                        _ => 0,
-                    };
+                    let other_finger: Option<(u64, Vec2)> = self
+                        .fingers
+                        .iter()
+                        .filter(|finger| finger.0 != touch.id)
+                        .next()
+                        .cloned();
+                    let this_finger: Option<&mut (u64, Vec2)> = self
+                        .fingers
+                        .iter_mut()
+                        .filter(|finger| finger.0 == touch.id)
+                        .next();
                     let new_position = Vec2::new(touch.location.x as f32, touch.location.y as f32);
-                    if let Some(finger) = self.fingers[touch.id as usize] {
-                        if let Some(other_finger) = self.fingers[other_finger_index] {
-                            let original_distance = finger.distance(other_finger);
-                            let new_distance = new_position.distance(other_finger);
-                            let distance_delta = (original_distance - new_distance).abs();
+                    if let Some(this_finger) = this_finger {
+                        let old_position = this_finger.1;
+                        if let Some(other_finger) = other_finger {
+                            // zoom
+                            let other_position = other_finger.1;
+                            let original_distance = old_position.distance(other_position);
+                            let new_distance = new_position.distance(other_position);
+                            let distance_delta = (new_distance - original_distance) * 10.; //TODO: remove this magical number: 10
                             if distance_delta != 0. {
                                 self.global_transform.unwrapped =
                                     Mat4::from_scale(
@@ -145,15 +157,21 @@ impl ViewModel for LifeGameView<'_> {
                                     ) * self.global_transform.unwrapped;
                             }
                         } else {
-                            let motion = new_position - finger;
+                            // pan
+                            let motion = new_position - old_position;
                             self.global_transform.unwrapped *=
                                 Mat4::from_translation(Vec3::from((motion.x, motion.y, 0_f32)))
                         }
+                        this_finger.1 = new_position;
                     }
-                    self.fingers[touch.id as usize] = Some(new_position);
                 }
                 TouchPhase::Ended => {
-                    self.fingers[touch.id as usize] = None;
+                    self.fingers = self
+                        .fingers
+                        .iter()
+                        .filter(|finger| finger.0 != touch.id)
+                        .cloned()
+                        .collect();
                 }
                 _ => {}
             },
