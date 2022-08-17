@@ -152,7 +152,7 @@ impl ViewModel for LifeGameView<'_> {
                             let other_position = other_finger.1;
                             let original_distance = old_position.distance(other_position);
                             let new_distance = new_position.distance(other_position);
-                            let distance_delta = (new_distance - original_distance) * 10.; //TODO: remove this magical number: 10
+                            let distance_delta = (new_distance - original_distance) * 20.; //TODO: remove this magical number
                             if distance_delta != 0. {
                                 self.global_transform.unwrapped =
                                     Mat4::from_scale(
