@@ -22,7 +22,6 @@ struct LifeGame {
 
 #[derive(Default)]
 struct LifeGameView<'a> {
-    screen_size_transform: Mat4,
     fingers: Vec<(u64, Vec2)>,
     animation_register: Arc<Mutex<Vec<SpringMat4>>>,
     player_avatar_transforms: MutCount<[SpringMat4; 4]>,
@@ -70,7 +69,7 @@ impl ViewModel for LifeGameView<'_> {
         .any(|x| x > &0);
 
         let mat_4: Vec<Mat4> = iter::empty::<Mat4>()
-            .chain([self.global_transform.unwrapped * self.screen_size_transform])
+            .chain([self.global_transform.unwrapped])
             .chain([Mat4::IDENTITY])
             .chain(
                 self.player_avatar_transforms
@@ -107,16 +106,20 @@ impl ViewModel for LifeGameView<'_> {
     fn on_event(&mut self, event: WindowEvent) {
         match event {
             WindowEvent::Resized(p) => {
-                self.screen_size_transform = get_scale(p, self.svg_set.bbox.size);
+                let (_scale, rot, trans) = self.global_transform.to_scale_rotation_translation();
+                let scale = get_scale(p, self.svg_set.bbox.size);
+                *self.global_transform = Mat4::from_scale_rotation_translation(
+                    scale.to_scale_rotation_translation().0,
+                    rot,
+                    trans,
+                );
             }
             WindowEvent::CursorMoved { position, .. } => {
                 let new_position = Vec2::new(position.x as f32, position.y as f32);
                 if self.mouse_down.is_some() {
                     let motion = new_position - self.mouse_position;
-                    self.global_transform.unwrapped = self.global_transform.unwrapped
-                        * self.screen_size_transform
-                        * Mat4::from_translation(Vec3::from((motion.x, motion.y, 0_f32)))
-                        * self.screen_size_transform.inverse()
+                    self.global_transform.unwrapped *=
+                        Mat4::from_translation(Vec3::from((motion.x, motion.y, 0_f32)))
                 }
                 self.mouse_position = new_position
             }
@@ -164,10 +167,8 @@ impl ViewModel for LifeGameView<'_> {
                         } else {
                             // pan
                             let motion = new_position - old_position;
-                            self.global_transform.unwrapped = self.global_transform.unwrapped
-                                * self.screen_size_transform
-                                * Mat4::from_translation(Vec3::from((motion.x, motion.y, 0_f32)))
-                                * self.screen_size_transform.inverse()
+                            self.global_transform.unwrapped *=
+                                Mat4::from_translation(Vec3::from((motion.x, motion.y, 0_f32)))
                         }
                         this_finger.1 = new_position;
                     }
@@ -359,11 +360,11 @@ pub fn main() {
     let svg_set = SvgSet::new(include_str!("../../svg/life.svg"), callback);
     let svg_scale = svg_set.bbox.size;
 
-    let scale: Mat4 = get_scale(PhysicalSize::<u32>::new(0, 0), svg_scale);
+    // Below scale should get overridden by guppies' redraw event forced on init
+    let scale: Mat4 = get_scale(PhysicalSize::<u32>::new(100, 100), svg_scale);
     let translate = Mat4::from_translation([-1., 1.0, 0.0].into());
     let life_view = LifeGameView {
-        global_transform: (translate).into(),
-        screen_size_transform: scale,
+        global_transform: (translate * scale).into(),
         tip_center,
         instruction_text: MutCount::from("Please click".to_string()),
         start_center,
