@@ -113,8 +113,10 @@ impl ViewModel for LifeGameView<'_> {
                 let new_position = Vec2::new(position.x as f32, position.y as f32);
                 if self.mouse_down.is_some() {
                     let motion = new_position - self.mouse_position;
-                    self.global_transform.unwrapped *=
-                        Mat4::from_translation(Vec3::from((motion.x, motion.y, 0_f32)))
+                    self.global_transform.unwrapped = self.global_transform.unwrapped
+                        * self.screen_size_transform
+                        * Mat4::from_translation(Vec3::from((motion.x, motion.y, 0_f32)))
+                        * self.screen_size_transform.inverse()
                 }
                 self.mouse_position = new_position
             }
@@ -162,8 +164,10 @@ impl ViewModel for LifeGameView<'_> {
                         } else {
                             // pan
                             let motion = new_position - old_position;
-                            self.global_transform.unwrapped *=
-                                Mat4::from_translation(Vec3::from((motion.x, motion.y, 0_f32)))
+                            self.global_transform.unwrapped = self.global_transform.unwrapped
+                                * self.screen_size_transform
+                                * Mat4::from_translation(Vec3::from((motion.x, motion.y, 0_f32)))
+                                * self.screen_size_transform.inverse()
                         }
                         this_finger.1 = new_position;
                     }
@@ -355,7 +359,7 @@ pub fn main() {
     let svg_set = SvgSet::new(include_str!("../../svg/life.svg"), callback);
     let svg_scale = svg_set.bbox.size;
 
-    let scale: Mat4 = get_scale(PhysicalSize::<u32>::new(1600, 1200), svg_scale);
+    let scale: Mat4 = get_scale(PhysicalSize::<u32>::new(0, 0), svg_scale);
     let translate = Mat4::from_translation([-1., 1.0, 0.0].into());
     let life_view = LifeGameView {
         global_transform: (translate).into(),
