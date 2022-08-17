@@ -2,7 +2,7 @@ use concept::spring::{MutCount, SpringMat4, StaticCallback};
 use guppies::glam::{DVec2, Mat4, Vec2, Vec3};
 use guppies::primitives::DrawPrimitives;
 use guppies::winit::dpi::PhysicalSize;
-use guppies::winit::event::{ElementState, MouseScrollDelta, WindowEvent};
+use guppies::winit::event::{ElementState, MouseScrollDelta, TouchPhase, WindowEvent};
 use guppies::{get_scale, ViewModel};
 use regex::{Regex, RegexSet};
 use salvage::callback::{IndicesPriority, InitCallback, Initialization};
@@ -22,7 +22,7 @@ struct LifeGame {
 
 #[derive(Default)]
 struct LifeGameView<'a> {
-    screen_size: SpringMat4,
+    fingers: Vec<(u64, Vec2)>,
     animation_register: Arc<Mutex<Vec<SpringMat4>>>,
     player_avatar_transforms: MutCount<[SpringMat4; 4]>,
     tip_center: Mat4,
@@ -105,6 +105,15 @@ impl ViewModel for LifeGameView<'_> {
     }
     fn on_event(&mut self, event: WindowEvent) {
         match event {
+            WindowEvent::Resized(p) => {
+                let (_scale, rot, trans) = self.global_transform.to_scale_rotation_translation();
+                let scale = get_scale(p, self.svg_set.bbox.size);
+                *self.global_transform = Mat4::from_scale_rotation_translation(
+                    scale.to_scale_rotation_translation().0,
+                    rot,
+                    trans,
+                );
+            }
             WindowEvent::CursorMoved { position, .. } => {
                 let new_position = Vec2::new(position.x as f32, position.y as f32);
                 if self.mouse_down.is_some() {
@@ -114,9 +123,66 @@ impl ViewModel for LifeGameView<'_> {
                 }
                 self.mouse_position = new_position
             }
-            WindowEvent::Touch(touch) => {
-                self.tip_clicked();
-            }
+            WindowEvent::Touch(touch) => match touch.phase {
+                TouchPhase::Started => {
+                    let new_position = Vec2::new(touch.location.x as f32, touch.location.y as f32);
+                    self.tip_clicked();
+                    let fingers_len = self.fingers.len();
+                    if fingers_len < 2 {
+                        self.fingers.push((touch.id, new_position));
+                    }
+                }
+                TouchPhase::Moved => {
+                    let other_finger: Option<(u64, Vec2)> = self
+                        .fingers
+                        .iter()
+                        .filter(|finger| finger.0 != touch.id)
+                        .next()
+                        .cloned();
+                    let this_finger: Option<&mut (u64, Vec2)> = self
+                        .fingers
+                        .iter_mut()
+                        .filter(|finger| finger.0 == touch.id)
+                        .next();
+                    let new_position = Vec2::new(touch.location.x as f32, touch.location.y as f32);
+                    if let Some(this_finger) = this_finger {
+                        let old_position = this_finger.1;
+                        if let Some(other_finger) = other_finger {
+                            // zoom
+                            let other_position = other_finger.1;
+                            let original_distance = old_position.distance(other_position);
+                            let new_distance = new_position.distance(other_position);
+                            let distance_delta = (new_distance - original_distance) * 10.; //TODO: remove this magical number: 10
+                            if distance_delta != 0. {
+                                self.global_transform.unwrapped =
+                                    Mat4::from_scale(
+                                        [
+                                            1. + (1. / (distance_delta as f32)),
+                                            1. + (1. / (distance_delta as f32)),
+                                            1_f32,
+                                        ]
+                                        .into(),
+                                    ) * self.global_transform.unwrapped;
+                            }
+                        } else {
+                            // pan
+                            let motion = new_position - old_position;
+                            self.global_transform.unwrapped *=
+                                Mat4::from_translation(Vec3::from((motion.x, motion.y, 0_f32)))
+                        }
+                        this_finger.1 = new_position;
+                    }
+                }
+                TouchPhase::Ended => {
+                    self.fingers = self
+                        .fingers
+                        .iter()
+                        .filter(|finger| finger.0 != touch.id)
+                        .cloned()
+                        .collect();
+                }
+                _ => {}
+            },
             WindowEvent::MouseInput {
                 state: ElementState::Released,
                 ..
@@ -294,7 +360,8 @@ pub fn main() {
     let svg_set = SvgSet::new(include_str!("../../svg/life.svg"), callback);
     let svg_scale = svg_set.bbox.size;
 
-    let scale: Mat4 = get_scale(PhysicalSize::<u32>::new(1600, 1200), svg_scale);
+    // Below scale should get overridden by guppies' redraw event forced on init
+    let scale: Mat4 = get_scale(PhysicalSize::<u32>::new(100, 100), svg_scale);
     let translate = Mat4::from_translation([-1., 1.0, 0.0].into());
     let life_view = LifeGameView {
         global_transform: (translate * scale).into(),
