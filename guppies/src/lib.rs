@@ -85,7 +85,7 @@ pub fn main<V: ViewModel + 'static>(mut view_model: V) {
     event_loop.run(move |event, event_loop, control_flow| {
         *control_flow = ControlFlow::Poll;
         // FIXME: why does ios not redraw automatically without explicit call
-        #[cfg(target_os = "ios")]
+        #[cfg(any(target_os = "ios", target_os = "android"))]
         if let Some(window) = window.as_mut() {
             window.request_redraw();
         }
@@ -120,7 +120,6 @@ pub fn main<V: ViewModel + 'static>(mut view_model: V) {
                     if let (Some(mut texture), Some((vertices, indices))) = view_model.on_redraw() {
                         texture.resize(8192 * 16, 0);
                         Setup::redraw(redraw, &texture[..], &vertices, &indices);
-                        window.request_redraw();
                     }
                 }
             }
