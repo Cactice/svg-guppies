@@ -121,6 +121,7 @@ pub fn main<V: ViewModel + 'static>(mut view_model: V) {
                         texture.resize(8192 * 16, 0);
                         Setup::redraw(redraw, &texture[..], &vertices, &indices);
                     }
+                    window.request_redraw();
                 }
             }
             _ => {}
