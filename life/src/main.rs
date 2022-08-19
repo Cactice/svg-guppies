@@ -232,7 +232,7 @@ impl LifeGameView<'_> {
             let current = ctx.life_game.current_player;
             SpringMat4::<LifeGameView>::spring_to(
                 ctx,
-                Arc::new(move |ctx: &mut LifeGameView| &mut ctx.player_avatar_transforms[current]),
+                Arc::new(move |ctx| &mut ctx.player_avatar_transforms[current]),
                 Arc::new(|ctx, get_self| ctx.animation_vec.push(get_self)),
                 avatar_mat4,
                 Arc::new(|_| {}),

@@ -2,19 +2,9 @@ use guppies::glam::Mat4;
 use natura::{AngularFrequency, DampingRatio, DeltaTime, Spring};
 use std::default::Default;
 use std::iter::zip;
-use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::Arc;
 pub type GetSelf<T> = Arc<dyn Fn(&mut T) -> &mut SpringMat4<T>>;
-pub struct AnimationRegister<T> {
-    pub sender: Sender<SpringMat4<T>>,
-    pub receiver: Receiver<SpringMat4<T>>,
-}
-impl<T> Default for AnimationRegister<T> {
-    fn default() -> Self {
-        let (sender, receiver) = channel();
-        Self { sender, receiver }
-    }
-}
+
 pub struct SpringMat4<T> {
     spring: Spring,
     target: Mat4,
