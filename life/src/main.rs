@@ -1,4 +1,4 @@
-use concept::spring::{AnimationRegister, MutCount, SpringMat4};
+use concept::spring::{AnimationRegister, GetSelf, MutCount, SpringMat4};
 use guppies::glam::{DVec2, Mat4, Vec2, Vec3};
 use guppies::primitives::DrawPrimitives;
 use guppies::winit::dpi::PhysicalSize;
@@ -8,9 +8,11 @@ use regex::{Regex, RegexSet};
 use salvage::callback::{IndicesPriority, InitCallback, Initialization};
 use salvage::geometry::SvgSet;
 use salvage::usvg::{Node, NodeExt, NodeKind};
+use std::convert::TryInto;
 use std::f32::consts::PI;
 use std::iter;
 use std::rc::Rc;
+use std::sync::Arc;
 const UNMOVED_RADIUS: f32 = 40.;
 
 #[derive(Default)]
@@ -25,8 +27,7 @@ struct LifeGame {
 #[derive(Default)]
 struct LifeGameView<'a> {
     fingers: Vec<(u64, Vec2)>,
-    animation_register: AnimationRegister<Self>,
-    animation_vec: Vec<SpringMat4<Self>>,
+    animation_vec: Vec<GetSelf<Self>>,
     player_avatar_transforms: MutCount<[SpringMat4<Self>; 4]>,
     tip_center: Mat4,
     start_center: Mat4,
@@ -46,24 +47,14 @@ impl ViewModel for LifeGameView<'_> {
     }
     fn on_redraw(&mut self) -> (Option<Vec<u8>>, Option<DrawPrimitives>) {
         {
-            let new_springs = self.animation_register.receiver.iter();
-
-            let animation_vec: Vec<SpringMat4<Self>> = iter::empty::<SpringMat4<Self>>()
-                .chain(new_springs)
-                .chain(self.animation_vec.into_iter())
-                .filter_map(|spring| {
-                    let is_animating = !spring.update(self);
-                    if is_animating {
-                        Some(spring)
-                    } else {
-                        None
-                    }
-                })
-                .collect();
-            // r2 is necessary because spring.update above will add new elements not in r
-            // let mut r2 = self.animation_register.lock().unwrap();
-            // vec.extend_from_slice(&r2[r.len()..]);
-            // *r2 = vec;
+            self.animation_vec.clone().iter_mut().for_each(|a| {
+                SpringMat4::<Self>::update(self, a);
+            })
+            // self.animation_vec = self
+            //     .animation_vec
+            //     .iter()
+            //     .filter(|a| a.is_animating)
+            //     .collect();
         }
         let _is_mutated = [self.player_avatar_transforms.mut_count]
             .iter()
@@ -248,19 +239,21 @@ impl LifeGameView<'_> {
         let current = life_game.current_player;
         self.instruction_text = MutCount::from(format!("Player: {}", current + 1));
         life_game.finish_turn();
-        let cb1 = Box::new(move |ctx: &mut LifeGameView| {
+        let cb1 = Arc::new(move |ctx: &mut LifeGameView| {
             let current = ctx.life_game.current_player;
             SpringMat4::<LifeGameView>::spring_to(
                 ctx,
-                Box::new(|ctx: &mut LifeGameView| ctx.player_avatar_transforms[current]),
+                Arc::new(move |ctx: &mut LifeGameView| &mut ctx.player_avatar_transforms[current]),
+                Arc::new(|ctx, get_self| ctx.animation_vec.push(get_self)),
                 avatar_mat4,
-                Box::new(|_| {}),
+                Arc::new(|_| {}),
             )
         });
 
         SpringMat4::<LifeGameView>::spring_to(
             self,
-            Box::new(|ctx| ctx.tip_transform),
+            Arc::new(|ctx| &mut ctx.tip_transform),
+            Arc::new(|ctx, get_self| ctx.animation_vec.push(get_self)),
             self.tip_center
                 * Mat4::from_rotation_z(PI / 3. * one_sixths_spins as f32)
                 * self.tip_center.inverse(),

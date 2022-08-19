@@ -6,7 +6,8 @@ use std::default::Default;
 use std::iter::zip;
 use std::ops::{Deref, DerefMut};
 use std::sync::mpsc::{channel, Receiver, Sender};
-
+use std::sync::Arc;
+pub type GetSelf<T> = Arc<dyn Fn(&mut T) -> &mut SpringMat4<T>>;
 pub struct AnimationRegister<T> {
     pub sender: Sender<SpringMat4<T>>,
     pub receiver: Receiver<SpringMat4<T>>,
@@ -23,7 +24,7 @@ pub struct SpringMat4<T> {
     pub current: Mat4,
     velocity: Mat4,
     pub is_animating: bool,
-    on_complete: Box<dyn Fn(&mut T) -> ()>,
+    on_complete: Arc<dyn Fn(&mut T) -> ()>,
 }
 impl<T> Default for SpringMat4<T> {
     fn default() -> Self {
@@ -37,7 +38,7 @@ impl<T> Default for SpringMat4<T> {
             current: Default::default(),
             target: Default::default(),
             velocity: Default::default(),
-            on_complete: Box::new(|_| {}),
+            on_complete: Arc::new(|_| {}),
         }
     }
 }
@@ -45,9 +46,10 @@ impl<T> Default for SpringMat4<T> {
 impl<T> SpringMat4<T> {
     pub fn spring_to(
         ctx: &mut T,
-        get_self: Box<dyn Fn(&mut T) -> &mut Self>,
+        mut get_self: GetSelf<T>,
+        register: Arc<dyn Fn(&mut T, GetSelf<T>) -> ()>,
         target: Mat4,
-        on_complete: Box<dyn Fn(&mut T) -> ()>,
+        on_complete: Arc<dyn Fn(&mut T) -> ()>,
     ) {
         {
             let mut me = get_self(ctx);
@@ -55,10 +57,11 @@ impl<T> SpringMat4<T> {
             me.target = target;
             me.on_complete = on_complete;
         }
-        Self::update(ctx, get_self);
+        Self::update(ctx, &mut get_self);
+        register(ctx, get_self);
     }
 
-    pub fn update(ctx: &mut T, get_self: Box<dyn Fn(&mut T) -> &mut Self>) -> bool {
+    pub fn update(ctx: &mut T, get_self: &mut GetSelf<T>) -> bool {
         let mut current_position_vec = vec![];
         let mut vel_vec = vec![];
 
@@ -81,9 +84,12 @@ impl<T> SpringMat4<T> {
             me.current.abs_diff_eq(me.target, 1.0) && me.velocity.abs_diff_eq(Mat4::ZERO, 100.0)
         };
         if animating_complete {
-            let me = get_self(ctx);
-            me.is_animating = false;
-            (me.on_complete)(ctx)
+            let call = {
+                let me = get_self(ctx);
+                me.is_animating = false;
+                me.on_complete.clone()
+            };
+            call(ctx);
         }
         animating_complete
     }
