@@ -1,10 +1,7 @@
-use guppies::callback::{Callback, MutCallback};
 use guppies::glam::Mat4;
 use natura::{AngularFrequency, DampingRatio, DeltaTime, Spring};
-use std::cell::{Cell, RefCell};
 use std::default::Default;
 use std::iter::zip;
-use std::ops::{Deref, DerefMut};
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::Arc;
 pub type GetSelf<T> = Arc<dyn Fn(&mut T) -> &mut SpringMat4<T>>;
@@ -92,44 +89,5 @@ impl<T> SpringMat4<T> {
             call(ctx);
         }
         animating_complete
-    }
-}
-
-pub struct MutCount<T> {
-    pub unwrapped: T, //TODO: remove pub
-    pub mut_count: u8,
-}
-impl<T: std::default::Default> Default for MutCount<T> {
-    fn default() -> Self {
-        Self {
-            unwrapped: Default::default(),
-            mut_count: 1,
-        }
-    }
-}
-
-impl<T> MutCount<T> {
-    pub fn reset_mut_count(&mut self) {
-        self.mut_count = 0
-    }
-}
-impl<T> From<T> for MutCount<T> {
-    fn from(unwrapped: T) -> Self {
-        Self {
-            unwrapped,
-            mut_count: 0,
-        }
-    }
-}
-impl<T> Deref for MutCount<T> {
-    type Target = T;
-    fn deref(&self) -> &Self::Target {
-        &self.unwrapped
-    }
-}
-impl<T> DerefMut for MutCount<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        self.mut_count += 1;
-        &mut self.unwrapped
     }
 }

@@ -1,4 +1,4 @@
-use concept::spring::{AnimationRegister, GetSelf, MutCount, SpringMat4};
+use concept::spring::{AnimationRegister, GetSelf, SpringMat4};
 use guppies::glam::{DVec2, Mat4, Vec2, Vec3};
 use guppies::primitives::DrawPrimitives;
 use guppies::winit::dpi::PhysicalSize;
@@ -8,10 +8,8 @@ use regex::{Regex, RegexSet};
 use salvage::callback::{IndicesPriority, InitCallback, Initialization};
 use salvage::geometry::SvgSet;
 use salvage::usvg::{Node, NodeExt, NodeKind};
-use std::convert::TryInto;
 use std::f32::consts::PI;
 use std::iter;
-use std::rc::Rc;
 use std::sync::Arc;
 const UNMOVED_RADIUS: f32 = 40.;
 
@@ -28,12 +26,12 @@ struct LifeGame {
 struct LifeGameView<'a> {
     fingers: Vec<(u64, Vec2)>,
     animation_vec: Vec<GetSelf<Self>>,
-    player_avatar_transforms: MutCount<[SpringMat4<Self>; 4]>,
+    player_avatar_transforms: [SpringMat4<Self>; 4],
     tip_center: Mat4,
     start_center: Mat4,
-    global_transform: MutCount<Mat4>,
+    global_transform: Mat4,
     tip_transform: SpringMat4<Self>,
-    instruction_text: MutCount<String>,
+    instruction_text: String,
     life_game: LifeGame,
     mouse_position: Vec2,
     mouse_down: Option<Vec2>,
@@ -41,27 +39,24 @@ struct LifeGameView<'a> {
 }
 
 impl ViewModel for LifeGameView<'_> {
-    fn reset_mut_count(&mut self) {
-        self.player_avatar_transforms.reset_mut_count();
-        self.instruction_text.reset_mut_count();
-    }
     fn on_redraw(&mut self) -> (Option<Vec<u8>>, Option<DrawPrimitives>) {
         {
             self.animation_vec.clone().iter_mut().for_each(|a| {
                 SpringMat4::<Self>::update(self, a);
-            })
-            // self.animation_vec = self
-            //     .animation_vec
-            //     .iter()
-            //     .filter(|a| a.is_animating)
-            //     .collect();
+            });
+            self.animation_vec = self
+                .animation_vec
+                .clone()
+                .into_iter()
+                .filter(|a| a(self).is_animating)
+                .collect();
         }
-        let _is_mutated = [self.player_avatar_transforms.mut_count]
-            .iter()
-            .any(|x| x > &0);
+        // let _is_mutated = [self.player_avatar_transforms.mut_count]
+        //     .iter()
+        //     .any(|x| x > &0);
 
         let mat_4: Vec<Mat4> = iter::empty::<Mat4>()
-            .chain([self.global_transform.unwrapped])
+            .chain([self.global_transform])
             .chain([Mat4::IDENTITY])
             .chain(self.player_avatar_transforms.iter().map(|m| m.current))
             .chain([self.tip_transform.current])
@@ -96,7 +91,7 @@ impl ViewModel for LifeGameView<'_> {
             WindowEvent::Resized(p) => {
                 let (_scale, rot, trans) = self.global_transform.to_scale_rotation_translation();
                 let scale = get_scale(p, self.svg_set.bbox.size);
-                *self.global_transform = Mat4::from_scale_rotation_translation(
+                self.global_transform = Mat4::from_scale_rotation_translation(
                     scale.to_scale_rotation_translation().0,
                     rot,
                     trans,
@@ -106,7 +101,7 @@ impl ViewModel for LifeGameView<'_> {
                 let new_position = Vec2::new(position.x as f32, position.y as f32);
                 if self.mouse_down.is_some() {
                     let motion = new_position - self.mouse_position;
-                    self.global_transform.unwrapped *=
+                    self.global_transform *=
                         Mat4::from_translation(Vec3::from((motion.x, motion.y, 0_f32)))
                 }
                 self.mouse_position = new_position
@@ -144,20 +139,19 @@ impl ViewModel for LifeGameView<'_> {
                             let new_distance = new_position.distance(other_position);
                             let distance_delta = (new_distance - original_distance) * 20.; //TODO: remove this magical number
                             if distance_delta != 0. {
-                                self.global_transform.unwrapped =
-                                    Mat4::from_scale(
-                                        [
-                                            1. + (1. / (distance_delta as f32)),
-                                            1. + (1. / (distance_delta as f32)),
-                                            1_f32,
-                                        ]
-                                        .into(),
-                                    ) * self.global_transform.unwrapped;
+                                self.global_transform = Mat4::from_scale(
+                                    [
+                                        1. + (1. / (distance_delta as f32)),
+                                        1. + (1. / (distance_delta as f32)),
+                                        1_f32,
+                                    ]
+                                    .into(),
+                                ) * self.global_transform;
                             }
                         } else {
                             // pan
                             let motion = new_position - old_position;
-                            self.global_transform.unwrapped *=
+                            self.global_transform *=
                                 Mat4::from_translation(Vec3::from((motion.x, motion.y, 0_f32)))
                         }
                         this_finger.1 = new_position;
@@ -188,7 +182,6 @@ impl ViewModel for LifeGameView<'_> {
             } => {
                 if let Some(mouse_down) = self.mouse_down {
                     if UNMOVED_RADIUS > self.mouse_position.distance(mouse_down) {
-                        dbg!(self.mouse_position.distance(mouse_down));
                         self.tip_clicked()
                     }
                 }
@@ -205,9 +198,9 @@ impl ViewModel for LifeGameView<'_> {
                 ..
             } => {
                 if p.y != 0. {
-                    self.global_transform.unwrapped = Mat4::from_scale(
+                    self.global_transform = Mat4::from_scale(
                         [1. + (1. / (p.y as f32)), 1. + (1. / (p.y as f32)), 1_f32].into(),
-                    ) * self.global_transform.unwrapped;
+                    ) * self.global_transform;
                 }
             }
             _ => (),
@@ -237,7 +230,7 @@ impl LifeGameView<'_> {
         };
 
         let current = life_game.current_player;
-        self.instruction_text = MutCount::from(format!("Player: {}", current + 1));
+        self.instruction_text = format!("Player: {}", current + 1);
         life_game.finish_turn();
         let cb1 = Arc::new(move |ctx: &mut LifeGameView| {
             let current = ctx.life_game.current_player;
@@ -379,7 +372,7 @@ pub fn main() {
     let life_view = LifeGameView {
         global_transform: (translate * scale).into(),
         tip_center,
-        instruction_text: MutCount::from("Please click".to_string()),
+        instruction_text: "Please click".to_string(),
         start_center,
         life_game: LifeGame {
             position_to_coordinates,
