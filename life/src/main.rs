@@ -11,6 +11,8 @@ use salvage::usvg::{Node, NodeExt, NodeKind};
 use std::f32::consts::PI;
 use std::iter;
 use std::sync::{Arc, Mutex};
+const UNMOVED_RADIUS: f32 = 40.;
+
 #[derive(Default)]
 struct LifeGame {
     dollars: [i32; 4],
@@ -126,8 +128,10 @@ impl ViewModel for LifeGameView<'_> {
             WindowEvent::Touch(touch) => match touch.phase {
                 TouchPhase::Started => {
                     let new_position = Vec2::new(touch.location.x as f32, touch.location.y as f32);
-                    self.tip_clicked();
                     let fingers_len = self.fingers.len();
+                    if fingers_len == 0 {
+                        self.mouse_down = Some(new_position);
+                    }
                     if fingers_len < 2 {
                         self.fingers.push((touch.id, new_position));
                     }
@@ -174,6 +178,15 @@ impl ViewModel for LifeGameView<'_> {
                     }
                 }
                 TouchPhase::Ended => {
+                    let new_position = Vec2::new(touch.location.x as f32, touch.location.y as f32);
+                    if self.fingers.len() == 1 {
+                        if let Some(mouse_down) = self.mouse_down {
+                            if UNMOVED_RADIUS > new_position.distance(mouse_down) {
+                                self.tip_clicked()
+                            }
+                            self.mouse_down = None;
+                        }
+                    }
                     self.fingers = self
                         .fingers
                         .iter()
@@ -181,12 +194,18 @@ impl ViewModel for LifeGameView<'_> {
                         .cloned()
                         .collect();
                 }
-                _ => {}
+                TouchPhase::Cancelled => self.fingers = [].to_vec(),
             },
             WindowEvent::MouseInput {
                 state: ElementState::Released,
                 ..
             } => {
+                if let Some(mouse_down) = self.mouse_down {
+                    if UNMOVED_RADIUS > self.mouse_position.distance(mouse_down) {
+                        dbg!(self.mouse_position.distance(mouse_down));
+                        self.tip_clicked()
+                    }
+                }
                 self.mouse_down = None;
             }
             WindowEvent::MouseInput {
@@ -194,7 +213,6 @@ impl ViewModel for LifeGameView<'_> {
                 ..
             } => {
                 self.mouse_down = Some(self.mouse_position);
-                self.tip_clicked();
             }
             WindowEvent::MouseWheel {
                 delta: MouseScrollDelta::PixelDelta(p),
@@ -235,7 +253,7 @@ impl LifeGameView<'_> {
         let mut arc = self.player_avatar_transforms[life_game.current_player].clone();
         let arc2 = self.animation_register.clone();
         let current = life_game.current_player;
-        self.instruction_text = MutCount::from(format!("Player: {current}"));
+        self.instruction_text = MutCount::from(format!("Player: {}", current + 1));
         life_game.finish_turn();
         self.tip_transform.spring_to(
             self.tip_center
