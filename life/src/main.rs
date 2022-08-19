@@ -1,4 +1,4 @@
-use concept::spring::{AnimationRegister, GetSelf, SpringMat4};
+use concept::spring::{GetSelf, SpringMat4};
 use guppies::glam::{DVec2, Mat4, Vec2, Vec3};
 use guppies::primitives::DrawPrimitives;
 use guppies::winit::dpi::PhysicalSize;
@@ -121,14 +121,10 @@ impl ViewModel for LifeGameView<'_> {
                     let other_finger: Option<(u64, Vec2)> = self
                         .fingers
                         .iter()
-                        .filter(|finger| finger.0 != touch.id)
-                        .next()
+                        .find(|finger| finger.0 != touch.id)
                         .cloned();
-                    let this_finger: Option<&mut (u64, Vec2)> = self
-                        .fingers
-                        .iter_mut()
-                        .filter(|finger| finger.0 == touch.id)
-                        .next();
+                    let this_finger: Option<&mut (u64, Vec2)> =
+                        self.fingers.iter_mut().find(|finger| finger.0 == touch.id);
                     let new_position = Vec2::new(touch.location.x as f32, touch.location.y as f32);
                     if let Some(this_finger) = this_finger {
                         let old_position = this_finger.1;
@@ -370,7 +366,7 @@ pub fn main() {
     let scale: Mat4 = get_scale(PhysicalSize::<u32>::new(100, 100), svg_scale);
     let translate = Mat4::from_translation([-1., 1.0, 0.0].into());
     let life_view = LifeGameView {
-        global_transform: (translate * scale).into(),
+        global_transform: translate * scale,
         tip_center,
         instruction_text: "Please click".to_string(),
         start_center,
