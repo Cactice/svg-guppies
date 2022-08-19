@@ -1,5 +1,4 @@
-use concept::spring::{springy, AnimationRegister, MutCount, SpringMat4};
-use guppies::callback::{Callback, MutCallback};
+use concept::spring::{AnimationRegister, MutCount, SpringMat4};
 use guppies::glam::{DVec2, Mat4, Vec2, Vec3};
 use guppies::primitives::DrawPrimitives;
 use guppies::winit::dpi::PhysicalSize;
@@ -11,6 +10,7 @@ use salvage::geometry::SvgSet;
 use salvage::usvg::{Node, NodeExt, NodeKind};
 use std::f32::consts::PI;
 use std::iter;
+use std::rc::Rc;
 const UNMOVED_RADIUS: f32 = 40.;
 
 #[derive(Default)]
@@ -31,7 +31,7 @@ struct LifeGameView<'a> {
     tip_center: Mat4,
     start_center: Mat4,
     global_transform: MutCount<Mat4>,
-    tip_transform: MutCount<SpringMat4<Self>>,
+    tip_transform: SpringMat4<Self>,
     instruction_text: MutCount<String>,
     life_game: LifeGame,
     mouse_position: Vec2,
@@ -42,7 +42,6 @@ struct LifeGameView<'a> {
 impl ViewModel for LifeGameView<'_> {
     fn reset_mut_count(&mut self) {
         self.player_avatar_transforms.reset_mut_count();
-        self.tip_transform.reset_mut_count();
         self.instruction_text.reset_mut_count();
     }
     fn on_redraw(&mut self) -> (Option<Vec<u8>>, Option<DrawPrimitives>) {
@@ -66,12 +65,9 @@ impl ViewModel for LifeGameView<'_> {
             // vec.extend_from_slice(&r2[r.len()..]);
             // *r2 = vec;
         }
-        let _is_mutated = [
-            self.player_avatar_transforms.mut_count,
-            self.tip_transform.mut_count,
-        ]
-        .iter()
-        .any(|x| x > &0);
+        let _is_mutated = [self.player_avatar_transforms.mut_count]
+            .iter()
+            .any(|x| x > &0);
 
         let mat_4: Vec<Mat4> = iter::empty::<Mat4>()
             .chain([self.global_transform.unwrapped])
@@ -252,20 +248,23 @@ impl LifeGameView<'_> {
         let current = life_game.current_player;
         self.instruction_text = MutCount::from(format!("Player: {}", current + 1));
         life_game.finish_turn();
-        self.tip_transform.spring_to(
-            self.animation_register.sender.clone(),
+        let cb1 = Box::new(move |ctx: &mut LifeGameView| {
+            let current = ctx.life_game.current_player;
+            SpringMat4::<LifeGameView>::spring_to(
+                ctx,
+                Box::new(|ctx: &mut LifeGameView| ctx.player_avatar_transforms[current]),
+                avatar_mat4,
+                Box::new(|_| {}),
+            )
+        });
+
+        SpringMat4::<LifeGameView>::spring_to(
             self,
+            Box::new(|ctx| ctx.tip_transform),
             self.tip_center
                 * Mat4::from_rotation_z(PI / 3. * one_sixths_spins as f32)
                 * self.tip_center.inverse(),
-            Box::new(move |ctx| {
-                ctx.player_avatar_transforms[life_game.current_player].spring_to(
-                    ctx.animation_register.sender.clone(),
-                    ctx,
-                    avatar_mat4,
-                    Box::new(|_| {}),
-                );
-            }),
+            cb1,
         );
     }
 }
