@@ -10,3 +10,16 @@ impl<'a, A, T> Callback<'a, A, T> {
         (self.func)(arg)
     }
 }
+
+pub struct MutCallback<'a, A, T> {
+    func: Box<dyn FnMut(&mut A) -> T + 'a + Send>,
+}
+
+impl<'a, A, T> MutCallback<'a, A, T> {
+    pub fn new(c: impl FnMut(&mut A) -> T + 'a + Send) -> Self {
+        Self { func: Box::new(c) }
+    }
+    pub fn process_events(&mut self, arg: &mut A) -> T {
+        (self.func)(arg)
+    }
+}

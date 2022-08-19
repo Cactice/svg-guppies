@@ -1,23 +1,30 @@
-use guppies::callback::Callback;
+use guppies::callback::{Callback, MutCallback};
 use guppies::glam::Mat4;
 use natura::{AngularFrequency, DampingRatio, DeltaTime, Spring};
 use std::default::Default;
 use std::iter::zip;
 use std::ops::{Deref, DerefMut};
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::sync::mpsc::{channel, Receiver, Sender};
 
-pub type StaticCallback = Callback<'static, (), ()>;
-pub struct SpringMat4NonAtomic {
+pub struct AnimationRegister<'a, T> {
+    pub sender: Sender<SpringMat4<'a, T>>,
+    pub receiver: Receiver<SpringMat4<'a, T>>,
+}
+impl<T> Default for AnimationRegister<'_, T> {
+    fn default() -> Self {
+        let (sender, receiver) = channel();
+        Self { sender, receiver }
+    }
+}
+pub struct SpringMat4<'a, T> {
     spring: Spring,
     target: Mat4,
     pub current: Mat4,
     velocity: Mat4,
     pub is_animating: bool,
-    on_complete: Option<StaticCallback>,
+    on_complete: MutCallback<'a, T, ()>,
 }
-#[derive(Default, Clone)]
-pub struct SpringMat4(pub Arc<Mutex<SpringMat4NonAtomic>>);
-impl Default for SpringMat4NonAtomic {
+impl<T> Default for SpringMat4<'_, T> {
     fn default() -> Self {
         Self {
             spring: Spring::new(
@@ -29,62 +36,59 @@ impl Default for SpringMat4NonAtomic {
             current: Default::default(),
             target: Default::default(),
             velocity: Default::default(),
-            on_complete: None,
+            on_complete: MutCallback::new(|_| {}),
         }
     }
 }
 
-impl SpringMat4 {
-    pub fn get_inner(&self) -> MutexGuard<'_, SpringMat4NonAtomic> {
-        self.0.lock().expect("SpringMat4 mutex unwrap failed")
-    }
-    pub fn spring_to(
-        &mut self,
+pub trait springy<T> {
+    fn spring_to(
+        self,
+        register: Sender<SpringMat4<T>>,
+        ctx: &mut T,
         target: Mat4,
-        register: Arc<Mutex<Vec<SpringMat4>>>,
-        on_complete: Option<StaticCallback>,
-    ) {
-        {
-            register.lock().unwrap().push(self.clone());
-            let mut mutable = self.get_inner();
-            mutable.is_animating = true;
-            mutable.target = target;
-            mutable.on_complete = on_complete;
-        }
-        self.update();
-    }
-    pub fn update(&mut self) -> bool {
-        let animating_complete = {
-            let mut mutable = self.get_inner();
-            let mut current_position_vec = vec![];
-            let mut vel_vec = vec![];
-            zip(
-                zip(
-                    mutable.current.to_cols_array(),
-                    mutable.velocity.to_cols_array(),
-                ),
-                mutable.target.to_cols_array(),
-            )
-            .for_each(|((current_position, vel), target)| {
-                let (new_current_position, new_vel) =
-                    mutable
-                        .spring
-                        .update(current_position as f64, vel as f64, target as f64);
-                current_position_vec.push(new_current_position as f32);
-                vel_vec.push(new_vel as f32);
-            });
-            mutable.current = Mat4::from_cols_array(&current_position_vec.try_into().unwrap());
-            mutable.velocity = Mat4::from_cols_array(&vel_vec.try_into().unwrap());
+        on_complete: MutCallback<'static, T, ()>,
+    );
+    fn update(&mut self, t: &mut T) -> bool;
+}
 
-            mutable.current.abs_diff_eq(mutable.target, 1.0)
-                && mutable.velocity.abs_diff_eq(Mat4::ZERO, 100.0)
-        };
+impl<T> springy<T> for SpringMat4<'_, T> {
+    fn spring_to(
+        mut self,
+        register: Sender<SpringMat4<T>>,
+        ctx: &mut T,
+        target: Mat4,
+        on_complete: MutCallback<T, ()>,
+    ) {
+        self.is_animating = true;
+        self.target = target;
+        self.update(ctx);
+        self.on_complete = on_complete;
+        register.send(self);
+    }
+
+    fn update(&mut self, ctx: &mut T) -> bool {
+        let mut current_position_vec = vec![];
+        let mut vel_vec = vec![];
+        zip(
+            zip(self.current.to_cols_array(), self.velocity.to_cols_array()),
+            self.target.to_cols_array(),
+        )
+        .for_each(|((current_position, vel), target)| {
+            let (new_current_position, new_vel) =
+                self.spring
+                    .update(current_position as f64, vel as f64, target as f64);
+            current_position_vec.push(new_current_position as f32);
+            vel_vec.push(new_vel as f32);
+        });
+        self.current = Mat4::from_cols_array(&current_position_vec.try_into().unwrap());
+        self.velocity = Mat4::from_cols_array(&vel_vec.try_into().unwrap());
+
+        let animating_complete = self.current.abs_diff_eq(self.target, 1.0)
+            && self.velocity.abs_diff_eq(Mat4::ZERO, 100.0);
         if animating_complete {
-            let mut inner = self.get_inner();
-            inner.is_animating = false;
-            if let Some(on_complete) = inner.on_complete.as_mut() {
-                on_complete.process_events(&());
-            }
+            self.is_animating = false;
+            self.on_complete.process_events(ctx);
         }
         animating_complete
     }
