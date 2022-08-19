@@ -6,25 +6,25 @@ use std::iter::zip;
 use std::ops::{Deref, DerefMut};
 use std::sync::mpsc::{channel, Receiver, Sender};
 
-pub struct AnimationRegister<'a, T> {
-    pub sender: Sender<SpringMat4<'a, T>>,
-    pub receiver: Receiver<SpringMat4<'a, T>>,
+pub struct AnimationRegister<T> {
+    pub sender: Sender<SpringMat4<T>>,
+    pub receiver: Receiver<SpringMat4<T>>,
 }
-impl<T> Default for AnimationRegister<'_, T> {
+impl<T> Default for AnimationRegister<T> {
     fn default() -> Self {
         let (sender, receiver) = channel();
         Self { sender, receiver }
     }
 }
-pub struct SpringMat4<'a, T> {
+pub struct SpringMat4<T> {
     spring: Spring,
     target: Mat4,
     pub current: Mat4,
     velocity: Mat4,
     pub is_animating: bool,
-    on_complete: MutCallback<'a, T, ()>,
+    on_complete: Box<dyn FnMut(&mut T) -> ()>,
 }
-impl<T> Default for SpringMat4<'_, T> {
+impl<T> Default for SpringMat4<T> {
     fn default() -> Self {
         Self {
             spring: Spring::new(
@@ -36,7 +36,7 @@ impl<T> Default for SpringMat4<'_, T> {
             current: Default::default(),
             target: Default::default(),
             velocity: Default::default(),
-            on_complete: MutCallback::new(|_| {}),
+            on_complete: Box::new(|_| {}),
         }
     }
 }
@@ -47,18 +47,18 @@ pub trait springy<T> {
         register: Sender<SpringMat4<T>>,
         ctx: &mut T,
         target: Mat4,
-        on_complete: MutCallback<'static, T, ()>,
+        on_complete: Box<dyn FnMut(&mut T) -> ()>,
     );
     fn update(&mut self, t: &mut T) -> bool;
 }
 
-impl<T> springy<T> for SpringMat4<'_, T> {
+impl<T> springy<T> for SpringMat4<T> {
     fn spring_to(
         mut self,
         register: Sender<SpringMat4<T>>,
         ctx: &mut T,
         target: Mat4,
-        on_complete: MutCallback<T, ()>,
+        on_complete: Box<dyn FnMut(&mut T) -> ()>,
     ) {
         self.is_animating = true;
         self.target = target;
@@ -88,7 +88,7 @@ impl<T> springy<T> for SpringMat4<'_, T> {
             && self.velocity.abs_diff_eq(Mat4::ZERO, 100.0);
         if animating_complete {
             self.is_animating = false;
-            self.on_complete.process_events(ctx);
+            (self.on_complete)(ctx);
         }
         animating_complete
     }
