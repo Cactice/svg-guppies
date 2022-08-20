@@ -2,8 +2,8 @@ use guppies::glam::Mat4;
 use natura::{AngularFrequency, DampingRatio, DeltaTime, Spring};
 use std::default::Default;
 use std::iter::zip;
-use std::sync::Arc;
-pub type GetSelf<T> = Arc<dyn Fn(&mut T) -> &mut SpringMat4<T>>;
+use std::rc::Rc;
+pub type GetSelf<T> = Rc<dyn Fn(&mut T) -> &mut SpringMat4<T>>;
 
 pub struct SpringMat4<T> {
     spring: Spring,
@@ -11,7 +11,7 @@ pub struct SpringMat4<T> {
     pub current: Mat4,
     velocity: Mat4,
     pub is_animating: bool,
-    on_complete: Arc<dyn Fn(&mut T) -> ()>,
+    on_complete: Rc<dyn Fn(&mut T) -> ()>,
 }
 impl<T> Default for SpringMat4<T> {
     fn default() -> Self {
@@ -25,7 +25,7 @@ impl<T> Default for SpringMat4<T> {
             current: Default::default(),
             target: Default::default(),
             velocity: Default::default(),
-            on_complete: Arc::new(|_| {}),
+            on_complete: Rc::new(|_| {}),
         }
     }
 }
@@ -34,9 +34,9 @@ impl<T> SpringMat4<T> {
     pub fn spring_to(
         ctx: &mut T,
         mut get_self: GetSelf<T>,
-        register: Arc<dyn Fn(&mut T, GetSelf<T>) -> ()>,
+        register: Rc<dyn Fn(&mut T, GetSelf<T>) -> ()>,
         target: Mat4,
-        on_complete: Arc<dyn Fn(&mut T) -> ()>,
+        on_complete: Rc<dyn Fn(&mut T) -> ()>,
     ) {
         {
             let mut me = get_self(ctx);

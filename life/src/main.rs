@@ -10,7 +10,8 @@ use salvage::geometry::SvgSet;
 use salvage::usvg::{Node, NodeExt, NodeKind};
 use std::f32::consts::PI;
 use std::iter;
-use std::sync::Arc;
+use std::rc::Rc;
+
 const UNMOVED_RADIUS: f32 = 40.;
 
 #[derive(Default)]
@@ -228,21 +229,21 @@ impl LifeGameView<'_> {
         let current = life_game.current_player;
         self.instruction_text = format!("Player: {}", current + 1);
         life_game.finish_turn();
-        let cb1 = Arc::new(move |ctx: &mut LifeGameView| {
+        let cb1 = Rc::new(move |ctx: &mut LifeGameView| {
             let current = ctx.life_game.current_player;
             SpringMat4::<LifeGameView>::spring_to(
                 ctx,
-                Arc::new(move |ctx| &mut ctx.player_avatar_transforms[current]),
-                Arc::new(|ctx, get_self| ctx.animation_vec.push(get_self)),
+                Rc::new(move |ctx| &mut ctx.player_avatar_transforms[current]),
+                Rc::new(|ctx, get_self| ctx.animation_vec.push(get_self)),
                 avatar_mat4,
-                Arc::new(|_| {}),
+                Rc::new(|_| {}),
             )
         });
 
         SpringMat4::<LifeGameView>::spring_to(
             self,
-            Arc::new(|ctx| &mut ctx.tip_transform),
-            Arc::new(|ctx, get_self| ctx.animation_vec.push(get_self)),
+            Rc::new(|ctx| &mut ctx.tip_transform),
+            Rc::new(|ctx, get_self| ctx.animation_vec.push(get_self)),
             self.tip_center
                 * Mat4::from_rotation_z(PI / 3. * one_sixths_spins as f32)
                 * self.tip_center.inverse(),
