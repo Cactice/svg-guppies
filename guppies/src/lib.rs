@@ -25,9 +25,8 @@ pub fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
     )
 }
 
-pub trait ViewModel: Send + Sync {
+pub trait ViewModel {
     fn on_redraw(&mut self) -> (Option<Vec<u8>>, Option<DrawPrimitives>);
-    fn reset_mut_count(&mut self);
     fn on_event(&mut self, event: WindowEvent);
 }
 
