@@ -14,7 +14,7 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
 };
 pub fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
-    let ratio = f32::min(1200_f32, 1600_f32) / f32::max(svg_scale.x, svg_scale.y);
+    let ratio = f32::min(svg_scale.x, svg_scale.y) / f32::max(svg_scale.x, svg_scale.y);
     Mat4::from_scale(
         [
             2.0 * ratio / size.width as f32,
@@ -85,7 +85,7 @@ pub fn main<V: ViewModel + 'static>(mut view_model: V) {
     event_loop.run(move |event, event_loop, control_flow| {
         *control_flow = ControlFlow::Poll;
         // FIXME: why does ios not redraw automatically without explicit call
-        #[cfg(target_os = "ios")]
+        #[cfg(any(target_os = "ios", target_os = "android"))]
         if let Some(window) = window.as_mut() {
             window.request_redraw();
         }
@@ -95,7 +95,9 @@ pub fn main<V: ViewModel + 'static>(mut view_model: V) {
             #[cfg(not(target_os = "android"))]
             Event::NewEvents(start_cause) => match start_cause {
                 winit::event::StartCause::Init => {
-                    init(event_loop, &draw_primitive, &mut redraw, &mut window)
+                    init(event_loop, &draw_primitive, &mut redraw, &mut window);
+                    let size = window.as_ref().unwrap().inner_size();
+                    view_model.on_event(WindowEvent::Resized(size));
                 }
                 _ => (),
             },
@@ -103,6 +105,11 @@ pub fn main<V: ViewModel + 'static>(mut view_model: V) {
                 match event {
                     WindowEvent::CloseRequested => {
                         *control_flow = ControlFlow::Exit;
+                    }
+                    WindowEvent::Resized(p) => {
+                        if let Some(redraw) = redraw.as_mut() {
+                            Setup::resize(p, redraw);
+                        }
                     }
                     _ => {}
                 }
@@ -113,8 +120,8 @@ pub fn main<V: ViewModel + 'static>(mut view_model: V) {
                     if let (Some(mut texture), Some((vertices, indices))) = view_model.on_redraw() {
                         texture.resize(8192 * 16, 0);
                         Setup::redraw(redraw, &texture[..], &vertices, &indices);
-                        window.request_redraw();
                     }
+                    window.request_redraw();
                 }
             }
             _ => {}

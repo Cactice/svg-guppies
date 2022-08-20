@@ -113,16 +113,11 @@ fn get_uniform_buffer(
 }
 
 impl Setup {
-    pub fn resize(
-        size: PhysicalSize<u32>,
-        device: &Device,
-        surface: &Surface,
-        config: &mut SurfaceConfiguration,
-    ) {
+    pub fn resize(size: PhysicalSize<u32>, redraw: &mut Redraw) {
         // Reconfigure the surface with the new size
-        config.width = size.width;
-        config.height = size.height;
-        surface.configure(device, config);
+        redraw.config.width = size.width;
+        redraw.config.height = size.height;
+        redraw.surface.configure(&redraw.device, &redraw.config);
     }
     pub fn redraw(redraw: &Redraw, texture: &[u8], vertices: &Vertices, indices: &Indices) {
         let Redraw {
@@ -134,11 +129,19 @@ impl Setup {
             config,
             bind_group,
             uniform_buffer,
-            vertex_buffer,
-            index_buffer,
             transform_texture,
             ..
         } = redraw;
+        let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Index Buffer"),
+            contents: bytemuck::cast_slice(indices),
+            usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
+        });
+        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("SVG-GUI Vertex Buffer"),
+            contents: (bytemuck::cast_slice(vertices)),
+            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+        });
         let frame = surface
             .get_current_texture()
             .expect("Failed to acquire next swap chain texture");
@@ -189,8 +192,6 @@ impl Setup {
                 transform: *transform,
             }]),
         );
-        queue.write_buffer(vertex_buffer, 0, bytemuck::cast_slice(vertices));
-        queue.write_buffer(index_buffer, 0, bytemuck::cast_slice(indices));
         queue.write_texture(
             transform_texture.as_image_copy(),
             texture,
