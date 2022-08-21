@@ -3,7 +3,7 @@ pub mod primitives;
 mod setup;
 pub use glam;
 use glam::{Mat4, Vec2};
-use primitives::DrawPrimitives;
+use primitives::{TextureBytes, Triangles};
 use setup::Setup;
 pub use winit;
 use winit::dpi::PhysicalSize;
@@ -26,13 +26,13 @@ pub fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
 }
 
 pub trait ViewModel {
-    fn on_redraw(&mut self) -> (Option<Vec<u8>>, Option<DrawPrimitives>);
+    fn on_redraw(&mut self) -> (Option<TextureBytes>, Option<Triangles>);
     fn on_event(&mut self, event: WindowEvent);
 }
 
 fn init(
     event_loop: &EventLoopWindowTarget<()>,
-    draw_primitive: &DrawPrimitives,
+    triangles: &Triangles,
     redraw: &mut Option<setup::Redraw>,
     window: &mut Option<winit::window::Window>,
 ) {
@@ -62,8 +62,8 @@ fn init(
     let setup = pollster::block_on(Setup::new(
         window,
         Mat4::IDENTITY,
-        &draw_primitive.0,
-        &draw_primitive.1,
+        &triangles.vertices,
+        &triangles.indices,
     ));
     let Setup {
         redraw: some_redraw,
@@ -83,7 +83,7 @@ pub fn main<V: ViewModel + 'static>(mut view_model: V) {
 
     event_loop.run(move |event, event_loop, control_flow| {
         *control_flow = ControlFlow::Poll;
-        // FIXME: why does ios not redraw automatically without explicit call
+        // FIXME: why do some OS not redraw automatically without explicit call
         #[cfg(any(target_os = "ios", target_os = "android"))]
         if let Some(window) = window.as_mut() {
             window.request_redraw();
@@ -116,9 +116,14 @@ pub fn main<V: ViewModel + 'static>(mut view_model: V) {
             }
             Event::RedrawRequested(_) => {
                 if let (Some(redraw), Some(window)) = (redraw.as_mut(), window.as_mut()) {
-                    if let (Some(mut texture), Some((vertices, indices))) = view_model.on_redraw() {
+                    if let (Some(mut texture), Some(triangles)) = view_model.on_redraw() {
                         texture.resize(8192 * 16, 0);
-                        Setup::redraw(redraw, &texture[..], &vertices, &indices);
+                        Setup::redraw(
+                            redraw,
+                            &texture[..],
+                            &triangles.vertices,
+                            &triangles.indices,
+                        );
                     }
                     window.request_redraw();
                 }
