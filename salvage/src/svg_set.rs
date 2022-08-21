@@ -109,6 +109,7 @@ impl<'a> SvgSet<'a> {
             &mut geometries,
             &mut callback,
         );
+        geometries.sort_by_key(|a| a.priority);
         let view_box = tree.svg_node().view_box;
         let bbox: Rect = Rect::new(
             Vec2::new(view_box.rect.x() as f32, view_box.rect.y() as f32),

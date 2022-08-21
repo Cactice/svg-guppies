@@ -14,7 +14,7 @@ fn rect_from_bbox(bbox: &PathBbox) -> Rect {
 #[derive(Clone, Debug, Default)]
 pub struct Geometry {
     pub triangles: Triangles,
-    priority: IndicesPriority,
+    pub priority: IndicesPriority,
 }
 impl Geometry {
     pub fn extend(&mut self, other: &Self) {
