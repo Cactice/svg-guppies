@@ -4,7 +4,13 @@ pub type TextureBytes = Vec<u8>;
 pub type Index = u32;
 pub type Vertices = Vec<Vertex>;
 pub type Indices = Vec<Index>;
-pub type Triangles = (Vertices, Indices);
+
+#[derive(Clone, Debug, Default)]
+pub struct Triangles {
+    pub vertices: Vertices,
+    pub indices: Indices,
+}
+
 pub type Size = Vec2;
 pub type Position = Vec2;
 

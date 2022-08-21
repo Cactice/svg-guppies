@@ -1,13 +1,13 @@
 use crate::{fill::iterate_fill, stroke::iterate_stroke};
 use guppies::{
     glam::Vec4,
-    primitives::{Index, Vertex},
+    primitives::{Index, Triangles, Vertex},
 };
 use lyon::lyon_tessellation::VertexBuffers;
 use usvg::Path;
 pub const FALLBACK_COLOR: Vec4 = Vec4::ONE;
 
-pub fn prepare_vertex_buffer(p: &Path, transform_id: u32) -> VertexBuffers<Vertex, Index> {
+pub fn prepare_triangles_from_path(p: &Path, transform_id: u32) -> Triangles {
     let mut vertex_buffer = VertexBuffers::<Vertex, Index>::new();
     if let Some(ref stroke) = p.stroke {
         let color = match stroke.paint {
@@ -34,5 +34,8 @@ pub fn prepare_vertex_buffer(p: &Path, transform_id: u32) -> VertexBuffers<Verte
 
         iterate_fill(p, &color, &mut vertex_buffer, transform_id);
     };
-    vertex_buffer
+    Triangles {
+        vertices: vertex_buffer.vertices,
+        indices: vertex_buffer.indices,
+    }
 }

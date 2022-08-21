@@ -82,7 +82,7 @@ impl ViewModel for LifeGameView<'_> {
             });
         (
             Some(bytemuck::cast_slice(mat_4.as_slice()).to_vec()),
-            Some(self.svg_set.get_triangles_with_offset()),
+            Some(self.svg_set.get_combined_geometries().triangles),
         )
     }
     fn on_event(&mut self, event: WindowEvent) {

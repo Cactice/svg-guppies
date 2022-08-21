@@ -1,4 +1,4 @@
-use crate::{callback::IndicesPriority, prepare_vertex_buffer::prepare_vertex_buffer};
+use crate::{callback::IndicesPriority, prepare_triangles_from_path::prepare_triangles_from_path};
 use guppies::{
     glam::Vec2,
     primitives::{Indices, Rect, Triangles, Vertices},
@@ -13,26 +13,23 @@ fn rect_from_bbox(bbox: &PathBbox) -> Rect {
 
 #[derive(Clone, Debug, Default)]
 pub struct Geometry {
-    vertices: Vertices,
-    indices: Indices,
+    pub triangles: Triangles,
     priority: IndicesPriority,
 }
 impl Geometry {
-    pub fn extend(&mut self, other: &Self, with_offset: u32) {
-        let v_len = self.vertices.len() as u32;
-        let other_indices_with_offset: Indices = other
-            .indices
-            .iter()
-            .map(|i| i + v_len + with_offset)
-            .collect();
-        self.vertices.extend(other.vertices.iter());
-        self.indices.extend(other_indices_with_offset);
+    pub fn extend(&mut self, other: &Self) {
+        let v_len = self.triangles.vertices.len() as u32;
+        let other_indices_with_offset: Indices =
+            other.triangles.indices.iter().map(|i| i + v_len).collect();
+        self.triangles
+            .vertices
+            .extend(other.triangles.vertices.iter());
+        self.triangles.indices.extend(other_indices_with_offset);
     }
     pub fn new(p: &Path, transform_id: u32, priority: IndicesPriority) -> Self {
-        let v = prepare_vertex_buffer(p, transform_id);
+        let triangles = prepare_triangles_from_path(p, transform_id);
         Self {
-            vertices: v.vertices,
-            indices: v.indices,
+            triangles,
             priority,
         }
     }

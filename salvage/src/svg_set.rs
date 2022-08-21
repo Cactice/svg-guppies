@@ -7,7 +7,7 @@ use guppies::{
     primitives::{Rect, Triangles},
 };
 use roxmltree::{Document, NodeId};
-use std::{collections::HashMap, rc::Rc, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 use usvg::{fontdb::Source, Options, Tree};
 use xmlwriter::XmlWriter;
 fn recursive_svg(
@@ -73,11 +73,11 @@ impl<'a> SvgSet<'a> {
             }
         }
     }
-    pub fn get_combined_geometries(&self, with_offset: u32) -> Geometry {
+    pub fn get_combined_geometries(&self) -> Geometry {
         self.geometries.iter().fold(
             Geometry::default(),
             |mut acc: Geometry, geometry: &Geometry| {
-                acc.extend(&geometry, with_offset);
+                acc.extend(&geometry);
                 acc
             },
         )

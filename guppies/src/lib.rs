@@ -62,8 +62,8 @@ fn init(
     let setup = pollster::block_on(Setup::new(
         window,
         Mat4::IDENTITY,
-        &triangles.0,
-        &triangles.1,
+        &triangles.vertices,
+        &triangles.indices,
     ));
     let Setup {
         redraw: some_redraw,
@@ -83,7 +83,7 @@ pub fn main<V: ViewModel + 'static>(mut view_model: V) {
 
     event_loop.run(move |event, event_loop, control_flow| {
         *control_flow = ControlFlow::Poll;
-        // FIXME: why does ios not redraw automatically without explicit call
+        // FIXME: why do some OS not redraw automatically without explicit call
         #[cfg(any(target_os = "ios", target_os = "android"))]
         if let Some(window) = window.as_mut() {
             window.request_redraw();
@@ -116,9 +116,14 @@ pub fn main<V: ViewModel + 'static>(mut view_model: V) {
             }
             Event::RedrawRequested(_) => {
                 if let (Some(redraw), Some(window)) = (redraw.as_mut(), window.as_mut()) {
-                    if let (Some(mut texture), Some((vertices, indices))) = view_model.on_redraw() {
+                    if let (Some(mut texture), Some(triangles)) = view_model.on_redraw() {
                         texture.resize(8192 * 16, 0);
-                        Setup::redraw(redraw, &texture[..], &vertices, &indices);
+                        Setup::redraw(
+                            redraw,
+                            &texture[..],
+                            &triangles.vertices,
+                            &triangles.indices,
+                        );
                     }
                     window.request_redraw();
                 }
