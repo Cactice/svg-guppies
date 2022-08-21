@@ -53,9 +53,6 @@ impl ViewModel for LifeGameView<'_> {
                 .filter(|a| a(self).is_animating)
                 .collect();
         }
-        // let _is_mutated = [self.player_avatar_transforms.mut_count]
-        //     .iter()
-        //     .any(|x| x > &0);
 
         let mat_4: Vec<Mat4> = iter::empty::<Mat4>()
             .chain([self.global_transform])
@@ -63,7 +60,6 @@ impl ViewModel for LifeGameView<'_> {
             .chain(self.player_avatar_transforms.iter().map(|m| m.current))
             .chain([self.tip_transform.current])
             .collect();
-        // let _is_mutated = [self.instruction_text.mut_count].iter().any(|x| x > &0);
         iter::empty::<(String, String)>()
             .chain(
                 self.life_game
@@ -312,7 +308,7 @@ pub fn main() {
     let mut tip_center = Mat4::IDENTITY;
     let mut start_center = Mat4::IDENTITY;
     let _clickable_regex_pattern = regex_patterns.add(r"#clickable(?:$| |#)");
-    let _dynamic_regex_pattern = regex_patterns.add(r"#dynamic(?:$| |#)");
+    let dynamic_regex_pattern = regex_patterns.add(r"#dynamic(?:$| |#)");
     let coord_regex_pattern = regex_patterns.add(r"#coord(?:$| |#)");
     let dynamic_text_regex_pattern = regex_patterns.add(r"#dynamicText(?:$| |#)");
     let defaults = RegexSet::new(regex_patterns.0.iter().map(|r| &r.regex_pattern)).unwrap();
@@ -325,12 +321,15 @@ pub fn main() {
         } = pass_down;
         let node_ref = node.borrow();
         let id = NodeKind::id(&node_ref);
-        let transform_id = if id.ends_with("#dynamic") {
+        let default_matches = defaults.matches(id);
+
+        let transform_id = if default_matches.matched(dynamic_regex_pattern.index) {
             transform_count += 1;
             transform_count
         } else {
             *parent_transform_id
         };
+
         for captures in stops.captures_iter(id) {
             let stop: usize = captures[1].parse().unwrap();
             let dollar: i32 = captures[2].parse().unwrap();
@@ -344,7 +343,6 @@ pub fn main() {
             position_to_dollar.insert(stop, dollar);
             position_to_coordinates.insert(stop, coordinate);
         }
-        let default_matches = defaults.matches(id);
         if default_matches.matched(coord_regex_pattern.index) {
             let bbox = node.calculate_bbox().unwrap();
             let center = Mat4::from_translation(
