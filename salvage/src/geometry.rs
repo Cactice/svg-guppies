@@ -1,15 +1,6 @@
 use crate::{callback::IndicesPriority, prepare_triangles_from_path::prepare_triangles_from_path};
-use guppies::{
-    glam::Vec2,
-    primitives::{Indices, Rect, Triangles},
-};
-use usvg::{Path, PathBbox, Tree};
-fn rect_from_bbox(bbox: &PathBbox) -> Rect {
-    Rect {
-        position: Vec2::new(bbox.x() as f32, bbox.y() as f32),
-        size: Vec2::new(bbox.width() as f32, bbox.height() as f32),
-    }
-}
+use guppies::primitives::{Indices, Triangles};
+use usvg::{Path, Tree};
 
 #[derive(Clone, Debug, Default)]
 pub struct Geometry {
