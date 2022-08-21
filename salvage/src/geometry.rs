@@ -1,7 +1,7 @@
 use crate::{callback::IndicesPriority, prepare_triangles_from_path::prepare_triangles_from_path};
 use guppies::{
     glam::Vec2,
-    primitives::{Indices, Rect, Triangles, Vertices},
+    primitives::{Indices, Rect, Triangles},
 };
 use usvg::{Path, PathBbox};
 fn rect_from_bbox(bbox: &PathBbox) -> Rect {

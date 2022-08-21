@@ -2,10 +2,7 @@ use crate::{
     callback::{InitCallback, PassDown},
     geometry::Geometry,
 };
-use guppies::{
-    glam::Vec2,
-    primitives::{Rect, Triangles},
-};
+use guppies::{glam::Vec2, primitives::Rect};
 use roxmltree::{Document, NodeId};
 use std::{collections::HashMap, sync::Arc};
 use usvg::{fontdb::Source, Options, Tree};
