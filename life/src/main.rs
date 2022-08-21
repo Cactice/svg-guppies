@@ -1,6 +1,6 @@
 use concept::spring::{GetSelf, SpringMat4};
 use guppies::glam::{DVec2, Mat4, Vec2, Vec3};
-use guppies::primitives::DrawPrimitives;
+use guppies::primitives::{TextureBytes, Triangles};
 use guppies::winit::dpi::PhysicalSize;
 use guppies::winit::event::{ElementState, MouseScrollDelta, TouchPhase, WindowEvent};
 use guppies::{get_scale, ViewModel};
@@ -41,7 +41,7 @@ struct LifeGameView<'a> {
 }
 
 impl ViewModel for LifeGameView<'_> {
-    fn on_redraw(&mut self) -> (Option<Vec<u8>>, Option<DrawPrimitives>) {
+    fn on_redraw(&mut self) -> (Option<TextureBytes>, Option<Triangles>) {
         {
             self.animation_vec.clone().iter_mut().for_each(|a| {
                 SpringMat4::<Self>::update(self, a);

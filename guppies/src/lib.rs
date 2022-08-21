@@ -3,7 +3,7 @@ pub mod primitives;
 mod setup;
 pub use glam;
 use glam::{Mat4, Vec2};
-use primitives::DrawPrimitives;
+use primitives::{TextureBytes, Triangles};
 use setup::Setup;
 pub use winit;
 use winit::dpi::PhysicalSize;
@@ -26,13 +26,13 @@ pub fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
 }
 
 pub trait ViewModel {
-    fn on_redraw(&mut self) -> (Option<Vec<u8>>, Option<DrawPrimitives>);
+    fn on_redraw(&mut self) -> (Option<TextureBytes>, Option<Triangles>);
     fn on_event(&mut self, event: WindowEvent);
 }
 
 fn init(
     event_loop: &EventLoopWindowTarget<()>,
-    draw_primitive: &DrawPrimitives,
+    draw_primitive: &Triangles,
     redraw: &mut Option<setup::Redraw>,
     window: &mut Option<winit::window::Window>,
 ) {

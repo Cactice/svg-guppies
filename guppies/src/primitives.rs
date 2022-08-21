@@ -1,9 +1,10 @@
 use glam::{DVec2, Vec2, Vec4};
 
+pub type TextureBytes = Vec<u8>;
 pub type Index = u32;
 pub type Vertices = Vec<Vertex>;
 pub type Indices = Vec<Index>;
-pub type DrawPrimitives = (Vertices, Indices);
+pub type Triangles = (Vertices, Indices);
 pub type Size = Vec2;
 pub type Position = Vec2;
 
