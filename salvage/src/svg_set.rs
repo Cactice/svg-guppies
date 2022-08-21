@@ -105,7 +105,10 @@ impl<'a> SvgSet<'a> {
         let mut geometries: Vec<Geometry> = vec![];
         recursive_svg(
             tree.root(),
-            PassDown::default(),
+            PassDown {
+                transform_id: 1,
+                ..Default::default()
+            },
             &mut geometries,
             &mut callback,
         );
@@ -137,5 +140,6 @@ impl<'a> SvgSet<'a> {
         let _writer = self.get_base_writer();
         let mut parent_ids: Vec<roxmltree::NodeId> = vec![];
         find_text_node_path(node, &mut parent_ids);
+        todo!()
     }
 }

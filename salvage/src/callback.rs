@@ -4,9 +4,9 @@ use usvg::Node;
 
 #[derive(PartialEq, PartialOrd, Eq, Ord, Clone, Copy, Debug, Default)]
 pub enum IndicesPriority {
+    Variable,
     #[default]
     Fixed,
-    Variable,
 }
 
 #[derive(PartialEq, PartialOrd, Eq, Ord, Clone, Copy, Debug, Default)]
