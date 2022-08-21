@@ -31,10 +31,6 @@ pub struct Redraw {
 const SAMPLE_COUNT: u32 = 4;
 #[derive(Debug)]
 pub(crate) struct Setup {
-    pub(crate) instance: wgpu::Instance,
-    pub(crate) adapter: wgpu::Adapter,
-    pub(crate) shader: wgpu::ShaderModule,
-    pub(crate) pipeline_layout: wgpu::PipelineLayout,
     pub(crate) redraw: Redraw,
 }
 
@@ -322,10 +318,11 @@ impl Setup {
         };
 
         Setup {
-            instance,
-            adapter,
-            shader,
-            pipeline_layout,
+            // Apparently below shouldn't be dropped according to examples but it works without them
+            // instance,
+            // adapter,
+            // shader,
+            // pipeline_layout,
             redraw,
         }
     }
