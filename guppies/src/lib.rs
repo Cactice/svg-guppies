@@ -4,7 +4,7 @@ mod setup;
 pub use glam;
 use glam::{Mat4, Vec2};
 use primitives::{TextureBytes, Triangles};
-use setup::Setup;
+use setup::Redraw;
 pub use winit;
 use winit::dpi::PhysicalSize;
 use winit::event_loop::EventLoopWindowTarget;
@@ -59,17 +59,12 @@ fn init(
             })
             .expect("Couldn't append canvas to document body");
     }
-    let setup = pollster::block_on(Setup::new(
+    *redraw = Some(pollster::block_on(Redraw::new(
         window,
         Mat4::IDENTITY,
         &triangles.vertices,
         &triangles.indices,
-    ));
-    let Setup {
-        redraw: some_redraw,
-        ..
-    } = setup;
-    *redraw = Some(some_redraw);
+    )));
 }
 
 pub fn main<V: ViewModel + 'static>(mut view_model: V) {
@@ -107,7 +102,7 @@ pub fn main<V: ViewModel + 'static>(mut view_model: V) {
                     }
                     WindowEvent::Resized(p) => {
                         if let Some(redraw) = redraw.as_mut() {
-                            Setup::resize(p, redraw);
+                            redraw.resize(p);
                         }
                     }
                     _ => {}
@@ -118,12 +113,7 @@ pub fn main<V: ViewModel + 'static>(mut view_model: V) {
                 if let (Some(redraw), Some(window)) = (redraw.as_mut(), window.as_mut()) {
                     if let (Some(mut texture), Some(triangles)) = view_model.on_redraw() {
                         texture.resize(8192 * 16, 0);
-                        Setup::redraw(
-                            redraw,
-                            &texture[..],
-                            &triangles.vertices,
-                            &triangles.indices,
-                        );
+                        redraw.redraw(&texture[..], &triangles.vertices, &triangles.indices);
                     }
                     window.request_redraw();
                 }

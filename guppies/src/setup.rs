@@ -29,10 +29,6 @@ pub struct Redraw {
 }
 
 const SAMPLE_COUNT: u32 = 4;
-#[derive(Debug)]
-pub(crate) struct Setup {
-    pub(crate) redraw: Redraw,
-}
 
 fn get_uniform_buffer(
     device: &Device,
@@ -108,14 +104,14 @@ fn get_uniform_buffer(
     )
 }
 
-impl Setup {
-    pub fn resize(size: PhysicalSize<u32>, redraw: &mut Redraw) {
+impl Redraw {
+    pub fn resize(&mut self, size: PhysicalSize<u32>) {
         // Reconfigure the surface with the new size
-        redraw.config.width = size.width;
-        redraw.config.height = size.height;
-        redraw.surface.configure(&redraw.device, &redraw.config);
+        self.config.width = size.width;
+        self.config.height = size.height;
+        self.surface.configure(&self.device, &self.config);
     }
-    pub fn redraw(redraw: &Redraw, texture: &[u8], vertices: &Vertices, indices: &Indices) {
+    pub fn redraw(&self, texture: &[u8], vertices: &Vertices, indices: &Indices) {
         let Redraw {
             transform,
             device,
@@ -127,7 +123,7 @@ impl Setup {
             uniform_buffer,
             transform_texture,
             ..
-        } = redraw;
+        } = self;
         let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Index Buffer"),
             contents: bytemuck::cast_slice(indices),
@@ -303,7 +299,7 @@ impl Setup {
             contents: (bytemuck::cast_slice(vertices)),
             usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         });
-        let redraw = Redraw {
+        Redraw {
             device,
             surface,
             render_pipeline,
@@ -315,15 +311,6 @@ impl Setup {
             index_buffer,
             transform: default_transform,
             transform_texture,
-        };
-
-        Setup {
-            // Apparently below shouldn't be dropped according to examples but it works without them
-            // instance,
-            // adapter,
-            // shader,
-            // pipeline_layout,
-            redraw,
         }
     }
 }
