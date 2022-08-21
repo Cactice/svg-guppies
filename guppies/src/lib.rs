@@ -32,7 +32,7 @@ pub trait ViewModel {
 
 fn init(
     event_loop: &EventLoopWindowTarget<()>,
-    draw_primitive: &Triangles,
+    triangles: &Triangles,
     redraw: &mut Option<setup::Redraw>,
     window: &mut Option<winit::window::Window>,
 ) {
@@ -62,8 +62,8 @@ fn init(
     let setup = pollster::block_on(Setup::new(
         window,
         Mat4::IDENTITY,
-        &draw_primitive.0,
-        &draw_primitive.1,
+        &triangles.0,
+        &triangles.1,
     ));
     let Setup {
         redraw: some_redraw,

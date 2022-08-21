@@ -1,7 +1,7 @@
 use crate::{callback::IndicesPriority, prepare_vertex_buffer::prepare_vertex_buffer};
 use guppies::{
     glam::Vec2,
-    primitives::{Indices, Rect, Vertices},
+    primitives::{Indices, Rect, Triangles, Vertices},
 };
 use usvg::{Path, PathBbox};
 fn rect_from_bbox(bbox: &PathBbox) -> Rect {
@@ -18,14 +18,15 @@ pub struct Geometry {
     priority: IndicesPriority,
 }
 impl Geometry {
-    pub fn get_vertices_len(&self) -> usize {
-        self.vertices.len()
-    }
-    pub fn get_v(&self) -> Vertices {
-        self.vertices.clone()
-    }
-    pub fn get_i_with_offset(&self, offset: u32) -> Indices {
-        self.indices.iter().map(|index| index + offset).collect()
+    pub fn extend(&mut self, other: &Self, with_offset: u32) {
+        let v_len = self.vertices.len() as u32;
+        let other_indices_with_offset: Indices = other
+            .indices
+            .iter()
+            .map(|i| i + v_len + with_offset)
+            .collect();
+        self.vertices.extend(other.vertices.iter());
+        self.indices.extend(other_indices_with_offset);
     }
     pub fn new(p: &Path, transform_id: u32, priority: IndicesPriority) -> Self {
         let v = prepare_vertex_buffer(p, transform_id);

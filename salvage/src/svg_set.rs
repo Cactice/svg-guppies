@@ -4,10 +4,10 @@ use crate::{
 };
 use guppies::{
     glam::Vec2,
-    primitives::{Indices, Rect, Vertices},
+    primitives::{Rect, Triangles},
 };
 use roxmltree::{Document, NodeId};
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, rc::Rc, sync::Arc};
 use usvg::{fontdb::Source, Options, Tree};
 use xmlwriter::XmlWriter;
 fn recursive_svg(
@@ -73,11 +73,14 @@ impl<'a> SvgSet<'a> {
             }
         }
     }
-    pub fn get_vertices(&self) -> Vertices {
-        todo!()
-    }
-    pub fn get_indices(&self) -> Indices {
-        todo!()
+    pub fn get_combined_geometries(&self, with_offset: u32) -> Geometry {
+        self.geometries.iter().fold(
+            Geometry::default(),
+            |mut acc: Geometry, geometry: &Geometry| {
+                acc.extend(&geometry, with_offset);
+                acc
+            },
+        )
     }
     pub fn get_node_with_id(&self, id: &String) -> Result<roxmltree::Node, &str> {
         let node_id = self.id_map.get(id).ok_or("Not in node_id")?;
