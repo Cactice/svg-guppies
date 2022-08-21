@@ -222,7 +222,6 @@ impl LifeGameView<'_> {
 
         let current = life_game.current_player;
         self.instruction_text = format!("Player: {}", current + 1);
-        life_game.finish_turn();
         let cb1 = Rc::new(move |ctx: &mut LifeGameView| {
             let current = ctx.life_game.current_player;
             SpringMat4::<LifeGameView>::spring_to(
@@ -230,7 +229,9 @@ impl LifeGameView<'_> {
                 Rc::new(move |ctx| &mut ctx.player_avatar_transforms[current]),
                 Rc::new(|ctx, get_self| ctx.animation_vec.push(get_self)),
                 avatar_mat4,
-                Rc::new(|_| {}),
+                Rc::new(|ctx| {
+                    ctx.life_game.finish_turn();
+                }),
             )
         });
 
@@ -263,7 +264,7 @@ impl LifeGame {
     fn finish_turn(&mut self) {
         let dollar_delta = self
             .position_to_dollar
-            .get(self.current_player)
+            .get(self.position[self.current_player])
             .expect("current_player is invalid");
         self.dollars[self.current_player] += dollar_delta;
         for n in 1..4 {

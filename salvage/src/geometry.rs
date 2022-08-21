@@ -3,7 +3,7 @@ use guppies::{
     glam::Vec2,
     primitives::{Indices, Rect, Triangles},
 };
-use usvg::{Path, PathBbox};
+use usvg::{Path, PathBbox, Tree};
 fn rect_from_bbox(bbox: &PathBbox) -> Rect {
     Rect {
         position: Vec2::new(bbox.x() as f32, bbox.y() as f32),
@@ -15,6 +15,27 @@ fn rect_from_bbox(bbox: &PathBbox) -> Rect {
 pub struct Geometry {
     pub triangles: Triangles,
     pub priority: IndicesPriority,
+    pub id: String,
+}
+impl From<Tree> for Geometry {
+    fn from(tree: Tree) -> Self {
+        let geometry = tree
+            .root()
+            .descendants()
+            .into_iter()
+            .filter_map(|node| {
+                if let usvg::NodeKind::Path(ref p) = *node.borrow() {
+                    Some(Geometry::new(p, 1, IndicesPriority::Variable))
+                } else {
+                    None
+                }
+            })
+            .fold(Geometry::default(), |mut acc, curr| {
+                acc.extend(&curr);
+                acc
+            });
+        geometry
+    }
 }
 impl Geometry {
     pub fn extend(&mut self, other: &Self) {
@@ -31,6 +52,7 @@ impl Geometry {
         Self {
             triangles,
             priority,
+            id: p.id.to_owned(),
         }
     }
 }
