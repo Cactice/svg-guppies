@@ -139,21 +139,18 @@ impl<'a> SvgSet<'a> {
             usvg_options: opt,
         }
     }
-    fn get_base_writer(&self) -> XmlWriter {
+    pub fn update_text(&mut self, id: &String, new_text: &String) {
+        let node = self.get_node_with_id(id).unwrap();
         let mut writer = XmlWriter::new(xmlwriter::Options {
             use_single_quote: true,
             ..Default::default()
         });
         writer.set_preserve_whitespaces(true);
-        writer
-    }
-    pub fn update_text(&mut self, id: &String, new_text: &String) {
-        let node = self.get_node_with_id(id).unwrap();
-        let mut writer = self.get_base_writer();
         let mut parent_ids: Vec<roxmltree::NodeId> = vec![];
-        find_text_node_path(node, &mut parent_ids);
 
         // TODO: this only works with one line of text
+        find_text_node_path(node, &mut parent_ids);
+
         while let Some(parent_id) = parent_ids.pop() {
             let parent = self.document.get_node(parent_id).unwrap();
             self.copy_element(&parent, &mut writer);
