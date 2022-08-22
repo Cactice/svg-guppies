@@ -1,6 +1,6 @@
 use guppies::{
     glam::{Mat4, Vec2, Vec3},
-    winit::event::{ElementState, MouseScrollDelta, TouchPhase, WindowEvent},
+    winit::event::{ElementState, MouseScrollDelta, TouchPhase, WindowEvent}, get_scale,
 };
 const UNMOVED_RADIUS: f32 = 40.;
 
@@ -9,20 +9,20 @@ struct ScrollState {
     global_transform: Mat4,
     mouse_position: Vec2,
     mouse_down: Option<Vec2>,
+    display_size: Vec2,
 }
 
-fn scroll(event: WindowEvent, scroll_state: ScrollState) {
+fn scroll<F: Fn() -> ()>(event: WindowEvent, scroll_state: &mut ScrollState, on_click: F) {
     match event {
         WindowEvent::Resized(p) => {
             let (_scale, rot, trans) = scroll_state
                 .global_transform
                 .to_scale_rotation_translation();
-            let scale = get_scale(p, scroll_state.svg_set.bbox.size);
-            scroll_state.global_transform = Mat4::from_scale_rotation_translation(
-                scale.to_scale_rotation_translation().0,
-                rot,
-                trans,
-            );
+            let scale = get_scale(p, scroll_state.display_size)
+                .to_scale_rotation_translation()
+                .0;
+            scroll_state.global_transform =
+                Mat4::from_scale_rotation_translation(scale, rot, trans);
         }
         WindowEvent::CursorMoved { position, .. } => {
             let new_position = Vec2::new(position.x as f32, position.y as f32);
@@ -87,7 +87,7 @@ fn scroll(event: WindowEvent, scroll_state: ScrollState) {
                 if scroll_state.fingers.len() == 1 {
                     if let Some(mouse_down) = scroll_state.mouse_down {
                         if UNMOVED_RADIUS > new_position.distance(mouse_down) {
-                            scroll_state.tip_clicked()
+                            on_click()
                         }
                         scroll_state.mouse_down = None;
                     }
@@ -107,7 +107,7 @@ fn scroll(event: WindowEvent, scroll_state: ScrollState) {
         } => {
             if let Some(mouse_down) = scroll_state.mouse_down {
                 if UNMOVED_RADIUS > scroll_state.mouse_position.distance(mouse_down) {
-                    scroll_state.tip_clicked()
+                    on_click()
                 }
             }
             scroll_state.mouse_down = None;
