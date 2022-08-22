@@ -74,7 +74,7 @@ pub fn main<V: ViewModel + 'static>(mut view_model: V) {
         .1
         .expect("initial draw must not be none");
     let mut redraw = None;
-    let mut window: Option<Window> = None;
+    let mut window = None;
 
     event_loop.run(move |event, event_loop, control_flow| {
         *control_flow = ControlFlow::Poll;
