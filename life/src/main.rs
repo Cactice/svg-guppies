@@ -1,8 +1,9 @@
+use concept::scroll::{event_handler_for_scroll, ScrollState};
 use concept::spring::{GetSelf, SpringMat4};
-use guppies::glam::{DVec2, Mat4, Vec2, Vec3};
+use guppies::glam::{DVec2, Mat4};
 use guppies::primitives::{TextureBytes, Triangles};
 use guppies::winit::dpi::PhysicalSize;
-use guppies::winit::event::{ElementState, MouseScrollDelta, TouchPhase, WindowEvent};
+use guppies::winit::event::WindowEvent;
 use guppies::{get_scale, ViewModel};
 use regex::{Regex, RegexSet};
 use salvage::callback::{IndicesPriority, InitCallback, PassDown};
@@ -24,17 +25,14 @@ struct LifeGame {
 
 #[derive(Default)]
 struct LifeGameView<'a> {
-    fingers: Vec<(u64, Vec2)>,
     animation_vec: Vec<GetSelf<Self>>,
+    scroll_state: ScrollState,
     player_avatar_transforms: [SpringMat4<Self>; 4],
     tip_center: Mat4,
     start_center: Mat4,
-    global_transform: Mat4,
     tip_transform: SpringMat4<Self>,
     instruction_text: String,
     life_game: LifeGame,
-    mouse_position: Vec2,
-    mouse_down: Option<Vec2>,
     svg_set: SvgSet<'a>,
 }
 
@@ -53,7 +51,7 @@ impl ViewModel for LifeGameView<'_> {
         }
 
         let mat_4: Vec<Mat4> = iter::empty::<Mat4>()
-            .chain([self.global_transform])
+            .chain([self.scroll_state.transform])
             .chain([Mat4::IDENTITY])
             .chain(self.player_avatar_transforms.iter().map(|m| m.current))
             .chain([self.tip_transform.current])
@@ -79,7 +77,11 @@ impl ViewModel for LifeGameView<'_> {
             Some(self.svg_set.get_combined_geometries().triangles),
         )
     }
-    fn on_event(&mut self, event: WindowEvent) {}
+    fn on_event(&mut self, event: WindowEvent) {
+        if event_handler_for_scroll(event, &mut self.scroll_state) {
+            self.tip_clicked()
+        }
+    }
 }
 
 impl LifeGameView<'_> {
@@ -271,15 +273,18 @@ pub fn main() {
     let scale: Mat4 = get_scale(PhysicalSize::<u32>::new(100, 100), svg_scale);
     let translate = Mat4::from_translation([-1., 1.0, 0.0].into());
     let life_view = LifeGameView {
-        global_transform: translate * scale,
-        tip_center,
-        instruction_text: "Please click".to_string(),
-        start_center,
         life_game: LifeGame {
             position_to_coordinates,
             position_to_dollar,
             ..Default::default()
         },
+        scroll_state: ScrollState {
+            transform: translate * scale,
+            ..Default::default()
+        },
+        tip_center,
+        start_center,
+        instruction_text: "Please click".to_string(),
         svg_set,
         ..Default::default()
     };

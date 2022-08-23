@@ -1,34 +1,33 @@
 use guppies::{
+    get_scale,
     glam::{Mat4, Vec2, Vec3},
-    winit::event::{ElementState, MouseScrollDelta, TouchPhase, WindowEvent}, get_scale,
+    winit::event::{ElementState, MouseScrollDelta, TouchPhase, WindowEvent},
 };
 const UNMOVED_RADIUS: f32 = 40.;
 
-struct ScrollState {
-    fingers: Vec<(u64, Vec2)>,
-    global_transform: Mat4,
-    mouse_position: Vec2,
-    mouse_down: Option<Vec2>,
-    display_size: Vec2,
+#[derive(Default, Debug, Clone)]
+pub struct ScrollState {
+    pub fingers: Vec<(u64, Vec2)>,
+    pub transform: Mat4,
+    pub mouse_position: Vec2,
+    pub mouse_down: Option<Vec2>,
+    pub display_size: Vec2,
 }
 
-fn scroll<F: Fn() -> ()>(event: WindowEvent, scroll_state: &mut ScrollState, on_click: F) {
+pub fn event_handler_for_scroll(event: WindowEvent, scroll_state: &mut ScrollState) -> bool {
     match event {
         WindowEvent::Resized(p) => {
-            let (_scale, rot, trans) = scroll_state
-                .global_transform
-                .to_scale_rotation_translation();
+            let (_scale, rot, trans) = scroll_state.transform.to_scale_rotation_translation();
             let scale = get_scale(p, scroll_state.display_size)
                 .to_scale_rotation_translation()
                 .0;
-            scroll_state.global_transform =
-                Mat4::from_scale_rotation_translation(scale, rot, trans);
+            scroll_state.transform = Mat4::from_scale_rotation_translation(scale, rot, trans);
         }
         WindowEvent::CursorMoved { position, .. } => {
             let new_position = Vec2::new(position.x as f32, position.y as f32);
             if scroll_state.mouse_down.is_some() {
                 let motion = new_position - scroll_state.mouse_position;
-                scroll_state.global_transform *=
+                scroll_state.transform *=
                     Mat4::from_translation(Vec3::from((motion.x, motion.y, 0_f32)))
             }
             scroll_state.mouse_position = new_position
@@ -64,19 +63,19 @@ fn scroll<F: Fn() -> ()>(event: WindowEvent, scroll_state: &mut ScrollState, on_
                         let new_distance = new_position.distance(other_position);
                         let distance_delta = (new_distance - original_distance) * 20.; //TODO: remove this magical number
                         if distance_delta != 0. {
-                            scroll_state.global_transform = Mat4::from_scale(
+                            scroll_state.transform = Mat4::from_scale(
                                 [
                                     1. + (1. / (distance_delta as f32)),
                                     1. + (1. / (distance_delta as f32)),
                                     1_f32,
                                 ]
                                 .into(),
-                            ) * scroll_state.global_transform;
+                            ) * scroll_state.transform;
                         }
                     } else {
                         // pan
                         let motion = new_position - old_position;
-                        scroll_state.global_transform *=
+                        scroll_state.transform *=
                             Mat4::from_translation(Vec3::from((motion.x, motion.y, 0_f32)))
                     }
                     this_finger.1 = new_position;
@@ -87,7 +86,7 @@ fn scroll<F: Fn() -> ()>(event: WindowEvent, scroll_state: &mut ScrollState, on_
                 if scroll_state.fingers.len() == 1 {
                     if let Some(mouse_down) = scroll_state.mouse_down {
                         if UNMOVED_RADIUS > new_position.distance(mouse_down) {
-                            on_click()
+                            return true;
                         }
                         scroll_state.mouse_down = None;
                     }
@@ -107,7 +106,7 @@ fn scroll<F: Fn() -> ()>(event: WindowEvent, scroll_state: &mut ScrollState, on_
         } => {
             if let Some(mouse_down) = scroll_state.mouse_down {
                 if UNMOVED_RADIUS > scroll_state.mouse_position.distance(mouse_down) {
-                    on_click()
+                    return true;
                 }
             }
             scroll_state.mouse_down = None;
@@ -123,11 +122,12 @@ fn scroll<F: Fn() -> ()>(event: WindowEvent, scroll_state: &mut ScrollState, on_
             ..
         } => {
             if p.y != 0. {
-                scroll_state.global_transform = Mat4::from_scale(
+                scroll_state.transform = Mat4::from_scale(
                     [1. + (1. / (p.y as f32)), 1. + (1. / (p.y as f32)), 1_f32].into(),
-                ) * scroll_state.global_transform;
+                ) * scroll_state.transform;
             }
         }
         _ => (),
     }
+    false
 }
