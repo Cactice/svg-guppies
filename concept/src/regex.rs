@@ -10,17 +10,11 @@ pub struct RegexPattern {
     pub regex_pattern: String,
     pub index: usize,
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct RegexPatterns {
     pub inner: Vec<RegexPattern>,
 }
 
-impl Default for RegexPatterns {
-    fn default() -> Self {
-        let mut regex_patterns = Self { inner: vec![] };
-        regex_patterns
-    }
-}
 impl RegexPatterns {
     pub fn add(&mut self, regex_pattern: &str) -> RegexPattern {
         let regex_pattern = RegexPattern {
@@ -32,7 +26,7 @@ impl RegexPatterns {
     }
 }
 
-pub fn default_directives() -> InitCallback<'static> {
+pub fn get_default_init_callback() -> InitCallback<'static> {
     let mut transform_count = 1;
     let mut regex_patterns = RegexPatterns::default();
     let _clickable_regex_pattern = regex_patterns.add(r"#clickable(?:$| |#)");

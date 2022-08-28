@@ -1,4 +1,4 @@
-use concept::regex::{default_directives, get_center};
+use concept::regex::{get_center, get_default_init_callback};
 use concept::scroll::{event_handler_for_scroll, ScrollState};
 use concept::spring::{GetSelf, SpringMat4};
 use guppies::glam::{DVec2, Mat4};
@@ -174,7 +174,7 @@ pub fn main() {
     let mut start_center = Mat4::IDENTITY;
     let coord = Regex::new(r"#coord(?:$| |#)").unwrap();
     let stops = Regex::new(r"^(\d+)\.((?:\+|-)\d+):").unwrap();
-    let mut default_callback = default_directives();
+    let mut default_callback = get_default_init_callback();
     let callback = InitCallback::new(|(node, pass_down)| {
         let id = node.id();
         for captures in stops.captures_iter(&id) {
