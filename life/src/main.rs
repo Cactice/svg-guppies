@@ -280,6 +280,7 @@ pub fn main() {
         },
         scroll_state: ScrollState {
             transform: translate * scale,
+            display_size: svg_set.bbox.size,
             ..Default::default()
         },
         tip_center,
