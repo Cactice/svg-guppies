@@ -11,14 +11,14 @@ pub struct ScrollState {
     pub transform: Mat4,
     pub mouse_position: Vec2,
     pub mouse_down: Option<Vec2>,
-    pub display_size: Vec2,
+    pub display_image_size: Vec2,
 }
 
 pub fn event_handler_for_scroll(event: WindowEvent, scroll_state: &mut ScrollState) -> bool {
     match event {
         WindowEvent::Resized(p) => {
             let (_scale, rot, trans) = scroll_state.transform.to_scale_rotation_translation();
-            let scale = get_scale(p, scroll_state.display_size)
+            let scale = get_scale(p, scroll_state.display_image_size)
                 .to_scale_rotation_translation()
                 .0;
             scroll_state.transform = Mat4::from_scale_rotation_translation(scale, rot, trans);

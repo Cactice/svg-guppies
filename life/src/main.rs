@@ -1,4 +1,4 @@
-use concept::regex::RegexPatterns;
+use concept::regex::{default_directives, get_center, RegexPatterns};
 use concept::scroll::{event_handler_for_scroll, ScrollState};
 use concept::spring::{GetSelf, SpringMat4};
 use guppies::glam::{DVec2, Mat4};
@@ -6,9 +6,8 @@ use guppies::primitives::{TextureBytes, Triangles};
 use guppies::winit::dpi::PhysicalSize;
 use guppies::winit::event::WindowEvent;
 use guppies::{get_scale, ViewModel};
-use regex::{Regex, RegexSet};
+use regex::Regex;
 use salvage::callback::{IndicesPriority, InitCallback, PassDown};
-use salvage::geometry::Geometry;
 use salvage::svg_set::SvgSet;
 use salvage::usvg::{self, NodeExt, NodeKind};
 use std::f32::consts::PI;
@@ -172,33 +171,14 @@ pub fn main() {
     env_logger::init();
     let mut position_to_dollar: Vec<i32> = vec![];
     let mut position_to_coordinates: Vec<DVec2> = vec![];
-    let mut regex_patterns = RegexPatterns::default();
     let mut tip_center = Mat4::IDENTITY;
     let mut start_center = Mat4::IDENTITY;
-    let _clickable_regex_pattern = regex_patterns.add(r"#clickable(?:$| |#)");
-    let dynamic_regex_pattern = regex_patterns.add(r"#dynamic(?:$| |#)");
-    let coord_regex_pattern = regex_patterns.add(r"#coord(?:$| |#)");
-    let dynamic_text_regex_pattern = regex_patterns.add(r"#dynamicText(?:$| |#)");
-    let defaults = RegexSet::new(regex_patterns.inner.iter().map(|r| &r.regex_pattern)).unwrap();
+    let coord = Regex::new(r"#coord(?:$| |#)").unwrap();
     let stops = Regex::new(r"^(\d+)\.((?:\+|-)\d+):").unwrap();
-    let mut transform_count = 1;
+    let mut default_callback = default_directives();
     let callback = InitCallback::new(|(node, pass_down)| {
-        let PassDown {
-            transform_id: parent_transform_id,
-            indices_priority: parent_priority,
-        } = pass_down;
-        let node_ref = node.borrow();
-        let id = NodeKind::id(&node_ref);
-        let default_matches = defaults.matches(id);
-
-        let transform_id = if default_matches.matched(dynamic_regex_pattern.index) {
-            transform_count += 1;
-            transform_count
-        } else {
-            *parent_transform_id
-        };
-
-        for captures in stops.captures_iter(id) {
+        let id = node.id();
+        for captures in stops.captures_iter(&id) {
             let stop: usize = captures[1].parse().unwrap();
             let dollar: i32 = captures[2].parse().unwrap();
             let bbox = node.calculate_bbox().unwrap();
@@ -211,42 +191,15 @@ pub fn main() {
             position_to_dollar.insert(stop, dollar);
             position_to_coordinates.insert(stop, coordinate);
         }
-        if default_matches.matched(coord_regex_pattern.index) {
-            let bbox = node.calculate_bbox().unwrap();
-            let center = Mat4::from_translation(
-                [
-                    (bbox.x() + bbox.width() / 2.) as f32,
-                    (bbox.y() + bbox.height() / 2.) as f32,
-                    0.,
-                ]
-                .into(),
-            );
+        if coord.is_match(&id) {
+            let center = get_center(node);
             if id.starts_with("Tip") {
-                tip_center = center
-            } else {
-                start_center = center
-            }
-        }
-        let indices_priority = if !default_matches.matched(dynamic_text_regex_pattern.index) {
-            IndicesPriority::Variable
-        } else {
-            IndicesPriority::Fixed
-        };
-        let geometry = {
-            if let usvg::NodeKind::Path(ref p) = *node.borrow() {
-                Some(Geometry::new(p, transform_id, indices_priority))
-            } else {
-                None
+                tip_center = center;
+            } else if id.starts_with("0.") {
+                start_center = center;
             }
         };
-        let indices_priority = *parent_priority.max(&indices_priority);
-        (
-            geometry,
-            PassDown {
-                indices_priority,
-                transform_id,
-            },
-        )
+        default_callback.process_events(&(node.clone(), *pass_down))
     });
     let svg_set = SvgSet::new(include_str!("../../svg/life.svg"), callback);
     let svg_scale = svg_set.bbox.size;
@@ -262,7 +215,7 @@ pub fn main() {
         },
         scroll_state: ScrollState {
             transform: translate * scale,
-            display_size: svg_set.bbox.size,
+            display_image_size: svg_set.bbox.size,
             ..Default::default()
         },
         tip_center,
