@@ -74,6 +74,7 @@ pub fn main<V: ViewModel + 'static>(mut view_model: V) {
         .1
         .expect("initial draw must not be none");
     let mut redraw = None;
+    // Type definition is required for android build
     let mut window: Option<Window> = None;
 
     event_loop.run(move |event, event_loop, control_flow| {

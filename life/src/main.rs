@@ -1,8 +1,9 @@
+use concept::scroll::{event_handler_for_scroll, ScrollState};
 use concept::spring::{GetSelf, SpringMat4};
-use guppies::glam::{DVec2, Mat4, Vec2, Vec3};
+use guppies::glam::{DVec2, Mat4};
 use guppies::primitives::{TextureBytes, Triangles};
 use guppies::winit::dpi::PhysicalSize;
-use guppies::winit::event::{ElementState, MouseScrollDelta, TouchPhase, WindowEvent};
+use guppies::winit::event::WindowEvent;
 use guppies::{get_scale, ViewModel};
 use regex::{Regex, RegexSet};
 use salvage::callback::{IndicesPriority, InitCallback, PassDown};
@@ -12,8 +13,6 @@ use salvage::usvg::{self, NodeExt, NodeKind};
 use std::f32::consts::PI;
 use std::iter;
 use std::rc::Rc;
-
-const UNMOVED_RADIUS: f32 = 40.;
 
 #[derive(Default)]
 struct LifeGame {
@@ -26,17 +25,14 @@ struct LifeGame {
 
 #[derive(Default)]
 struct LifeGameView<'a> {
-    fingers: Vec<(u64, Vec2)>,
     animation_vec: Vec<GetSelf<Self>>,
+    scroll_state: ScrollState,
     player_avatar_transforms: [SpringMat4<Self>; 4],
     tip_center: Mat4,
     start_center: Mat4,
-    global_transform: Mat4,
     tip_transform: SpringMat4<Self>,
     instruction_text: String,
     life_game: LifeGame,
-    mouse_position: Vec2,
-    mouse_down: Option<Vec2>,
     svg_set: SvgSet<'a>,
 }
 
@@ -55,7 +51,7 @@ impl ViewModel for LifeGameView<'_> {
         }
 
         let mat_4: Vec<Mat4> = iter::empty::<Mat4>()
-            .chain([self.global_transform])
+            .chain([self.scroll_state.transform])
             .chain([Mat4::IDENTITY])
             .chain(self.player_avatar_transforms.iter().map(|m| m.current))
             .chain([self.tip_transform.current])
@@ -82,119 +78,8 @@ impl ViewModel for LifeGameView<'_> {
         )
     }
     fn on_event(&mut self, event: WindowEvent) {
-        match event {
-            WindowEvent::Resized(p) => {
-                let (_scale, rot, trans) = self.global_transform.to_scale_rotation_translation();
-                let scale = get_scale(p, self.svg_set.bbox.size);
-                self.global_transform = Mat4::from_scale_rotation_translation(
-                    scale.to_scale_rotation_translation().0,
-                    rot,
-                    trans,
-                );
-            }
-            WindowEvent::CursorMoved { position, .. } => {
-                let new_position = Vec2::new(position.x as f32, position.y as f32);
-                if self.mouse_down.is_some() {
-                    let motion = new_position - self.mouse_position;
-                    self.global_transform *=
-                        Mat4::from_translation(Vec3::from((motion.x, motion.y, 0_f32)))
-                }
-                self.mouse_position = new_position
-            }
-            WindowEvent::Touch(touch) => match touch.phase {
-                TouchPhase::Started => {
-                    let new_position = Vec2::new(touch.location.x as f32, touch.location.y as f32);
-                    let fingers_len = self.fingers.len();
-                    if fingers_len == 0 {
-                        self.mouse_down = Some(new_position);
-                    }
-                    if fingers_len < 2 {
-                        self.fingers.push((touch.id, new_position));
-                    }
-                }
-                TouchPhase::Moved => {
-                    let other_finger: Option<(u64, Vec2)> = self
-                        .fingers
-                        .iter()
-                        .find(|finger| finger.0 != touch.id)
-                        .cloned();
-                    let this_finger: Option<&mut (u64, Vec2)> =
-                        self.fingers.iter_mut().find(|finger| finger.0 == touch.id);
-                    let new_position = Vec2::new(touch.location.x as f32, touch.location.y as f32);
-                    if let Some(this_finger) = this_finger {
-                        let old_position = this_finger.1;
-                        if let Some(other_finger) = other_finger {
-                            // zoom
-                            let other_position = other_finger.1;
-                            let original_distance = old_position.distance(other_position);
-                            let new_distance = new_position.distance(other_position);
-                            let distance_delta = (new_distance - original_distance) * 20.; //TODO: remove this magical number
-                            if distance_delta != 0. {
-                                self.global_transform = Mat4::from_scale(
-                                    [
-                                        1. + (1. / (distance_delta as f32)),
-                                        1. + (1. / (distance_delta as f32)),
-                                        1_f32,
-                                    ]
-                                    .into(),
-                                ) * self.global_transform;
-                            }
-                        } else {
-                            // pan
-                            let motion = new_position - old_position;
-                            self.global_transform *=
-                                Mat4::from_translation(Vec3::from((motion.x, motion.y, 0_f32)))
-                        }
-                        this_finger.1 = new_position;
-                    }
-                }
-                TouchPhase::Ended => {
-                    let new_position = Vec2::new(touch.location.x as f32, touch.location.y as f32);
-                    if self.fingers.len() == 1 {
-                        if let Some(mouse_down) = self.mouse_down {
-                            if UNMOVED_RADIUS > new_position.distance(mouse_down) {
-                                self.tip_clicked()
-                            }
-                            self.mouse_down = None;
-                        }
-                    }
-                    self.fingers = self
-                        .fingers
-                        .iter()
-                        .filter(|finger| finger.0 != touch.id)
-                        .cloned()
-                        .collect();
-                }
-                TouchPhase::Cancelled => self.fingers = [].to_vec(),
-            },
-            WindowEvent::MouseInput {
-                state: ElementState::Released,
-                ..
-            } => {
-                if let Some(mouse_down) = self.mouse_down {
-                    if UNMOVED_RADIUS > self.mouse_position.distance(mouse_down) {
-                        self.tip_clicked()
-                    }
-                }
-                self.mouse_down = None;
-            }
-            WindowEvent::MouseInput {
-                state: ElementState::Pressed,
-                ..
-            } => {
-                self.mouse_down = Some(self.mouse_position);
-            }
-            WindowEvent::MouseWheel {
-                delta: MouseScrollDelta::PixelDelta(p),
-                ..
-            } => {
-                if p.y != 0. {
-                    self.global_transform = Mat4::from_scale(
-                        [1. + (1. / (p.y as f32)), 1. + (1. / (p.y as f32)), 1_f32].into(),
-                    ) * self.global_transform;
-                }
-            }
-            _ => (),
+        if event_handler_for_scroll(event, &mut self.scroll_state) {
+            self.tip_clicked()
         }
     }
 }
@@ -388,15 +273,19 @@ pub fn main() {
     let scale: Mat4 = get_scale(PhysicalSize::<u32>::new(100, 100), svg_scale);
     let translate = Mat4::from_translation([-1., 1.0, 0.0].into());
     let life_view = LifeGameView {
-        global_transform: translate * scale,
-        tip_center,
-        instruction_text: "Please click".to_string(),
-        start_center,
         life_game: LifeGame {
             position_to_coordinates,
             position_to_dollar,
             ..Default::default()
         },
+        scroll_state: ScrollState {
+            transform: translate * scale,
+            display_size: svg_set.bbox.size,
+            ..Default::default()
+        },
+        tip_center,
+        start_center,
+        instruction_text: "Please click".to_string(),
         svg_set,
         ..Default::default()
     };
