@@ -1,3 +1,4 @@
+use concept::regex::RegexPatterns;
 use concept::scroll::{event_handler_for_scroll, ScrollState};
 use concept::spring::{GetSelf, SpringMat4};
 use guppies::glam::{DVec2, Mat4};
@@ -167,25 +168,6 @@ impl LifeGame {
     }
 }
 
-#[derive(Clone, Debug, Default)]
-struct RegexPattern {
-    regex_pattern: String,
-    index: usize,
-}
-#[derive(Clone, Debug, Default)]
-struct RegexPatterns(Vec<RegexPattern>);
-
-impl RegexPatterns {
-    fn add(&mut self, regex_pattern: &str) -> RegexPattern {
-        let regex_pattern = RegexPattern {
-            regex_pattern: regex_pattern.to_string(),
-            index: self.0.len(),
-        };
-        self.0.push(regex_pattern.clone());
-        regex_pattern
-    }
-}
-
 pub fn main() {
     env_logger::init();
     let mut position_to_dollar: Vec<i32> = vec![];
@@ -197,7 +179,7 @@ pub fn main() {
     let dynamic_regex_pattern = regex_patterns.add(r"#dynamic(?:$| |#)");
     let coord_regex_pattern = regex_patterns.add(r"#coord(?:$| |#)");
     let dynamic_text_regex_pattern = regex_patterns.add(r"#dynamicText(?:$| |#)");
-    let defaults = RegexSet::new(regex_patterns.0.iter().map(|r| &r.regex_pattern)).unwrap();
+    let defaults = RegexSet::new(regex_patterns.inner.iter().map(|r| &r.regex_pattern)).unwrap();
     let stops = Regex::new(r"^(\d+)\.((?:\+|-)\d+):").unwrap();
     let mut transform_count = 1;
     let callback = InitCallback::new(|(node, pass_down)| {
