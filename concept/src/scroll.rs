@@ -1,8 +1,12 @@
 use guppies::{
     get_scale,
     glam::{Mat4, Vec2, Vec3},
-    winit::event::{ElementState, MouseScrollDelta, TouchPhase, WindowEvent},
+    winit::{
+        dpi::PhysicalSize,
+        event::{ElementState, MouseScrollDelta, TouchPhase, WindowEvent},
+    },
 };
+use salvage::svg_set::SvgSet;
 const UNMOVED_RADIUS: f32 = 40.;
 
 #[derive(Default, Debug, Clone)]
@@ -12,6 +16,19 @@ pub struct ScrollState {
     pub mouse_position: Vec2,
     pub mouse_down: Option<Vec2>,
     pub display_image_size: Vec2,
+}
+impl ScrollState {
+    pub fn new_from_svg_set(svg_set: &SvgSet) -> Self {
+        // Below scale should get overridden by guppies' redraw event forced on init
+        let svg_scale = svg_set.bbox.size;
+        let scale: Mat4 = get_scale(PhysicalSize::<u32>::new(100, 100), svg_scale);
+        let translate = Mat4::from_translation([-1., 1.0, 0.0].into());
+        Self {
+            transform: translate * scale,
+            display_image_size: svg_set.bbox.size,
+            ..Default::default()
+        }
+    }
 }
 
 pub fn event_handler_for_scroll(event: WindowEvent, scroll_state: &mut ScrollState) -> bool {
@@ -85,10 +102,12 @@ pub fn event_handler_for_scroll(event: WindowEvent, scroll_state: &mut ScrollSta
                 let new_position = Vec2::new(touch.location.x as f32, touch.location.y as f32);
                 if scroll_state.fingers.len() == 1 {
                     if let Some(mouse_down) = scroll_state.mouse_down {
-                        if UNMOVED_RADIUS > new_position.distance(mouse_down) {
+                        let is_click = UNMOVED_RADIUS > new_position.distance(mouse_down);
+                        scroll_state.mouse_down = None;
+                        if is_click {
+                            scroll_state.mouse_down = None;
                             return true;
                         }
-                        scroll_state.mouse_down = None;
                     }
                 }
                 scroll_state.fingers = scroll_state
@@ -105,11 +124,12 @@ pub fn event_handler_for_scroll(event: WindowEvent, scroll_state: &mut ScrollSta
             ..
         } => {
             if let Some(mouse_down) = scroll_state.mouse_down {
-                if UNMOVED_RADIUS > scroll_state.mouse_position.distance(mouse_down) {
+                let is_click = UNMOVED_RADIUS > scroll_state.mouse_position.distance(mouse_down);
+                scroll_state.mouse_down = None;
+                if is_click {
                     return true;
                 }
             }
-            scroll_state.mouse_down = None;
         }
         WindowEvent::MouseInput {
             state: ElementState::Pressed,

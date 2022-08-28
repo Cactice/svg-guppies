@@ -3,7 +3,7 @@ use regex::RegexSet;
 use salvage::{
     callback::{IndicesPriority, InitCallback, PassDown},
     geometry::Geometry,
-    usvg::{self, Node, NodeExt, NodeKind},
+    usvg::{self, Node, NodeExt},
 };
 #[derive(Clone, Debug, Default)]
 pub struct RegexPattern {
@@ -44,8 +44,7 @@ pub fn default_directives() -> InitCallback<'static> {
             transform_id: parent_transform_id,
             indices_priority: parent_priority,
         } = pass_down;
-        let node_ref = node.borrow();
-        let id = NodeKind::id(&node_ref);
+        let id = node.id();
         let default_matches = defaults.matches(&id);
         let transform_id = if default_matches.matched(dynamic_regex_pattern.index) {
             transform_count += 1;

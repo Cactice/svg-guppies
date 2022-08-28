@@ -3,9 +3,8 @@ use concept::scroll::{event_handler_for_scroll, ScrollState};
 use concept::spring::{GetSelf, SpringMat4};
 use guppies::glam::{DVec2, Mat4};
 use guppies::primitives::{TextureBytes, Triangles};
-use guppies::winit::dpi::PhysicalSize;
 use guppies::winit::event::WindowEvent;
-use guppies::{get_scale, ViewModel};
+use guppies::ViewModel;
 use regex::Regex;
 use salvage::callback::InitCallback;
 use salvage::svg_set::SvgSet;
@@ -202,22 +201,14 @@ pub fn main() {
         default_callback.process_events(&(node.clone(), *pass_down))
     });
     let svg_set = SvgSet::new(include_str!("../../svg/life.svg"), callback);
-    let svg_scale = svg_set.bbox.size;
 
-    // Below scale should get overridden by guppies' redraw event forced on init
-    let scale: Mat4 = get_scale(PhysicalSize::<u32>::new(100, 100), svg_scale);
-    let translate = Mat4::from_translation([-1., 1.0, 0.0].into());
     let life_view = LifeGameView {
         life_game: LifeGame {
             position_to_coordinates,
             position_to_dollar,
             ..Default::default()
         },
-        scroll_state: ScrollState {
-            transform: translate * scale,
-            display_image_size: svg_set.bbox.size,
-            ..Default::default()
-        },
+        scroll_state: ScrollState::new_from_svg_set(&svg_set),
         tip_center,
         start_center,
         instruction_text: "Please click".to_string(),
