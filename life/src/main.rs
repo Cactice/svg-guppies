@@ -1,4 +1,4 @@
-use concept::regex::{default_directives, get_center, RegexPatterns};
+use concept::regex::{default_directives, get_center};
 use concept::scroll::{event_handler_for_scroll, ScrollState};
 use concept::spring::{GetSelf, SpringMat4};
 use guppies::glam::{DVec2, Mat4};
@@ -7,9 +7,9 @@ use guppies::winit::dpi::PhysicalSize;
 use guppies::winit::event::WindowEvent;
 use guppies::{get_scale, ViewModel};
 use regex::Regex;
-use salvage::callback::{IndicesPriority, InitCallback, PassDown};
+use salvage::callback::InitCallback;
 use salvage::svg_set::SvgSet;
-use salvage::usvg::{self, NodeExt, NodeKind};
+use salvage::usvg::NodeExt;
 use std::f32::consts::PI;
 use std::iter;
 use std::rc::Rc;
