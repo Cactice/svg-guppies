@@ -1,7 +1,7 @@
 use concept::regex::{get_center, get_default_init_callback};
 use concept::scroll::{event_handler_for_scroll, ScrollState};
 use concept::spring::{GetSelf, SpringMat4};
-use guppies::glam::{DVec2, Mat4};
+use guppies::glam::{DVec2, Mat4, Vec2};
 use guppies::primitives::{TextureBytes, Triangles};
 use guppies::winit::event::WindowEvent;
 use guppies::ViewModel;
@@ -19,7 +19,7 @@ struct LifeGame {
     position: [usize; 4],
     current_player: usize,
     pub position_to_dollar: Vec<i32>,
-    position_to_coordinates: Vec<DVec2>,
+    position_to_coordinates: Vec<Vec2>,
 }
 
 #[derive(Default)]
@@ -98,9 +98,8 @@ impl LifeGameView<'_> {
         let life_game = &mut self.life_game;
         let avatar_mat4 = {
             life_game.proceed(one_sixths_spins);
-            let target = life_game.position_to_coordinates
-                [life_game.position[life_game.current_player]]
-                .as_vec2();
+            let target =
+                life_game.position_to_coordinates[life_game.position[life_game.current_player]];
             Mat4::IDENTITY + Mat4::from_translation((target, 0.).into()) - self.start_center
         };
 
@@ -169,7 +168,7 @@ impl LifeGame {
 pub fn main() {
     env_logger::init();
     let mut position_to_dollar: Vec<i32> = vec![];
-    let mut position_to_coordinates: Vec<DVec2> = vec![];
+    let mut position_to_coordinates: Vec<Vec2> = vec![];
     let mut tip_center = Mat4::IDENTITY;
     let mut start_center = Mat4::IDENTITY;
     let coord = Regex::new(r"#coord(?:$| |#)").unwrap();
@@ -180,9 +179,7 @@ pub fn main() {
         for captures in stops.captures_iter(&id) {
             let stop: usize = captures[1].parse().unwrap();
             let dollar: i32 = captures[2].parse().unwrap();
-            let bbox = node.calculate_bbox().unwrap();
-            let coordinate =
-                DVec2::new(bbox.x() + bbox.width() / 2., bbox.y() + bbox.height() / 2.);
+            let coordinate = get_center(node);
             if stop >= position_to_dollar.len() {
                 position_to_dollar.resize(stop, dollar);
                 position_to_coordinates.resize(stop, coordinate);
@@ -191,7 +188,7 @@ pub fn main() {
             position_to_coordinates.insert(stop, coordinate);
         }
         if coord.is_match(&id) {
-            let center = get_center(node);
+            let center = Mat4::from_translation((get_center(node), 0.).into());
             if id.starts_with("Tip") {
                 tip_center = center;
             } else if id.starts_with("0.") {
