@@ -8,8 +8,8 @@ authors = ["cactice"]
 guppies = { path = "../guppies" }
 salvage = { path = "../salvage" }
 natura = { git = "https://github.com/ziyasal/natura" }
+regex = "1"
 
 [dev-dependencies]
-regex = "1"
 bytemuck = "1.9.1"
 fastrand = "1.8.0"
