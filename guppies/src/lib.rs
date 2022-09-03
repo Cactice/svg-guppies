@@ -3,8 +3,9 @@ pub mod primitives;
 mod setup;
 pub use glam;
 use glam::{Mat4, Vec2};
-use primitives::{TextureBytes, Triangles};
+use primitives::Triangles;
 use setup::Redraw;
+use std::rc::Rc;
 pub use winit;
 use winit::dpi::PhysicalSize;
 use winit::event_loop::EventLoopWindowTarget;
@@ -13,6 +14,7 @@ use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
 };
+
 pub fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
     let ratio = f32::min(svg_scale.x, svg_scale.y) / f32::max(svg_scale.x, svg_scale.y);
     Mat4::from_scale(
@@ -23,11 +25,6 @@ pub fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
         ]
         .into(),
     )
-}
-
-pub trait ViewModel {
-    fn on_redraw(&mut self) -> (Option<TextureBytes>, Option<Triangles>);
-    fn on_event(&mut self, event: WindowEvent);
 }
 
 fn init(
@@ -67,15 +64,16 @@ fn init(
     )));
 }
 
-pub fn main<V: ViewModel + 'static>(mut view_model: V) {
+type UpdateTexture = Rc<dyn FnMut(u32, &[u8])>;
+type UpdateTriangle = Rc<dyn FnMut(u32, Triangles)>;
+type MainLoop = Rc<dyn FnMut(Option<WindowEvent>, UpdateTexture, UpdateTriangle)>;
+pub fn main(mut main_loop: MainLoop) {
     let event_loop = EventLoop::new();
-    let draw_primitive = view_model
-        .on_redraw()
-        .1
-        .expect("initial draw must not be none");
     let mut redraw = None;
     // Type definition is required for android build
     let mut window: Option<Window> = None;
+    let mut triangles = Triangles::default();
+    let mut texture: Vec<u8> = vec![];
 
     event_loop.run(move |event, event_loop, control_flow| {
         *control_flow = ControlFlow::Poll;
@@ -90,26 +88,32 @@ pub fn main<V: ViewModel + 'static>(mut view_model: V) {
             #[cfg(not(target_os = "android"))]
             Event::NewEvents(start_cause) => match start_cause {
                 winit::event::StartCause::Init => {
-                    init(event_loop, &draw_primitive, &mut redraw, &mut window);
+                    init(event_loop, &triangles, &mut redraw, &mut window);
                     let size = window.as_ref().unwrap().inner_size();
-                    view_model.on_event(WindowEvent::Resized(size));
+                    main_loop(
+                        None,
+                        Rc::new(|x, a| texture = a.to_owned()),
+                        Rc::new(|x, a| triangles = a),
+                    );
+                    main_loop(
+                        Some(WindowEvent::Resized(size)),
+                        Rc::new(|x, a| {}),
+                        Rc::new(|x, a| {}),
+                    );
                 }
                 _ => (),
             },
-            Event::WindowEvent { event, .. } => {
-                match event {
-                    WindowEvent::CloseRequested => {
-                        *control_flow = ControlFlow::Exit;
-                    }
-                    WindowEvent::Resized(p) => {
-                        if let Some(redraw) = redraw.as_mut() {
-                            redraw.resize(p);
-                        }
-                    }
-                    _ => {}
+            Event::WindowEvent { event, .. } => match event {
+                WindowEvent::CloseRequested => {
+                    *control_flow = ControlFlow::Exit;
                 }
-                view_model.on_event(event);
-            }
+                WindowEvent::Resized(p) => {
+                    if let Some(redraw) = redraw.as_mut() {
+                        redraw.resize(p);
+                    }
+                }
+                _ => {}
+            },
             Event::RedrawRequested(_) => {
                 if let (Some(redraw), Some(window)) = (redraw.as_mut(), window.as_mut()) {
                     if let (Some(mut texture), Some(triangles)) = view_model.on_redraw() {

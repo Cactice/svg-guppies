@@ -13,6 +13,7 @@ pub struct SpringMat4<T> {
     pub is_animating: bool,
     on_complete: Rc<dyn Fn(&mut T) -> ()>,
 }
+
 impl<T> Default for SpringMat4<T> {
     fn default() -> Self {
         Self {

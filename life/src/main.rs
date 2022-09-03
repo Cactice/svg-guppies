@@ -1,7 +1,7 @@
 use concept::regex::{get_center, get_default_init_callback};
 use concept::scroll::{event_handler_for_scroll, ScrollState};
 use concept::spring::{GetSelf, SpringMat4};
-use guppies::glam::{DVec2, Mat4, Vec2};
+use guppies::glam::{Mat4, Vec2};
 use guppies::primitives::{TextureBytes, Triangles};
 use guppies::winit::event::WindowEvent;
 use guppies::ViewModel;
