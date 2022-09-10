@@ -1,7 +1,7 @@
 use bytemuck::{Pod, Zeroable};
 use concept::regex::{get_center, get_default_init_callback};
 use concept::scroll::ScrollState;
-use concept::spring::{GetSelf, SpringMat4};
+use concept::spring::SpringMat4;
 use guppies::glam::{Mat4, Vec2};
 use regex::Regex;
 use salvage::callback::InitCallback;
@@ -22,23 +22,8 @@ struct LifeGame {
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable, Default)]
 struct Texture {
+    tip_center: Mat4,
     player_avatar_transforms: [Mat4; 4],
-    tip_center: Mat4,
-    start_center: Mat4,
-    tip_transform: Mat4,
-}
-
-#[derive(Default)]
-struct LifeGameView<'a> {
-    animation_vec: Vec<GetSelf<Self>>,
-    scroll_state: ScrollState,
-    player_avatar_transforms: [SpringMat4<Self>; 4],
-    tip_center: Mat4,
-    start_center: Mat4,
-    tip_transform: SpringMat4<Self>,
-    instruction_text: String,
-    life_game: LifeGame,
-    svg_set: SvgSet<'a>,
 }
 
 const RANDOM_VARIANCE: u64 = 12;
@@ -110,27 +95,20 @@ pub fn main() {
     });
     let svg_set = SvgSet::new(include_str!("../../svg/life.svg"), callback);
 
-    let life_view = LifeGameView {
-        life_game: LifeGame {
-            position_to_coordinates,
-            position_to_dollar,
-            ..Default::default()
-        },
-        scroll_state: ScrollState::new_from_svg_set(&svg_set),
-        tip_center,
-        start_center,
-        instruction_text: "Please click".to_string(),
-        svg_set,
+    let life_game = LifeGame {
+        position_to_coordinates,
+        position_to_dollar,
         ..Default::default()
     };
-    guppies::main(|event, gpu_redraw| {
+    let scroll_state = ScrollState::new_from_svg_set(&svg_set);
+    let instruction_text = "Please click".to_string();
+    guppies::main(move |event, gpu_redraw| {
         if event.is_none() {
             let geometry = svg_set.get_combined_geometries();
             gpu_redraw.update_triangles(geometry.triangles, 0);
-
             // gpu_redraw.updateTexture(, 0);
         } else if let Some(event) = event {
-            if life_view.tip_transform.is_animating
+            if tip_transform.is_animating
                 || life_view
                     .player_avatar_transforms
                     .iter()
@@ -140,17 +118,15 @@ pub fn main() {
             }
 
             let one_sixths_spins = LifeGame::spin_roulette();
-            let life_game = &mut life_view.life_game;
             let avatar_mat4 = {
                 life_game.proceed(one_sixths_spins);
                 let target =
                     life_game.position_to_coordinates[life_game.position[life_game.current_player]];
-                Mat4::IDENTITY + Mat4::from_translation((target, 0.).into())
-                    - life_view.start_center
+                Mat4::IDENTITY + Mat4::from_translation((target, 0.).into()) - start_center
             };
 
             let current = life_game.current_player;
-            life_view.instruction_text = format!("Player: {}", current + 1);
+            instruction_text = format!("Player: {}", current + 1);
             let cb1 = Rc::new(move |ctx: &mut LifeGameView| {
                 let current = ctx.life_game.current_player;
                 SpringMat4::<LifeGameView>::spring_to(
@@ -167,7 +143,7 @@ pub fn main() {
             SpringMat4::<LifeGameView>::spring_to(
                 &mut life_view,
                 Rc::new(|ctx| &mut ctx.tip_transform),
-                Rc::new(|ctx, get_life_view| ctx.animation_vec.push(get_self)),
+                Rc::new(|ctx, get_self| ctx.animation_vec.push(get_self)),
                 life_view.tip_center
                     * Mat4::from_rotation_z(PI / 3. * one_sixths_spins as f32)
                     * life_view.tip_center.inverse(),

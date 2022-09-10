@@ -79,7 +79,7 @@ impl GpuRedraw {
     }
 }
 
-pub fn main<F: Fn(Option<WindowEvent>, &mut GpuRedraw) + 'static>(main_loop: F) {
+pub fn main<F: FnMut(Option<WindowEvent>, &mut GpuRedraw) + 'static>(mut main_loop: F) {
     let event_loop = EventLoop::new();
     let mut redraw = None;
     // Type definition is required for android build
