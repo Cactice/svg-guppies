@@ -5,7 +5,6 @@ pub use glam;
 use glam::{Mat4, Vec2};
 use primitives::Triangles;
 use setup::Redraw;
-use std::rc::Rc;
 pub use winit;
 use winit::dpi::PhysicalSize;
 use winit::event_loop::EventLoopWindowTarget;
@@ -64,16 +63,28 @@ fn init(
     )));
 }
 
-type UpdateTexture = Rc<dyn FnMut(u32, &[u8])>;
-type UpdateTriangle = Rc<dyn FnMut(u32, Triangles)>;
-type MainLoop = Rc<dyn FnMut(Option<WindowEvent>, UpdateTexture, UpdateTriangle)>;
-pub fn main(mut main_loop: MainLoop) {
+#[derive(Debug, Default)]
+pub struct GpuRedraw {
+    texture: Vec<u8>,
+    triangles: Triangles,
+}
+impl GpuRedraw {
+    pub fn update_texture(&mut self, textures: Vec<u8>, offset: usize) {
+        self.texture.splice(offset..textures.len(), textures);
+    }
+    pub fn update_triangles(&mut self, triangles: Triangles, offset: usize) {
+        let v_i = self.triangles.indices[offset + 1] as usize;
+        self.triangles.indices.splice(offset.., triangles.indices);
+        self.triangles.vertices.splice(v_i.., triangles.vertices);
+    }
+}
+
+pub fn main<F: Fn(Option<WindowEvent>, &mut GpuRedraw) + 'static>(main_loop: F) {
     let event_loop = EventLoop::new();
     let mut redraw = None;
     // Type definition is required for android build
     let mut window: Option<Window> = None;
-    let mut triangles = Triangles::default();
-    let mut texture: Vec<u8> = vec![];
+    let mut gpu_redraw = GpuRedraw::default();
 
     event_loop.run(move |event, event_loop, control_flow| {
         *control_flow = ControlFlow::Poll;
@@ -88,18 +99,10 @@ pub fn main(mut main_loop: MainLoop) {
             #[cfg(not(target_os = "android"))]
             Event::NewEvents(start_cause) => match start_cause {
                 winit::event::StartCause::Init => {
-                    init(event_loop, &triangles, &mut redraw, &mut window);
+                    init(event_loop, &gpu_redraw.triangles, &mut redraw, &mut window);
                     let size = window.as_ref().unwrap().inner_size();
-                    main_loop(
-                        None,
-                        Rc::new(|x, a| texture = a.to_owned()),
-                        Rc::new(|x, a| triangles = a),
-                    );
-                    main_loop(
-                        Some(WindowEvent::Resized(size)),
-                        Rc::new(|x, a| {}),
-                        Rc::new(|x, a| {}),
-                    );
+                    main_loop(None, &mut gpu_redraw);
+                    main_loop(Some(WindowEvent::Resized(size)), &mut gpu_redraw);
                 }
                 _ => (),
             },
@@ -116,10 +119,12 @@ pub fn main(mut main_loop: MainLoop) {
             },
             Event::RedrawRequested(_) => {
                 if let (Some(redraw), Some(window)) = (redraw.as_mut(), window.as_mut()) {
-                    if let (Some(mut texture), Some(triangles)) = view_model.on_redraw() {
-                        texture.resize(8192 * 16, 0);
-                        redraw.redraw(&texture[..], &triangles.vertices, &triangles.indices);
-                    }
+                    gpu_redraw.texture.resize(8192 * 16, 0);
+                    redraw.redraw(
+                        &gpu_redraw.texture[..],
+                        &gpu_redraw.triangles.vertices,
+                        &gpu_redraw.triangles.indices,
+                    );
                     window.request_redraw();
                 }
             }

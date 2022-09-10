@@ -1,16 +1,13 @@
+use bytemuck::{Pod, Zeroable};
 use concept::regex::{get_center, get_default_init_callback};
-use concept::scroll::{event_handler_for_scroll, ScrollState};
+use concept::scroll::ScrollState;
 use concept::spring::{GetSelf, SpringMat4};
 use guppies::glam::{Mat4, Vec2};
-use guppies::primitives::{TextureBytes, Triangles};
-use guppies::winit::event::WindowEvent;
-use guppies::ViewModel;
 use regex::Regex;
 use salvage::callback::InitCallback;
 use salvage::svg_set::SvgSet;
 use salvage::usvg::NodeExt;
 use std::f32::consts::PI;
-use std::iter;
 use std::rc::Rc;
 
 #[derive(Default)]
@@ -20,6 +17,15 @@ struct LifeGame {
     current_player: usize,
     pub position_to_dollar: Vec<i32>,
     position_to_coordinates: Vec<Vec2>,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Pod, Zeroable, Default)]
+struct Texture {
+    player_avatar_transforms: [Mat4; 4],
+    tip_center: Mat4,
+    start_center: Mat4,
+    tip_transform: Mat4,
 }
 
 #[derive(Default)]
@@ -33,101 +39,6 @@ struct LifeGameView<'a> {
     instruction_text: String,
     life_game: LifeGame,
     svg_set: SvgSet<'a>,
-}
-
-impl ViewModel for LifeGameView<'_> {
-    fn on_redraw(&mut self) -> (Option<TextureBytes>, Option<Triangles>) {
-        {
-            self.animation_vec.clone().iter_mut().for_each(|a| {
-                SpringMat4::<Self>::update(self, a);
-            });
-            self.animation_vec = self
-                .animation_vec
-                .clone()
-                .into_iter()
-                .filter(|a| a(self).is_animating)
-                .collect();
-        }
-
-        let mat_4: Vec<Mat4> = iter::empty::<Mat4>()
-            .chain([self.scroll_state.transform])
-            .chain([Mat4::IDENTITY])
-            .chain(self.player_avatar_transforms.iter().map(|m| m.current))
-            .chain([self.tip_transform.current])
-            .collect();
-        iter::empty::<(String, String)>()
-            .chain(
-                self.life_game
-                    .dollars
-                    .iter()
-                    .enumerate()
-                    .map(|(i, m)| (format!("{}. Player #dynamicText", i + 1), format!("${}", m)))
-                    .collect::<Vec<(String, String)>>(),
-            )
-            .chain([(
-                "instruction #dynamicText".to_string(),
-                self.instruction_text.clone(),
-            )])
-            .for_each(|(id, new_text)| {
-                self.svg_set.update_text(&id, &new_text);
-            });
-        (
-            Some(bytemuck::cast_slice(mat_4.as_slice()).to_vec()),
-            Some(self.svg_set.get_combined_geometries().triangles),
-        )
-    }
-    fn on_event(&mut self, event: WindowEvent) {
-        if event_handler_for_scroll(event, &mut self.scroll_state) {
-            self.tip_clicked()
-        }
-    }
-}
-
-impl LifeGameView<'_> {
-    fn tip_clicked(&mut self) {
-        if self.tip_transform.is_animating
-            || self
-                .player_avatar_transforms
-                .iter()
-                .any(|spring| spring.is_animating)
-        {
-            return;
-        }
-
-        let one_sixths_spins = LifeGame::spin_roulette();
-        let life_game = &mut self.life_game;
-        let avatar_mat4 = {
-            life_game.proceed(one_sixths_spins);
-            let target =
-                life_game.position_to_coordinates[life_game.position[life_game.current_player]];
-            Mat4::IDENTITY + Mat4::from_translation((target, 0.).into()) - self.start_center
-        };
-
-        let current = life_game.current_player;
-        self.instruction_text = format!("Player: {}", current + 1);
-        let cb1 = Rc::new(move |ctx: &mut LifeGameView| {
-            let current = ctx.life_game.current_player;
-            SpringMat4::<LifeGameView>::spring_to(
-                ctx,
-                Rc::new(move |ctx| &mut ctx.player_avatar_transforms[current]),
-                Rc::new(|ctx, get_self| ctx.animation_vec.push(get_self)),
-                avatar_mat4,
-                Rc::new(|ctx| {
-                    ctx.life_game.finish_turn();
-                }),
-            )
-        });
-
-        SpringMat4::<LifeGameView>::spring_to(
-            self,
-            Rc::new(|ctx| &mut ctx.tip_transform),
-            Rc::new(|ctx, get_self| ctx.animation_vec.push(get_self)),
-            self.tip_center
-                * Mat4::from_rotation_z(PI / 3. * one_sixths_spins as f32)
-                * self.tip_center.inverse(),
-            cb1,
-        );
-    }
 }
 
 const RANDOM_VARIANCE: u64 = 12;
@@ -212,5 +123,56 @@ pub fn main() {
         svg_set,
         ..Default::default()
     };
-    guppies::main::<LifeGameView>(life_view);
+    guppies::main(|event, gpu_redraw| {
+        if event.is_none() {
+            let geometry = svg_set.get_combined_geometries();
+            gpu_redraw.update_triangles(geometry.triangles, 0);
+
+            // gpu_redraw.updateTexture(, 0);
+        } else if let Some(event) = event {
+            if life_view.tip_transform.is_animating
+                || life_view
+                    .player_avatar_transforms
+                    .iter()
+                    .any(|spring| spring.is_animating)
+            {
+                return;
+            }
+
+            let one_sixths_spins = LifeGame::spin_roulette();
+            let life_game = &mut life_view.life_game;
+            let avatar_mat4 = {
+                life_game.proceed(one_sixths_spins);
+                let target =
+                    life_game.position_to_coordinates[life_game.position[life_game.current_player]];
+                Mat4::IDENTITY + Mat4::from_translation((target, 0.).into())
+                    - life_view.start_center
+            };
+
+            let current = life_game.current_player;
+            life_view.instruction_text = format!("Player: {}", current + 1);
+            let cb1 = Rc::new(move |ctx: &mut LifeGameView| {
+                let current = ctx.life_game.current_player;
+                SpringMat4::<LifeGameView>::spring_to(
+                    ctx,
+                    Rc::new(move |ctx| &mut ctx.player_avatar_transforms[current]),
+                    Rc::new(|ctx, get_life_view| ctx.animation_vec.push(get_life_view)),
+                    avatar_mat4,
+                    Rc::new(|ctx| {
+                        ctx.life_game.finish_turn();
+                    }),
+                )
+            });
+
+            SpringMat4::<LifeGameView>::spring_to(
+                &mut life_view,
+                Rc::new(|ctx| &mut ctx.tip_transform),
+                Rc::new(|ctx, get_life_view| ctx.animation_vec.push(get_self)),
+                life_view.tip_center
+                    * Mat4::from_rotation_z(PI / 3. * one_sixths_spins as f32)
+                    * life_view.tip_center.inverse(),
+                cb1,
+            );
+        }
+    });
 }
