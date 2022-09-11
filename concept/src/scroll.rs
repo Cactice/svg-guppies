@@ -29,12 +29,12 @@ impl ScrollState {
             ..Default::default()
         }
     }
-    pub fn event_handler(&mut self, event: WindowEvent) -> bool {
+    pub fn event_handler(&mut self, event: &WindowEvent) -> bool {
         let scroll_state = self;
         match event {
             WindowEvent::Resized(p) => {
                 let (_scale, rot, trans) = scroll_state.transform.to_scale_rotation_translation();
-                let scale = get_scale(p, scroll_state.display_image_size)
+                let scale = get_scale(*p, scroll_state.display_image_size)
                     .to_scale_rotation_translation()
                     .0;
                 scroll_state.transform = Mat4::from_scale_rotation_translation(scale, rot, trans);
