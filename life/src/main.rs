@@ -24,11 +24,12 @@ impl LifeGame {
     fn spin_roulette() -> u64 {
         RANDOM_BASE + (fastrand::u64(..) % RANDOM_VARIANCE)
     }
-    fn proceed(&mut self, steps: u64) {
+    fn proceed(&mut self, steps: u64) -> Vec2 {
         let proceed = steps % ROULETTE_MAX + 1;
         self.position[self.current_player] = (self.position[self.current_player]
             + proceed as usize)
             .min(self.position_to_coordinates.len() - 1);
+        self.position_to_coordinates[self.position[self.current_player]]
     }
     fn finish_turn(&mut self) {
         let dollar_delta = self.position_to_dollar[self.position[self.current_player]];
@@ -124,12 +125,9 @@ pub fn main() {
         //     return;
         // }
         let one_sixths_spins = LifeGame::spin_roulette();
-        let avatar_mat4 = {
-            life_game.proceed(one_sixths_spins);
-            let target =
-                life_game.position_to_coordinates[life_game.position[life_game.current_player]];
-            Mat4::IDENTITY + Mat4::from_translation((target, 0.).into()) - start_center
-        };
+        let target = life_game.proceed(one_sixths_spins);
+        let avatar_mat4 =
+            Mat4::IDENTITY + Mat4::from_translation((target, 0.).into()) - start_center;
 
         // instruction_text = format!("Player: {}", life_game.current_player + 1);
         // let cb1 = Rc::new(move |ctx: &mut LifeGameView| {
