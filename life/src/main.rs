@@ -110,7 +110,7 @@ pub fn main() {
         ..Default::default()
     };
     let mut animation_register = AnimationRegister::default();
-    let scroll_state = ScrollState::new_from_svg_set(&svg_set);
+    let mut scroll_state = ScrollState::new_from_svg_set(&svg_set);
     // let spring_players: Vec<SpringMat4<dyn FnMut()>> = texture
     //     .player_avatar_transforms
     //     .iter()
@@ -130,6 +130,7 @@ pub fn main() {
                 .concat(),
             );
         } else if let Some(event) = event {
+            scroll_state.event_handler(event);
             // if spring_tip.is_animating || spring_players.iter().any(|spring| spring.is_animating) {
             //     return;
             // }
