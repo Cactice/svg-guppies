@@ -7,7 +7,7 @@ authors = ["cactice"]
 [dependencies]
 guppies = { path = "../guppies" }
 salvage = { path = "../salvage" }
-natura = { git = "https://github.com/ziyasal/natura" }
+natura = { git = "https://github.com/cactice/natura" }
 regex = "1"
 
 [dev-dependencies]
