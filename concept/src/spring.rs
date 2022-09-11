@@ -1,21 +1,21 @@
 use guppies::glam::Mat4;
 use natura::{AngularFrequency, DampingRatio, DeltaTime, Spring};
+use std::cell::RefCell;
 use std::default::Default;
 use std::iter::zip;
 use std::rc::Rc;
-pub type GetSelf<T> = Rc<dyn Fn(&mut T) -> &mut SpringMat4<T>>;
 
-pub struct SpringMat4<T> {
+pub struct SpringMat4<'a> {
     spring: Spring,
     target: Mat4,
-    pub current: Mat4,
+    pub current: &'a mut Mat4,
     velocity: Mat4,
     pub is_animating: bool,
-    on_complete: Rc<dyn Fn(&mut T) -> ()>,
+    on_complete: Rc<RefCell<dyn FnMut() -> ()>>,
 }
 
-impl<T> Default for SpringMat4<T> {
-    fn default() -> Self {
+impl<'a> SpringMat4<'a> {
+    pub fn new<'b: 'a>(current: &'b mut Mat4) -> Self {
         Self {
             spring: Spring::new(
                 DeltaTime(natura::fps(60)),
@@ -23,61 +23,52 @@ impl<T> Default for SpringMat4<T> {
                 DampingRatio(0.7),
             ),
             is_animating: false,
-            current: Default::default(),
+            current,
             target: Default::default(),
             velocity: Default::default(),
-            on_complete: Rc::new(|_| {}),
+            on_complete: Rc::new(RefCell::new(|| {})),
         }
     }
-}
-
-impl<T> SpringMat4<T> {
     pub fn spring_to(
-        ctx: &mut T,
-        mut get_self: GetSelf<T>,
-        register: Rc<dyn Fn(&mut T, GetSelf<T>) -> ()>,
+        mut self,
+        register: &mut Vec<Self>,
         target: Mat4,
-        on_complete: Rc<dyn Fn(&mut T) -> ()>,
+        on_complete: Rc<RefCell<dyn FnMut() -> ()>>,
     ) {
-        {
-            let mut me = get_self(ctx);
-            me.is_animating = true;
-            me.target = target;
-            me.on_complete = on_complete;
-        }
-        Self::update(ctx, &mut get_self);
-        register(ctx, get_self);
+        self.is_animating = true;
+        self.target = target;
+        self.target = target;
+        self.on_complete = on_complete;
+        self.update();
+        register.push(self);
     }
 
-    pub fn update(ctx: &mut T, get_self: &mut GetSelf<T>) -> bool {
+    pub fn update(&mut self) -> bool {
         let mut current_position_vec = vec![];
         let mut vel_vec = vec![];
 
         let animating_complete = {
-            let mut me = get_self(ctx);
             zip(
-                zip(me.current.to_cols_array(), me.velocity.to_cols_array()),
-                me.target.to_cols_array(),
+                zip(self.current.to_cols_array(), self.velocity.to_cols_array()),
+                self.target.to_cols_array(),
             )
             .for_each(|((current_position, vel), target)| {
                 let (new_current_position, new_vel) =
-                    me.spring
+                    self.spring
                         .update(current_position as f64, vel as f64, target as f64);
                 current_position_vec.push(new_current_position as f32);
                 vel_vec.push(new_vel as f32);
             });
-            me.current = Mat4::from_cols_array(&current_position_vec.try_into().unwrap());
-            me.velocity = Mat4::from_cols_array(&vel_vec.try_into().unwrap());
+            *self.current = Mat4::from_cols_array(&current_position_vec.try_into().unwrap());
+            self.velocity = Mat4::from_cols_array(&vel_vec.try_into().unwrap());
 
-            me.current.abs_diff_eq(me.target, 1.0) && me.velocity.abs_diff_eq(Mat4::ZERO, 100.0)
+            self.current.abs_diff_eq(self.target, 1.0)
+                && self.velocity.abs_diff_eq(Mat4::ZERO, 100.0)
         };
         if animating_complete {
-            let call = {
-                let me = get_self(ctx);
-                me.is_animating = false;
-                me.on_complete.clone()
-            };
-            call(ctx);
+            self.is_animating = false;
+            let mut x = self.on_complete.try_borrow_mut().unwrap();
+            x()
         }
         animating_complete
     }

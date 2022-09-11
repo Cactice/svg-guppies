@@ -9,42 +9,45 @@ use guppies::{
 use salvage::svg_set::SvgSet;
 const UNMOVED_RADIUS: f32 = 40.;
 
-#[derive(Default, Debug, Clone)]
-pub struct ScrollState {
+#[derive(Debug)]
+pub struct ScrollState<'a> {
     pub fingers: Vec<(u64, Vec2)>,
-    pub transform: Mat4,
+    pub transform: &'a mut Mat4,
     pub mouse_position: Vec2,
     pub mouse_down: Option<Vec2>,
     pub display_image_size: Vec2,
 }
-impl ScrollState {
-    pub fn new_from_svg_set(svg_set: &SvgSet) -> Self {
+impl<'a> ScrollState<'a> {
+    pub fn new_from_svg_set<'b: 'a>(svg_set: &SvgSet, transform: &'b mut Mat4) -> Self {
         // Below scale should get overridden by guppies' redraw event forced on init
         let svg_scale = svg_set.bbox.size;
         let scale: Mat4 = get_scale(PhysicalSize::<u32>::new(100, 100), svg_scale);
         let translate = Mat4::from_translation([-1., 1.0, 0.0].into());
+        *transform = translate * scale;
         Self {
-            transform: translate * scale,
+            transform: transform,
             display_image_size: svg_set.bbox.size,
-            ..Default::default()
+            fingers: Default::default(),
+            mouse_down: Default::default(),
+            mouse_position: Default::default(),
         }
     }
 }
 
-pub fn event_handler_for_scroll(event: WindowEvent, scroll_state: &mut ScrollState) -> bool {
+pub fn event_handler_for_scroll(event: WindowEvent, mut scroll_state: &mut ScrollState) -> bool {
     match event {
         WindowEvent::Resized(p) => {
             let (_scale, rot, trans) = scroll_state.transform.to_scale_rotation_translation();
             let scale = get_scale(p, scroll_state.display_image_size)
                 .to_scale_rotation_translation()
                 .0;
-            scroll_state.transform = Mat4::from_scale_rotation_translation(scale, rot, trans);
+            *scroll_state.transform = Mat4::from_scale_rotation_translation(scale, rot, trans);
         }
         WindowEvent::CursorMoved { position, .. } => {
             let new_position = Vec2::new(position.x as f32, position.y as f32);
             if scroll_state.mouse_down.is_some() {
                 let motion = new_position - scroll_state.mouse_position;
-                scroll_state.transform *=
+                *scroll_state.transform *=
                     Mat4::from_translation(Vec3::from((motion.x, motion.y, 0_f32)))
             }
             scroll_state.mouse_position = new_position
@@ -80,19 +83,19 @@ pub fn event_handler_for_scroll(event: WindowEvent, scroll_state: &mut ScrollSta
                         let new_distance = new_position.distance(other_position);
                         let distance_delta = (new_distance - original_distance) * 20.; //TODO: remove this magical number
                         if distance_delta != 0. {
-                            scroll_state.transform = Mat4::from_scale(
+                            *scroll_state.transform = Mat4::from_scale(
                                 [
                                     1. + (1. / (distance_delta as f32)),
                                     1. + (1. / (distance_delta as f32)),
                                     1_f32,
                                 ]
                                 .into(),
-                            ) * scroll_state.transform;
+                            ) * *scroll_state.transform;
                         }
                     } else {
                         // pan
                         let motion = new_position - old_position;
-                        scroll_state.transform *=
+                        *scroll_state.transform *=
                             Mat4::from_translation(Vec3::from((motion.x, motion.y, 0_f32)))
                     }
                     this_finger.1 = new_position;
@@ -142,9 +145,9 @@ pub fn event_handler_for_scroll(event: WindowEvent, scroll_state: &mut ScrollSta
             ..
         } => {
             if p.y != 0. {
-                scroll_state.transform = Mat4::from_scale(
+                *scroll_state.transform = Mat4::from_scale(
                     [1. + (1. / (p.y as f32)), 1. + (1. / (p.y as f32)), 1_f32].into(),
-                ) * scroll_state.transform;
+                ) * (*scroll_state.transform);
             }
         }
         _ => (),

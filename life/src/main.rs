@@ -7,9 +7,13 @@ use regex::Regex;
 use salvage::callback::InitCallback;
 use salvage::svg_set::SvgSet;
 use salvage::usvg::NodeExt;
+use std::cell::RefCell;
 use std::f32::consts::PI;
 use std::rc::Rc;
 
+const RANDOM_VARIANCE: u64 = 12;
+const RANDOM_BASE: u64 = 18;
+const ROULETTE_MAX: u64 = 6;
 #[derive(Default)]
 struct LifeGame {
     dollars: [i32; 4],
@@ -18,18 +22,6 @@ struct LifeGame {
     pub position_to_dollar: Vec<i32>,
     position_to_coordinates: Vec<Vec2>,
 }
-
-#[repr(C)]
-#[derive(Clone, Copy, Pod, Zeroable, Default)]
-struct Texture {
-    tip_center: Mat4,
-    player_avatar_transforms: [Mat4; 4],
-}
-
-const RANDOM_VARIANCE: u64 = 12;
-const RANDOM_BASE: u64 = 18;
-const ROULETTE_MAX: u64 = 6;
-
 impl LifeGame {
     fn spin_roulette() -> u64 {
         RANDOM_BASE + (fastrand::u64(..) % RANDOM_VARIANCE)
@@ -41,24 +33,28 @@ impl LifeGame {
             .min(self.position_to_coordinates.len() - 1);
     }
     fn finish_turn(&mut self) {
-        let dollar_delta = self
-            .position_to_dollar
-            .get(self.position[self.current_player])
-            .expect("current_player is invalid");
+        let dollar_delta = self.position_to_dollar[self.position[self.current_player]];
         self.dollars[self.current_player] += dollar_delta;
         for n in 1..4 {
             if n == 4 {
                 todo!("game finished")
             } else {
-                self.current_player += n;
-                self.current_player %= 4;
-                let length_of_positions = self.position_to_dollar.len() - 1;
-                if self.position[self.current_player] < length_of_positions {
+                self.current_player = (self.current_player + n) % 4;
+                if self.position[self.current_player] < self.position_to_dollar.len() - 1 {
                     break;
                 }
             }
         }
     }
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Pod, Zeroable, Default)]
+struct Texture {
+    global_transform: Mat4,
+    identity_transform: Mat4,
+    tip_transform: Mat4,
+    player_avatar_transforms: [Mat4; 4],
 }
 
 pub fn main() {
@@ -67,9 +63,9 @@ pub fn main() {
     let mut position_to_coordinates: Vec<Vec2> = vec![];
     let mut tip_center = Mat4::IDENTITY;
     let mut start_center = Mat4::IDENTITY;
+    let mut default_callback = get_default_init_callback();
     let coord = Regex::new(r"#coord(?:$| |#)").unwrap();
     let stops = Regex::new(r"^(\d+)\.((?:\+|-)\d+):").unwrap();
-    let mut default_callback = get_default_init_callback();
     let callback = InitCallback::new(|(node, pass_down)| {
         let id = node.id();
         for captures in stops.captures_iter(&id) {
@@ -100,23 +96,25 @@ pub fn main() {
         position_to_dollar,
         ..Default::default()
     };
-    let scroll_state = ScrollState::new_from_svg_set(&svg_set);
+    let mut texture = Texture::default();
+    let animation_register = Vec::<SpringMat4>::new();
+    let scroll_state = ScrollState::new_from_svg_set(&svg_set, &mut texture.global_transform);
+    let spring_tip = SpringMat4::new(&mut texture.tip_transform);
+    // let spring_players: Vec<SpringMat4<dyn FnMut()>> = texture
+    //     .player_avatar_transforms
+    //     .iter()
+    //     .map(|x| SpringMat4::new(&mut x, || {}))
+    //     .collect();
     let instruction_text = "Please click".to_string();
-    guppies::main(move |event, gpu_redraw| {
+    guppies::init_main_loop(move |event, gpu_redraw| {
         if event.is_none() {
             let geometry = svg_set.get_combined_geometries();
             gpu_redraw.update_triangles(geometry.triangles, 0);
-            // gpu_redraw.updateTexture(, 0);
+            gpu_redraw.update_texture(bytemuck::cast_slice(&[texture.clone()]).to_vec(), 0);
         } else if let Some(event) = event {
-            if tip_transform.is_animating
-                || life_view
-                    .player_avatar_transforms
-                    .iter()
-                    .any(|spring| spring.is_animating)
-            {
-                return;
-            }
-
+            // if spring_tip.is_animating || spring_players.iter().any(|spring| spring.is_animating) {
+            //     return;
+            // }
             let one_sixths_spins = LifeGame::spin_roulette();
             let avatar_mat4 = {
                 life_game.proceed(one_sixths_spins);
@@ -125,29 +123,27 @@ pub fn main() {
                 Mat4::IDENTITY + Mat4::from_translation((target, 0.).into()) - start_center
             };
 
-            let current = life_game.current_player;
-            instruction_text = format!("Player: {}", current + 1);
-            let cb1 = Rc::new(move |ctx: &mut LifeGameView| {
-                let current = ctx.life_game.current_player;
-                SpringMat4::<LifeGameView>::spring_to(
-                    ctx,
-                    Rc::new(move |ctx| &mut ctx.player_avatar_transforms[current]),
-                    Rc::new(|ctx, get_life_view| ctx.animation_vec.push(get_life_view)),
-                    avatar_mat4,
-                    Rc::new(|ctx| {
-                        ctx.life_game.finish_turn();
-                    }),
-                )
-            });
+            instruction_text = format!("Player: {}", life_game.current_player + 1);
+            // let cb1 = Rc::new(move |ctx: &mut LifeGameView| {
+            //     SpringMat4::<LifeGameView>::spring_to(
+            //         ctx,
+            //         Rc::new(move |ctx| {
+            //             &mut ctx.player_avatar_transforms[ctx.life_game.current_player]
+            //         }),
+            //         Rc::new(|ctx, get_life_view| ctx.animation_vec.push(get_life_view)),
+            //         avatar_mat4,
+            //         Rc::new(|ctx| {
+            //             ctx.life_game.finish_turn();
+            //         }),
+            //     )
+            // });
 
-            SpringMat4::<LifeGameView>::spring_to(
-                &mut life_view,
-                Rc::new(|ctx| &mut ctx.tip_transform),
-                Rc::new(|ctx, get_self| ctx.animation_vec.push(get_self)),
-                life_view.tip_center
+            spring_tip.spring_to(
+                &mut animation_register,
+                tip_center
                     * Mat4::from_rotation_z(PI / 3. * one_sixths_spins as f32)
-                    * life_view.tip_center.inverse(),
-                cb1,
+                    * tip_center.inverse(),
+                Rc::new(RefCell::new(|| {})),
             );
         }
     });
