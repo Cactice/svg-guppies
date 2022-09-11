@@ -116,11 +116,10 @@ pub fn main() {
     //     .iter()
     //     .map(|x| SpringMat4::new(&mut x, || {}))
     //     .collect();
-    let instruction_text = "Please click";
-    svg_set.update_text("instruction #dynamicText", instruction_text);
+    svg_set.update_text("instruction #dynamicText", "Please click");
     guppies::init_main_loop(move |event, gpu_redraw| {
+        let geometry = svg_set.get_combined_geometries();
         if event.is_none() {
-            let geometry = svg_set.get_combined_geometries();
             gpu_redraw.update_triangles(geometry.triangles, 0);
             gpu_redraw.update_texture(
                 [
@@ -163,6 +162,14 @@ pub fn main() {
                     * Mat4::from_rotation_z(PI / 3. * one_sixths_spins as f32)
                     * tip_center.inverse(),
                 |_| {},
+            );
+            gpu_redraw.update_triangles(geometry.triangles, 0);
+            gpu_redraw.update_texture(
+                [
+                    cast_slice(&[scroll_state.transform]),
+                    cast_slice(&[animation_register.texture.clone()]),
+                ]
+                .concat(),
             );
         }
     });
