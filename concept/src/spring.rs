@@ -1,18 +1,19 @@
 use guppies::glam::Mat4;
 use natura::{AngularFrequency, DampingRatio, DeltaTime, Spring};
+use std::cell::RefCell;
 use std::iter::zip;
 use std::rc::Rc;
 
 #[derive(Clone)]
-pub struct SpringMat4<T> {
+pub struct SpringMat4 {
     spring: Spring,
     target: Mat4,
     velocity: Mat4,
     pub is_animating: bool,
-    on_complete: Rc<dyn Fn(&mut T) -> ()>,
+    on_complete: Rc<RefCell<dyn FnMut() -> ()>>,
 }
 
-impl<T> Default for SpringMat4<T> {
+impl Default for SpringMat4 {
     fn default() -> Self {
         Self {
             spring: Spring::new(
@@ -23,13 +24,13 @@ impl<T> Default for SpringMat4<T> {
             is_animating: false,
             target: Default::default(),
             velocity: Default::default(),
-            on_complete: Rc::new(|_| {}),
+            on_complete: Rc::new(RefCell::new(|| {})),
         }
     }
 }
 
-impl<T> SpringMat4<T> {
-    pub fn new(target: Mat4, on_complete: Rc<dyn Fn(&mut T) -> ()>) -> Self {
+impl SpringMat4 {
+    pub fn new(target: Mat4, on_complete: Rc<RefCell<dyn FnMut() -> ()>>) -> Self {
         let mut me = Self::default();
         me.is_animating = true;
         me.target = target;
@@ -37,7 +38,7 @@ impl<T> SpringMat4<T> {
         me
     }
 
-    pub fn update(&mut self, ctx: &mut T, current: Mat4) -> (Mat4, bool) {
+    pub fn update(&mut self, current: Mat4) -> (Mat4, bool) {
         let me = self;
         let mut current_position_vec = vec![];
         let mut vel_vec = vec![];
@@ -62,7 +63,7 @@ impl<T> SpringMat4<T> {
         };
         if animating_complete {
             me.is_animating = false;
-            (me.on_complete)(ctx)
+            (*me.on_complete.borrow_mut())()
         }
         (new_current, animating_complete)
     }
