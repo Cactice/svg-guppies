@@ -139,8 +139,8 @@ impl<'a> SvgSet<'a> {
             usvg_options: opt,
         }
     }
-    pub fn update_text(&mut self, id: &String, new_text: &String) {
-        let node = self.get_node_with_id(id).unwrap();
+    pub fn update_text(&mut self, id: &'static str, new_text: &'static str) {
+        let node = self.get_node_with_id(&id.to_string()).unwrap();
         let mut writer = XmlWriter::new(xmlwriter::Options {
             use_single_quote: true,
             ..Default::default()

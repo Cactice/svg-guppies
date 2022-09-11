@@ -69,11 +69,17 @@ pub struct GpuRedraw {
     triangles: Triangles,
 }
 impl GpuRedraw {
-    pub fn update_texture(&mut self, textures: Vec<u8>, offset: usize) {
-        self.texture.splice(offset..textures.len(), textures);
+    pub fn update_texture(&mut self, textures: Vec<u8>) {
+        self.texture = textures;
     }
     pub fn update_triangles(&mut self, triangles: Triangles, offset: usize) {
-        let v_i = self.triangles.indices[offset + 1] as usize;
+        let v_i = {
+            if offset > 0 {
+                self.triangles.indices[offset + 1] as usize
+            } else {
+                0 as usize
+            }
+        };
         self.triangles.indices.splice(offset.., triangles.indices);
         self.triangles.vertices.splice(v_i.., triangles.vertices);
     }

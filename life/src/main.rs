@@ -1,4 +1,4 @@
-use bytemuck::{Pod, Zeroable};
+use bytemuck::{cast_slice, Pod, Zeroable};
 use concept::regex::{get_center, get_default_init_callback};
 use concept::scroll::ScrollState;
 use concept::spring::SpringMat4;
@@ -7,9 +7,7 @@ use regex::Regex;
 use salvage::callback::InitCallback;
 use salvage::svg_set::SvgSet;
 use salvage::usvg::NodeExt;
-use std::cell::RefCell;
 use std::f32::consts::PI;
-use std::rc::Rc;
 
 const RANDOM_VARIANCE: u64 = 12;
 const RANDOM_BASE: u64 = 18;
@@ -51,10 +49,25 @@ impl LifeGame {
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable, Default)]
 struct Texture {
-    global_transform: Mat4,
     identity_transform: Mat4,
     tip_transform: Mat4,
     player_avatar_transforms: [Mat4; 4],
+}
+
+#[derive(Default)]
+struct AnimationRegister {
+    texture: Texture,
+    register: Vec<SpringMat4<Self>>,
+}
+impl AnimationRegister {
+    fn spring_to<F: Fn(&mut Self) -> &mut Mat4, G: Fn(&mut Self)>(
+        &mut self,
+        get_mat: F,
+        target_mat4: Mat4,
+        on_complete: G,
+    ) {
+        get_mat(self);
+    }
 }
 
 pub fn main() {
@@ -89,28 +102,33 @@ pub fn main() {
         };
         default_callback.process_events(&(node.clone(), *pass_down))
     });
-    let svg_set = SvgSet::new(include_str!("../../svg/life.svg"), callback);
+    let mut svg_set = SvgSet::new(include_str!("../../svg/life.svg"), callback);
 
-    let life_game = LifeGame {
+    let mut life_game = LifeGame {
         position_to_coordinates,
         position_to_dollar,
         ..Default::default()
     };
-    let mut texture = Texture::default();
-    let animation_register = Vec::<SpringMat4>::new();
-    let scroll_state = ScrollState::new_from_svg_set(&svg_set, &mut texture.global_transform);
-    let spring_tip = SpringMat4::new(&mut texture.tip_transform);
+    let mut animation_register = AnimationRegister::default();
+    let scroll_state = ScrollState::new_from_svg_set(&svg_set);
     // let spring_players: Vec<SpringMat4<dyn FnMut()>> = texture
     //     .player_avatar_transforms
     //     .iter()
     //     .map(|x| SpringMat4::new(&mut x, || {}))
     //     .collect();
-    let instruction_text = "Please click".to_string();
+    let instruction_text = "Please click";
+    svg_set.update_text("instruction #dynamicText", instruction_text);
     guppies::init_main_loop(move |event, gpu_redraw| {
         if event.is_none() {
             let geometry = svg_set.get_combined_geometries();
             gpu_redraw.update_triangles(geometry.triangles, 0);
-            gpu_redraw.update_texture(bytemuck::cast_slice(&[texture.clone()]).to_vec(), 0);
+            gpu_redraw.update_texture(
+                [
+                    cast_slice(&[scroll_state.transform]),
+                    cast_slice(&[animation_register.texture.clone()]),
+                ]
+                .concat(),
+            );
         } else if let Some(event) = event {
             // if spring_tip.is_animating || spring_players.iter().any(|spring| spring.is_animating) {
             //     return;
@@ -123,7 +141,7 @@ pub fn main() {
                 Mat4::IDENTITY + Mat4::from_translation((target, 0.).into()) - start_center
             };
 
-            instruction_text = format!("Player: {}", life_game.current_player + 1);
+            // instruction_text = format!("Player: {}", life_game.current_player + 1);
             // let cb1 = Rc::new(move |ctx: &mut LifeGameView| {
             //     SpringMat4::<LifeGameView>::spring_to(
             //         ctx,
@@ -138,12 +156,12 @@ pub fn main() {
             //     )
             // });
 
-            spring_tip.spring_to(
-                &mut animation_register,
+            animation_register.spring_to(
+                |r| &mut r.texture.tip_transform,
                 tip_center
                     * Mat4::from_rotation_z(PI / 3. * one_sixths_spins as f32)
                     * tip_center.inverse(),
-                Rc::new(RefCell::new(|| {})),
+                |_| {},
             );
         }
     });
