@@ -119,58 +119,47 @@ pub fn main() {
     svg_set.update_text("instruction #dynamicText", "Please click");
     guppies::init_main_loop(move |event, gpu_redraw| {
         let geometry = svg_set.get_combined_geometries();
-        if event.is_none() {
-            gpu_redraw.update_triangles(geometry.triangles, 0);
-            gpu_redraw.update_texture(
-                [
-                    cast_slice(&[scroll_state.transform]),
-                    cast_slice(&[animation_register.texture.clone()]),
-                ]
-                .concat(),
-            );
-        } else if let Some(event) = event {
-            scroll_state.event_handler(event);
-            // if spring_tip.is_animating || spring_players.iter().any(|spring| spring.is_animating) {
-            //     return;
-            // }
-            let one_sixths_spins = LifeGame::spin_roulette();
-            let avatar_mat4 = {
-                life_game.proceed(one_sixths_spins);
-                let target =
-                    life_game.position_to_coordinates[life_game.position[life_game.current_player]];
-                Mat4::IDENTITY + Mat4::from_translation((target, 0.).into()) - start_center
-            };
+        scroll_state.event_handler(event);
+        // if spring_tip.is_animating || spring_players.iter().any(|spring| spring.is_animating) {
+        //     return;
+        // }
+        let one_sixths_spins = LifeGame::spin_roulette();
+        let avatar_mat4 = {
+            life_game.proceed(one_sixths_spins);
+            let target =
+                life_game.position_to_coordinates[life_game.position[life_game.current_player]];
+            Mat4::IDENTITY + Mat4::from_translation((target, 0.).into()) - start_center
+        };
 
-            // instruction_text = format!("Player: {}", life_game.current_player + 1);
-            // let cb1 = Rc::new(move |ctx: &mut LifeGameView| {
-            //     SpringMat4::<LifeGameView>::spring_to(
-            //         ctx,
-            //         Rc::new(move |ctx| {
-            //             &mut ctx.player_avatar_transforms[ctx.life_game.current_player]
-            //         }),
-            //         Rc::new(|ctx, get_life_view| ctx.animation_vec.push(get_life_view)),
-            //         avatar_mat4,
-            //         Rc::new(|ctx| {
-            //             ctx.life_game.finish_turn();
-            //         }),
-            //     )
-            // });
+        // instruction_text = format!("Player: {}", life_game.current_player + 1);
+        // let cb1 = Rc::new(move |ctx: &mut LifeGameView| {
+        //     SpringMat4::<LifeGameView>::spring_to(
+        //         ctx,
+        //         Rc::new(move |ctx| {
+        //             &mut ctx.player_avatar_transforms[ctx.life_game.current_player]
+        //         }),
+        //         Rc::new(|ctx, get_life_view| ctx.animation_vec.push(get_life_view)),
+        //         avatar_mat4,
+        //         Rc::new(|ctx| {
+        //             ctx.life_game.finish_turn();
+        //         }),
+        //     )
+        // });
 
-            animation_register.spring_to(
-                |r| &mut r.texture.tip_transform,
-                tip_center
-                    * Mat4::from_rotation_z(PI / 3. * one_sixths_spins as f32)
-                    * tip_center.inverse(),
-                |_| {},
-            );
-            gpu_redraw.update_triangles(geometry.triangles, 0);
-            gpu_redraw.update_texture(
-                [
-                    cast_slice(&[scroll_state.transform]),
-                    cast_slice(&[animation_register.texture.clone()]),
-                ]
-                .concat(),
-            );
-        }
+        animation_register.spring_to(
+            |r| &mut r.texture.tip_transform,
+            tip_center
+                * Mat4::from_rotation_z(PI / 3. * one_sixths_spins as f32)
+                * tip_center.inverse(),
+            |_| {},
+        );
+        gpu_redraw.update_triangles(geometry.triangles, 0);
+        gpu_redraw.update_texture(
+            [
+                cast_slice(&[scroll_state.transform]),
+                cast_slice(&[animation_register.texture.clone()]),
+            ]
+            .concat(),
+        );
     });
 }

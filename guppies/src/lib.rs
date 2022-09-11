@@ -85,7 +85,7 @@ impl GpuRedraw {
     }
 }
 
-pub fn init_main_loop<F: FnMut(Option<WindowEvent>, &mut GpuRedraw) + 'static>(mut main_loop: F) {
+pub fn init_main_loop<F: FnMut(WindowEvent, &mut GpuRedraw) + 'static>(mut main_loop: F) {
     let event_loop = EventLoop::new();
     let mut redraw = None;
     // Type definition is required for android build
@@ -107,8 +107,7 @@ pub fn init_main_loop<F: FnMut(Option<WindowEvent>, &mut GpuRedraw) + 'static>(m
                 winit::event::StartCause::Init => {
                     init(event_loop, &gpu_redraw.triangles, &mut redraw, &mut window);
                     let size = window.as_ref().unwrap().inner_size();
-                    main_loop(None, &mut gpu_redraw);
-                    main_loop(Some(WindowEvent::Resized(size)), &mut gpu_redraw);
+                    main_loop(WindowEvent::Resized(size), &mut gpu_redraw);
                 }
                 _ => (),
             },
