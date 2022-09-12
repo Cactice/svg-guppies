@@ -126,7 +126,7 @@ pub fn main() {
     let mut animation_registerer = AnimationRegisterer::default();
     let mut scroll_state = ScrollState::new_from_svg_set(&svg_set);
     svg_set.update_text("instruction #dynamicText", "Please click");
-    guppies::main_loop(move |event, gpu_redraw| {
+    guppies::render_loop(move |event, gpu_redraw| {
         let clicked = scroll_state.event_handler(event);
         if clicked {
             // if spring_tip.is_animating || spring_players.iter().any(|spring| spring.is_animating) {
