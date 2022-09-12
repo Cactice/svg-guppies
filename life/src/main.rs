@@ -3,6 +3,7 @@ use concept::regex::{get_center, get_default_init_callback};
 use concept::scroll::ScrollState;
 use concept::spring::SpringMat4;
 use guppies::glam::{Mat4, Vec2};
+use guppies::winit::event::Event;
 use regex::Regex;
 use salvage::callback::InitCallback;
 use salvage::svg_set::SvgSet;
@@ -53,17 +54,17 @@ impl LifeGame {
 #[derive(Clone, Copy, Pod, Zeroable, Default)]
 struct Texture {
     identity_transform: Mat4,
-    tip_transform: Mat4,
     player_avatar_transforms: [Mat4; 4],
+    tip_transform: Mat4,
 }
 
 #[derive(Default, Clone)]
 struct AnimationRegisterer {
     texture: Texture,
-    registerer: Vec<SpringMat4>,
+    registerer: Vec<(SpringMat4, Rc<dyn Fn(&mut Self) -> &mut Mat4>)>,
 }
 impl AnimationRegisterer {
-    fn spring_to<F: Fn(&mut Self) -> &mut Mat4, G: FnMut() + 'static>(
+    fn spring_to<F: Fn(&mut Self) -> &mut Mat4 + 'static, G: FnMut() + 'static>(
         &mut self,
         get_current: F,
         target: Mat4,
@@ -72,14 +73,22 @@ impl AnimationRegisterer {
         let current = get_current(self).clone();
         let mut spring = SpringMat4::new(target, Rc::new(RefCell::new(on_complete)));
         *get_current(self) = spring.update(current).0;
-        self.registerer.push(spring);
+        self.registerer.push((spring, Rc::new(get_current)));
     }
     fn update(&mut self) {
         self.registerer = self
             .registerer
-            .iter()
-            .filter(|a| a.is_animating)
-            .cloned()
+            .clone()
+            .into_iter()
+            .filter_map(|(mut spring, get_current)| {
+                let current = get_current(self).clone();
+                *get_current(self) = spring.update(current).0;
+                if spring.is_animating {
+                    return Some((spring, get_current));
+                } else {
+                    None
+                }
+            })
             .collect();
     }
 }
@@ -155,6 +164,9 @@ pub fn main() {
                     * tip_center.inverse(),
                 || {},
             );
+        }
+        if let Event::RedrawRequested(_) = event {
+            animation_registerer.update();
         }
         let geometry = svg_set.get_combined_geometries();
         gpu_redraw.update_triangles(geometry.triangles, 0);

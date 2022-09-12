@@ -8,7 +8,7 @@ use setup::Redraw;
 pub use winit;
 use winit::dpi::PhysicalSize;
 use winit::event_loop::EventLoopWindowTarget;
-use winit::window::{Window, WindowBuilder};
+use winit::window::{Window, WindowBuilder, WindowId};
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -85,7 +85,7 @@ impl GpuRedraw {
     }
 }
 
-pub fn render_loop<F: FnMut(&WindowEvent, &mut GpuRedraw) + 'static>(mut render_loop: F) {
+pub fn render_loop<F: FnMut(&Event<()>, &mut GpuRedraw) + 'static>(mut render_loop: F) {
     let event_loop = EventLoop::new();
     let mut redraw = None;
     // Type definition is required for android build
@@ -99,6 +99,7 @@ pub fn render_loop<F: FnMut(&WindowEvent, &mut GpuRedraw) + 'static>(mut render_
         if let Some(window) = window.as_mut() {
             window.request_redraw();
         }
+        render_loop(&event, &mut gpu_redraw);
         match event {
             #[cfg(target_os = "android")]
             Event::Resumed => init(event_loop, &draw_primitive, &mut redraw, &mut window),
@@ -107,24 +108,30 @@ pub fn render_loop<F: FnMut(&WindowEvent, &mut GpuRedraw) + 'static>(mut render_
                 winit::event::StartCause::Init => {
                     init(event_loop, &gpu_redraw.triangles, &mut redraw, &mut window);
                     let size = window.as_ref().unwrap().inner_size();
-                    render_loop(&WindowEvent::Resized(size), &mut gpu_redraw);
+                    render_loop(
+                        &Event::WindowEvent {
+                            window_id: unsafe { WindowId::dummy() },
+                            event: WindowEvent::Resized(size),
+                        },
+                        &mut gpu_redraw,
+                    );
                 }
                 _ => (),
             },
-            Event::WindowEvent { event, .. } => {
-                render_loop(&event, &mut gpu_redraw);
-                match event {
-                    WindowEvent::CloseRequested => {
-                        *control_flow = ControlFlow::Exit;
-                    }
-                    WindowEvent::Resized(p) => {
-                        if let Some(redraw) = redraw.as_mut() {
-                            redraw.resize(p);
-                        }
-                    }
-                    _ => {}
+            Event::WindowEvent {
+                event: window_event,
+                ..
+            } => match window_event {
+                WindowEvent::CloseRequested => {
+                    *control_flow = ControlFlow::Exit;
                 }
-            }
+                WindowEvent::Resized(p) => {
+                    if let Some(redraw) = redraw.as_mut() {
+                        redraw.resize(p);
+                    }
+                }
+                _ => {}
+            },
             Event::RedrawRequested(_) => {
                 if let (Some(redraw), Some(window)) = (redraw.as_mut(), window.as_mut()) {
                     gpu_redraw.texture.resize(8192 * 16, 0);
