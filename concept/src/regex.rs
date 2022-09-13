@@ -1,4 +1,4 @@
-use guppies::glam::{Mat4, Vec2};
+use guppies::glam::Vec2;
 use regex::RegexSet;
 use salvage::{
     callback::{IndicesPriority, InitCallback, PassDown},

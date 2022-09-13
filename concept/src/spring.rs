@@ -1,48 +1,46 @@
 use guppies::glam::Mat4;
 use natura::{AngularFrequency, DampingRatio, DeltaTime, Spring};
-use std::cell::RefCell;
 use std::iter::zip;
+use std::marker::PhantomData;
 use std::rc::Rc;
 
 #[derive(Clone)]
-pub struct SpringMat4 {
+pub struct SpringMat4<T, G: Fn(&mut T)> {
+    _marker: PhantomData<T>,
     spring: Spring,
     target: Mat4,
     velocity: Mat4,
     pub is_animating: bool,
-    on_complete: Rc<RefCell<dyn FnMut() -> ()>>,
+    on_complete: Rc<G>,
 }
 
-impl Default for SpringMat4 {
-    fn default() -> Self {
+// impl<T, G: Fn(&mut T)> Default for SpringMat4<T, G> {
+// fn default() -> Self {}
+// }
+
+impl<T, G: Fn(&mut T)> SpringMat4<T, G> {
+    pub fn new(on_complete: G, target: Mat4) -> Self {
         Self {
             spring: Spring::new(
                 DeltaTime(natura::fps(60)),
                 AngularFrequency(20.0),
                 DampingRatio(0.7),
             ),
-            is_animating: false,
-            target: Default::default(),
+            is_animating: true,
+            target,
             velocity: Default::default(),
-            on_complete: Rc::new(RefCell::new(|| {})),
+            on_complete: Rc::new(on_complete),
+            _marker: PhantomData,
         }
     }
-}
 
-impl SpringMat4 {
-    pub fn new(target: Mat4, on_complete: Rc<RefCell<dyn FnMut() -> ()>>) -> Self {
-        let mut me = Self::default();
-        me.is_animating = true;
-        me.target = target;
-        me.on_complete = on_complete;
-        me
-    }
-
-    pub fn update(&mut self, current: Mat4) -> (Mat4, bool) {
+    pub fn update(&mut self, current: &mut Mat4, arg: &mut T) {
+        if !self.is_animating {
+            return;
+        }
         let me = self;
         let mut current_position_vec = vec![];
         let mut vel_vec = vec![];
-        let new_current;
 
         let animating_complete = {
             zip(
@@ -56,15 +54,14 @@ impl SpringMat4 {
                 current_position_vec.push(new_current_position as f32);
                 vel_vec.push(new_vel as f32);
             });
-            new_current = Mat4::from_cols_array(&current_position_vec.try_into().unwrap());
+            *current = Mat4::from_cols_array(&current_position_vec.try_into().unwrap());
             me.velocity = Mat4::from_cols_array(&vel_vec.try_into().unwrap());
 
             current.abs_diff_eq(me.target, 1.0) && me.velocity.abs_diff_eq(Mat4::ZERO, 100.0)
         };
         if animating_complete {
             me.is_animating = false;
-            (*me.on_complete.borrow_mut())()
+            (me.on_complete)(arg)
         }
-        (new_current, animating_complete)
     }
 }

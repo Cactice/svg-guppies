@@ -8,9 +8,7 @@ use regex::Regex;
 use salvage::callback::InitCallback;
 use salvage::svg_set::SvgSet;
 use salvage::usvg::NodeExt;
-use std::cell::RefCell;
 use std::f32::consts::PI;
-use std::rc::Rc;
 
 const RANDOM_VARIANCE: u64 = 12;
 const RANDOM_BASE: u64 = 18;
@@ -58,40 +56,40 @@ struct Texture {
     tip_transform: Mat4,
 }
 
-#[derive(Default, Clone)]
-struct AnimationRegisterer {
-    texture: Texture,
-    registerer: Vec<(SpringMat4, Rc<dyn Fn(&mut Self) -> &mut Mat4>)>,
-}
-impl AnimationRegisterer {
-    fn spring_to<F: Fn(&mut Self) -> &mut Mat4 + 'static, G: FnMut() + 'static>(
-        &mut self,
-        get_current: F,
-        target: Mat4,
-        on_complete: G,
-    ) {
-        let current = get_current(self).clone();
-        let mut spring = SpringMat4::new(target, Rc::new(RefCell::new(on_complete)));
-        *get_current(self) = spring.update(current).0;
-        self.registerer.push((spring, Rc::new(get_current)));
-    }
-    fn update(&mut self) {
-        self.registerer = self
-            .registerer
-            .clone()
-            .into_iter()
-            .filter_map(|(mut spring, get_current)| {
-                let current = get_current(self).clone();
-                *get_current(self) = spring.update(current).0;
-                if spring.is_animating {
-                    return Some((spring, get_current));
-                } else {
-                    None
-                }
-            })
-            .collect();
-    }
-}
+// #[derive(Default, Clone)]
+// struct AnimationRegisterer {
+//     texture: Texture,
+//     registerer: Vec<(SpringMat4, Rc<dyn FnMut() -> Mat4>)>,
+// }
+// impl AnimationRegisterer {
+//     fn spring_to<F: FnMut() -> Mat4 + 'static, G: FnMut() + 'static>(
+//         &mut self,
+//         get_current: F,
+//         target: Mat4,
+//         on_complete: G,
+//     ) {
+//         let current = get_current(self).clone();
+//         let mut spring = SpringMat4::new(target, Rc::new(RefCell::new(on_complete)));
+//         *get_current(self) = spring.update(current).0;
+//         self.registerer.push((spring, Rc::new(get_current)));
+//     }
+//     fn update(&mut self) {
+//         self.registerer = self
+//             .registerer
+//             .clone()
+//             .into_iter()
+//             .filter_map(|(mut spring, get_current)| {
+//                 let current = get_current(self).clone();
+//                 *get_current(self) = spring.update(current).0;
+//                 if spring.is_animating {
+//                     return Some((spring, get_current));
+//                 } else {
+//                     None
+//                 }
+//             })
+//             .collect();
+//     }
+// }
 
 pub fn main() {
     env_logger::init();
@@ -132,9 +130,10 @@ pub fn main() {
         position_to_dollar,
         ..Default::default()
     };
-    let mut animation_registerer = AnimationRegisterer::default();
     let mut scroll_state = ScrollState::new_from_svg_set(&svg_set);
+    let mut texture = Texture::default();
     svg_set.update_text("instruction #dynamicText", "Please click");
+    let mut x = None;
     guppies::render_loop(move |event, gpu_redraw| {
         let clicked = scroll_state.event_handler(event);
         if clicked {
@@ -157,23 +156,33 @@ pub fn main() {
             //         },
             //     )
             // };
-            animation_registerer.spring_to(
-                |r| &mut r.texture.tip_transform,
+            // animation_registerer.spring_to(
+            //     |r| &mut r.texture.tip_transform,
+            //     tip_center
+            // * Mat4::from_rotation_z(PI / 3. * one_sixths_spins as f32)
+            // * tip_center.inverse(),
+            //     || {
+            //         life_game.finish_turn();
+            //     },
+            // );
+            x = Some(SpringMat4::new(
+                |life_game: &mut LifeGame| life_game.finish_turn(),
                 tip_center
                     * Mat4::from_rotation_z(PI / 3. * one_sixths_spins as f32)
                     * tip_center.inverse(),
-                || {},
-            );
+            ));
         }
         if let Event::RedrawRequested(_) = event {
-            animation_registerer.update();
+            if let Some(x) = &mut x {
+                x.update(&mut texture.tip_transform, &mut life_game);
+            };
         }
         let geometry = svg_set.get_combined_geometries();
         gpu_redraw.update_triangles(geometry.triangles, 0);
         gpu_redraw.update_texture(
             [
                 cast_slice(&[scroll_state.transform]),
-                cast_slice(&[animation_registerer.texture.clone()]),
+                cast_slice(&[texture.clone()]),
             ]
             .concat(),
         );
