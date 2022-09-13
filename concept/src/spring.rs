@@ -5,36 +5,40 @@ use std::marker::PhantomData;
 use std::rc::Rc;
 
 #[derive(Clone)]
-pub struct SpringMat4<T, G: Fn(&mut T)> {
+pub struct SpringMat4<T> {
     _marker: PhantomData<T>,
     spring: Spring,
     target: Mat4,
     velocity: Mat4,
     pub is_animating: bool,
-    on_complete: Rc<G>,
+    on_complete: Rc<dyn Fn(&mut T)>,
 }
 
-// impl<T, G: Fn(&mut T)> Default for SpringMat4<T, G> {
-// fn default() -> Self {}
-// }
-
-impl<T, G: Fn(&mut T)> SpringMat4<T, G> {
-    pub fn new(on_complete: G, target: Mat4) -> Self {
+impl<T> Default for SpringMat4<T> {
+    fn default() -> Self {
         Self {
             spring: Spring::new(
                 DeltaTime(natura::fps(60)),
                 AngularFrequency(20.0),
                 DampingRatio(0.7),
             ),
-            is_animating: true,
-            target,
+            is_animating: false,
+            target: Default::default(),
             velocity: Default::default(),
-            on_complete: Rc::new(on_complete),
+            on_complete: Rc::new(|_| {}),
             _marker: PhantomData,
         }
     }
+}
 
-    pub fn update(&mut self, current: &mut Mat4, arg: &mut T) {
+impl<T> SpringMat4<T> {
+    pub fn set_target<G: Fn(&mut T) + 'static>(&mut self, target: Mat4, on_complete: G) {
+        self.target = target;
+        self.on_complete = Rc::new(on_complete);
+        self.is_animating = true;
+    }
+
+    pub fn update(&mut self, current: &mut Mat4, args: &mut T) {
         if !self.is_animating {
             return;
         }
@@ -61,7 +65,7 @@ impl<T, G: Fn(&mut T)> SpringMat4<T, G> {
         };
         if animating_complete {
             me.is_animating = false;
-            (me.on_complete)(arg)
+            (me.on_complete)(args)
         }
     }
 }

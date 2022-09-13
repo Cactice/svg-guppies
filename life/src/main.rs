@@ -133,7 +133,10 @@ pub fn main() {
     let mut scroll_state = ScrollState::new_from_svg_set(&svg_set);
     let mut texture = Texture::default();
     svg_set.update_text("instruction #dynamicText", "Please click");
-    let mut x = None;
+    let mut tip_animation = SpringMat4::default();
+    // let mut player_animations = texture
+    //     .player_avatar_transforms
+    //     .map(|_| SpringMat4::default());
     guppies::render_loop(move |event, gpu_redraw| {
         let clicked = scroll_state.event_handler(event);
         if clicked {
@@ -141,41 +144,32 @@ pub fn main() {
             //     return;
             // }
             let one_sixths_spins = LifeGame::spin_roulette();
-            let target = life_game.proceed(one_sixths_spins);
-            let avatar_mat4 =
-                Mat4::IDENTITY + Mat4::from_translation((target, 0.).into()) - start_center;
+            let one_sixths_spins2 = one_sixths_spins.clone();
 
             // instruction_text = format!("Player: {}", life_game.current_player + 1);
 
-            // let cb1 = || {
-            //     animation_registerer.spring_to(
-            //         |r| &mut r.texture.player_avatar_transforms[life_game.current_player],
-            //         avatar_mat4,
-            //         || {
-            //             life_game.finish_turn();
-            //         },
-            //     )
-            // };
-            // animation_registerer.spring_to(
-            //     |r| &mut r.texture.tip_transform,
-            //     tip_center
-            // * Mat4::from_rotation_z(PI / 3. * one_sixths_spins as f32)
-            // * tip_center.inverse(),
-            //     || {
-            //         life_game.finish_turn();
-            //     },
-            // );
-            x = Some(SpringMat4::new(
-                |life_game: &mut LifeGame| life_game.finish_turn(),
+            let after_tip_animation = move |(player_animations, life_game): &mut (
+                &mut [SpringMat4<LifeGame>; 4],
+                &mut LifeGame,
+            )| {
+                let target = life_game.proceed(one_sixths_spins2);
+                player_animations[life_game.current_player].set_target(
+                    Mat4::IDENTITY + Mat4::from_translation((target, 0.).into()) - start_center,
+                    |life_game: &mut LifeGame| life_game.finish_turn(),
+                )
+            };
+            tip_animation.set_target(
                 tip_center
                     * Mat4::from_rotation_z(PI / 3. * one_sixths_spins as f32)
                     * tip_center.inverse(),
-            ));
+                |life_game: &mut LifeGame| life_game.finish_turn(),
+            );
         }
         if let Event::RedrawRequested(_) = event {
-            if let Some(x) = &mut x {
-                x.update(&mut texture.tip_transform, &mut life_game);
-            };
+            tip_animation.update(&mut texture.tip_transform, &mut life_game);
+            // player_animations.iter_mut().for_each(|animation| {
+            //     animation.update(&mut texture.tip_transform, &mut life_game);
+            // });
         }
         let geometry = svg_set.get_combined_geometries();
         gpu_redraw.update_triangles(geometry.triangles, 0);
