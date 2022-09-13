@@ -56,41 +56,6 @@ struct Texture {
     tip_transform: Mat4,
 }
 
-// #[derive(Default, Clone)]
-// struct AnimationRegisterer {
-//     texture: Texture,
-//     registerer: Vec<(SpringMat4, Rc<dyn FnMut() -> Mat4>)>,
-// }
-// impl AnimationRegisterer {
-//     fn spring_to<F: FnMut() -> Mat4 + 'static, G: FnMut() + 'static>(
-//         &mut self,
-//         get_current: F,
-//         target: Mat4,
-//         on_complete: G,
-//     ) {
-//         let current = get_current(self).clone();
-//         let mut spring = SpringMat4::new(target, Rc::new(RefCell::new(on_complete)));
-//         *get_current(self) = spring.update(current).0;
-//         self.registerer.push((spring, Rc::new(get_current)));
-//     }
-//     fn update(&mut self) {
-//         self.registerer = self
-//             .registerer
-//             .clone()
-//             .into_iter()
-//             .filter_map(|(mut spring, get_current)| {
-//                 let current = get_current(self).clone();
-//                 *get_current(self) = spring.update(current).0;
-//                 if spring.is_animating {
-//                     return Some((spring, get_current));
-//                 } else {
-//                     None
-//                 }
-//             })
-//             .collect();
-//     }
-// }
-
 pub fn main() {
     env_logger::init();
     let mut position_to_dollar: Vec<i32> = vec![];
@@ -124,7 +89,6 @@ pub fn main() {
         default_callback.process_events(&(node.clone(), *pass_down))
     });
     let mut svg_set = SvgSet::new(include_str!("../../svg/life.svg"), callback);
-
     let mut life_game = LifeGame {
         position_to_coordinates,
         position_to_dollar,
@@ -134,26 +98,26 @@ pub fn main() {
     let mut texture = Texture::default();
     svg_set.update_text("instruction #dynamicText", "Please click");
     let mut tip_animation = SpringMat4::default();
-    // let mut player_animations = texture
-    //     .player_avatar_transforms
-    //     .map(|_| SpringMat4::default());
+    let mut player_animations = texture
+        .player_avatar_transforms
+        .map(|_| SpringMat4::default());
     guppies::render_loop(move |event, gpu_redraw| {
         let clicked = scroll_state.event_handler(event);
         if clicked {
-            // if spring_tip.is_animating || spring_players.iter().any(|spring| spring.is_animating) {
-            //     return;
-            // }
+            if tip_animation.is_animating
+                || player_animations.iter().any(|spring| spring.is_animating)
+            {
+                return;
+            }
             let one_sixths_spins = LifeGame::spin_roulette();
-            let one_sixths_spins2 = one_sixths_spins.clone();
+            let target = life_game.proceed(one_sixths_spins);
+            let current_player = life_game.current_player.clone();
 
+            // svg_set.update_text("instruction #dynamicText", "Please click");
             // instruction_text = format!("Player: {}", life_game.current_player + 1);
 
-            let after_tip_animation = move |(player_animations, life_game): &mut (
-                &mut [SpringMat4<LifeGame>; 4],
-                &mut LifeGame,
-            )| {
-                let target = life_game.proceed(one_sixths_spins2);
-                player_animations[life_game.current_player].set_target(
+            let after_tip_animation = move |player_animations: &mut [SpringMat4<LifeGame>; 4]| {
+                player_animations[current_player].set_target(
                     Mat4::IDENTITY + Mat4::from_translation((target, 0.).into()) - start_center,
                     |life_game: &mut LifeGame| life_game.finish_turn(),
                 )
@@ -162,14 +126,17 @@ pub fn main() {
                 tip_center
                     * Mat4::from_rotation_z(PI / 3. * one_sixths_spins as f32)
                     * tip_center.inverse(),
-                |life_game: &mut LifeGame| life_game.finish_turn(),
+                after_tip_animation,
             );
         }
         if let Event::RedrawRequested(_) = event {
-            tip_animation.update(&mut texture.tip_transform, &mut life_game);
-            // player_animations.iter_mut().for_each(|animation| {
-            //     animation.update(&mut texture.tip_transform, &mut life_game);
-            // });
+            tip_animation.update(&mut texture.tip_transform, &mut player_animations);
+            player_animations
+                .iter_mut()
+                .enumerate()
+                .for_each(|(i, animation)| {
+                    animation.update(&mut texture.player_avatar_transforms[i], &mut life_game);
+                });
         }
         let geometry = svg_set.get_combined_geometries();
         gpu_redraw.update_triangles(geometry.triangles, 0);
