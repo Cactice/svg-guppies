@@ -61,7 +61,6 @@ pub fn main() {
     let mut position_to_dollar: Vec<i32> = vec![];
     let mut position_to_coordinates: Vec<Vec2> = vec![];
     let mut tip_center = Mat4::IDENTITY;
-    let mut start_center = Mat4::IDENTITY;
     let mut default_callback = get_default_init_callback();
     let coord = Regex::new(r"#coord(?:$| |#)").unwrap();
     let stops = Regex::new(r"^(\d+)\.((?:\+|-)\d+):").unwrap();
@@ -82,8 +81,6 @@ pub fn main() {
             let center = Mat4::from_translation((get_center(node), 0.).into());
             if id.starts_with("Tip") {
                 tip_center = center;
-            } else if id.starts_with("0.") {
-                start_center = center;
             }
         };
         default_callback.process_events(&(node.clone(), *pass_down))
@@ -101,6 +98,7 @@ pub fn main() {
     let mut player_animations = texture
         .player_avatar_transforms
         .map(|_| SpringMat4::default());
+    let start_center = Mat4::from_translation((life_game.position_to_coordinates[0], 0.).into());
     guppies::render_loop(move |event, gpu_redraw| {
         let clicked = scroll_state.event_handler(event);
         if clicked {
@@ -111,16 +109,16 @@ pub fn main() {
             }
             let one_sixths_spins = LifeGame::spin_roulette();
             let target = life_game.proceed(one_sixths_spins);
+            let target =
+                Mat4::IDENTITY + Mat4::from_translation((target, 0.).into()) - start_center;
             let current_player = life_game.current_player.clone();
 
             // svg_set.update_text("instruction #dynamicText", "Please click");
             // instruction_text = format!("Player: {}", life_game.current_player + 1);
 
             let after_tip_animation = move |player_animations: &mut [SpringMat4<LifeGame>; 4]| {
-                player_animations[current_player].set_target(
-                    Mat4::IDENTITY + Mat4::from_translation((target, 0.).into()) - start_center,
-                    |life_game: &mut LifeGame| life_game.finish_turn(),
-                )
+                player_animations[current_player]
+                    .set_target(target, |life_game: &mut LifeGame| life_game.finish_turn())
             };
             tip_animation.set_target(
                 tip_center
