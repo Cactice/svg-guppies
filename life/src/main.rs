@@ -113,8 +113,8 @@ pub fn main() {
                 Mat4::IDENTITY + Mat4::from_translation((target, 0.).into()) - start_center;
             let current_player = life_game.current_player.clone();
 
-            // svg_set.update_text("instruction #dynamicText", "Please click");
-            // instruction_text = format!("Player: {}", life_game.current_player + 1);
+            let instruction_text = format!("Player: {}", life_game.current_player + 1);
+            svg_set.update_text("instruction #dynamicText", &instruction_text);
 
             let after_tip_animation = move |player_animations: &mut [SpringMat4<LifeGame>; 4]| {
                 player_animations[current_player]
