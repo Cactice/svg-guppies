@@ -13,6 +13,7 @@ use std::f32::consts::PI;
 const RANDOM_VARIANCE: u64 = 12;
 const RANDOM_BASE: u64 = 18;
 const ROULETTE_MAX: u64 = 6;
+
 #[derive(Default)]
 struct LifeGame {
     dollars: [i32; 4],
@@ -21,6 +22,7 @@ struct LifeGame {
     pub position_to_dollar: Vec<i32>,
     position_to_coordinates: Vec<Vec2>,
 }
+
 impl LifeGame {
     fn spin_roulette() -> u64 {
         RANDOM_BASE + (fastrand::u64(..) % RANDOM_VARIANCE)
@@ -37,7 +39,7 @@ impl LifeGame {
         self.dollars[self.current_player] += dollar_delta;
         for n in 1..4 {
             if n == 4 {
-                todo!("game finished")
+                panic!("game finished")
             } else {
                 self.current_player = (self.current_player + n) % 4;
                 if self.position[self.current_player] < self.position_to_dollar.len() - 1 {
@@ -109,16 +111,22 @@ pub fn main() {
             }
             let one_sixths_spins = LifeGame::spin_roulette();
             let target = life_game.proceed(one_sixths_spins);
-            let target =
-                Mat4::IDENTITY + Mat4::from_translation((target, 0.).into()) - start_center;
-            let current_player = life_game.current_player.clone();
-
+            let current_player = life_game.current_player;
+            let money = life_game.dollars[current_player];
+            life_game.finish_turn();
             let instruction_text = format!("Player: {}", life_game.current_player + 1);
             svg_set.update_text("instruction #dynamicText", &instruction_text);
 
-            let after_tip_animation = move |player_animations: &mut [SpringMat4<LifeGame>; 4]| {
-                player_animations[current_player]
-                    .set_target(target, |life_game: &mut LifeGame| life_game.finish_turn())
+            let after_tip_animation = move |player_animations: &mut [SpringMat4<SvgSet>; 4]| {
+                player_animations[current_player].set_target(
+                    Mat4::IDENTITY + Mat4::from_translation((target, 0.).into()) - start_center,
+                    move |svg_set| {
+                        svg_set.update_text(
+                            &format!("{}. Player #dynamicText", current_player + 1),
+                            &format!("${}", money),
+                        )
+                    },
+                )
             };
             tip_animation.set_target(
                 tip_center
@@ -133,7 +141,7 @@ pub fn main() {
                 .iter_mut()
                 .enumerate()
                 .for_each(|(i, animation)| {
-                    animation.update(&mut texture.player_avatar_transforms[i], &mut life_game);
+                    animation.update(&mut texture.player_avatar_transforms[i], &mut svg_set);
                 });
         }
         let geometry = svg_set.get_combined_geometries();
