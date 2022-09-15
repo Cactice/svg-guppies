@@ -4,7 +4,6 @@ use std::iter::zip;
 use std::marker::PhantomData;
 use std::rc::Rc;
 
-#[derive(Clone)]
 pub struct SpringMat4<T> {
     _marker: PhantomData<T>,
     spring: Spring,
