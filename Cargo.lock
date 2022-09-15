@@ -261,7 +261,7 @@ dependencies = [
  "bytemuck",
  "fastrand",
  "guppies",
- "natura 0.1.0 (git+https://github.com/cactice/natura)",
+ "natura",
  "regex",
  "salvage",
 ]
@@ -833,7 +833,7 @@ dependencies = [
  "guppies",
  "log",
  "mobile-entry-point",
- "natura 0.1.0 (git+https://github.com/ziyasal/natura)",
+ "natura",
  "ndk-glue",
  "regex",
  "salvage",
@@ -1027,11 +1027,6 @@ dependencies = [
  "thiserror",
  "unicode-xid",
 ]
-
-[[package]]
-name = "natura"
-version = "0.1.0"
-source = "git+https://github.com/cactice/natura#ad3d3f0d5fb365e80e79b04339a660e0a282c956"
 
 [[package]]
 name = "natura"
