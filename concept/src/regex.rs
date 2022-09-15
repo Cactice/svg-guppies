@@ -1,4 +1,4 @@
-use guppies::glam::Mat4;
+use guppies::glam::Vec2;
 use regex::RegexSet;
 use salvage::{
     callback::{IndicesPriority, InitCallback, PassDown},
@@ -10,17 +10,11 @@ pub struct RegexPattern {
     pub regex_pattern: String,
     pub index: usize,
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct RegexPatterns {
     pub inner: Vec<RegexPattern>,
 }
 
-impl Default for RegexPatterns {
-    fn default() -> Self {
-        let mut regex_patterns = Self { inner: vec![] };
-        regex_patterns
-    }
-}
 impl RegexPatterns {
     pub fn add(&mut self, regex_pattern: &str) -> RegexPattern {
         let regex_pattern = RegexPattern {
@@ -32,7 +26,7 @@ impl RegexPatterns {
     }
 }
 
-pub fn default_directives() -> InitCallback<'static> {
+pub fn get_default_init_callback() -> InitCallback<'static> {
     let mut transform_count = 1;
     let mut regex_patterns = RegexPatterns::default();
     let _clickable_regex_pattern = regex_patterns.add(r"#clickable(?:$| |#)");
@@ -76,15 +70,11 @@ pub fn default_directives() -> InitCallback<'static> {
     callback
 }
 
-pub fn get_center(node: &Node) -> Mat4 {
+pub fn get_center(node: &Node) -> Vec2 {
     let bbox = node.calculate_bbox().unwrap();
-    let center = Mat4::from_translation(
-        [
-            (bbox.x() + bbox.width() / 2.) as f32,
-            (bbox.y() + bbox.height() / 2.) as f32,
-            0.,
-        ]
-        .into(),
+    let center = Vec2::new(
+        (bbox.x() + bbox.width() / 2.) as f32,
+        (bbox.y() + bbox.height() / 2.) as f32,
     );
     center
 }
