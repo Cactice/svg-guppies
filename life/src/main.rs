@@ -38,13 +38,9 @@ impl LifeGame {
         let dollar_delta = self.position_to_dollar[self.position[self.current_player]];
         self.dollars[self.current_player] += dollar_delta;
         for n in 1..4 {
-            if n == 4 {
-                panic!("game finished")
-            } else {
-                self.current_player = (self.current_player + n) % 4;
-                if self.position[self.current_player] < self.position_to_dollar.len() - 1 {
-                    break;
-                }
+            self.current_player = (self.current_player + n) % 4;
+            if self.position[self.current_player] < self.position_to_dollar.len() - 1 {
+                break;
             }
         }
     }
@@ -112,11 +108,10 @@ pub fn main() {
             let one_sixths_spins = LifeGame::spin_roulette();
             let target = life_game.proceed(one_sixths_spins);
             let current_player = life_game.current_player;
-            let money = life_game.dollars[current_player];
-            life_game.finish_turn();
             let instruction_text = format!("Player: {}", life_game.current_player + 1);
             svg_set.update_text("instruction #dynamicText", &instruction_text);
-
+            life_game.finish_turn();
+            let money = life_game.dollars[current_player];
             let after_tip_animation = move |player_animations: &mut [SpringMat4<SvgSet>; 4]| {
                 player_animations[current_player].set_target(
                     Mat4::IDENTITY + Mat4::from_translation((target, 0.).into()) - start_center,
