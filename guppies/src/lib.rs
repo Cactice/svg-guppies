@@ -1,6 +1,7 @@
 pub mod callback;
 pub mod primitives;
 mod setup;
+pub use bytemuck;
 pub use glam;
 use glam::{Mat4, Vec2};
 use primitives::Triangles;

@@ -7,7 +7,7 @@ edition = "2021"
 winit = "0.26.1"
 wgpu = "0.13.0"
 pollster = "0.2"
-bytemuck = { version = "1.8", features = ["derive"] }
+bytemuck = { version = "1.9.1", features = ["derive"] }
 glam = { version = "0.21.2", features = ["bytemuck"] }
 
 
