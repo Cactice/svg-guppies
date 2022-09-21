@@ -1,7 +1,7 @@
 use guppies::glam::Vec2;
 use regex::RegexSet;
 use salvage::{
-    callback::{IndicesPriority, InitCallback, PassDown},
+    callback::{IndicesPriority, PassDown},
     geometry::Geometry,
     usvg::{self, Node, NodeExt},
 };
@@ -26,14 +26,14 @@ impl RegexPatterns {
     }
 }
 
-pub fn get_default_init_callback() -> InitCallback<'static> {
+pub fn get_default_init_callback() -> impl FnMut(Node, PassDown) -> (Option<Geometry>, PassDown) {
     let mut transform_count = 1;
     let mut regex_patterns = RegexPatterns::default();
     let _clickable_regex_pattern = regex_patterns.add(r"#clickable(?:$| |#)");
     let dynamic_regex_pattern = regex_patterns.add(r"#dynamic(?:$| |#)");
     let dynamic_text_regex_pattern = regex_patterns.add(r"#dynamicText(?:$| |#)");
     let defaults = RegexSet::new(regex_patterns.inner.iter().map(|r| &r.regex_pattern)).unwrap();
-    let callback = InitCallback::new(move |(node, pass_down)| {
+    move |node, pass_down| {
         let PassDown {
             transform_id: parent_transform_id,
             indices_priority: parent_priority,
@@ -44,14 +44,14 @@ pub fn get_default_init_callback() -> InitCallback<'static> {
             transform_count += 1;
             transform_count
         } else {
-            *parent_transform_id
+            parent_transform_id
         };
         let indices_priority = if !default_matches.matched(dynamic_text_regex_pattern.index) {
             IndicesPriority::Variable
         } else {
             IndicesPriority::Fixed
         };
-        let indices_priority = *parent_priority.max(&indices_priority);
+        let indices_priority = parent_priority.max(indices_priority);
         let geometry = {
             if let usvg::NodeKind::Path(ref p) = *node.borrow() {
                 Some(Geometry::new(p, transform_id, indices_priority))
@@ -66,8 +66,7 @@ pub fn get_default_init_callback() -> InitCallback<'static> {
                 transform_id,
             },
         )
-    });
-    callback
+    }
 }
 
 pub fn get_center(node: &Node) -> Vec2 {
