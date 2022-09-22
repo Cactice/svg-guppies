@@ -1,7 +1,8 @@
 use bytemuck::{cast_slice, Pod, Zeroable};
-use concept::regex::{get_center, get_default_init_callback};
+use concept::regex::get_center;
 use concept::scroll::ScrollState;
 use concept::spring::SpringMat4;
+use concept::uses::use_svg;
 use guppies::glam::{Mat4, Vec2};
 use guppies::winit::event::Event;
 use regex::Regex;
@@ -58,10 +59,9 @@ pub fn main() {
     let mut position_to_dollar: Vec<i32> = vec![];
     let mut position_to_coordinates: Vec<Vec2> = vec![];
     let mut tip_center = Mat4::IDENTITY;
-    let mut default_callback = get_default_init_callback();
     let coord = Regex::new(r"#coord(?:$| |#)").unwrap();
     let stops = Regex::new(r"^(\d+)\.((?:\+|-)\d+):").unwrap();
-    let mut svg_set = SvgSet::new(include_str!("../../svg/life.svg"), |node, pass_down| {
+    let mut svg_set = use_svg(include_str!("../../svg/life.svg"), |node, pass_down| {
         let id = node.id();
         for captures in stops.captures_iter(&id) {
             let stop: usize = captures[1].parse().unwrap();
@@ -80,7 +80,6 @@ pub fn main() {
                 tip_center = center;
             }
         };
-        default_callback(node.clone(), pass_down)
     });
     let mut life_game = LifeGame {
         position_to_coordinates,
