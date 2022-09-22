@@ -1,20 +1,17 @@
-use crate::{
-    callback::{InitCallback, PassDown},
-    geometry::Geometry,
-};
+use crate::{callback::PassDown, geometry::Geometry};
 use guppies::{glam::Vec2, primitives::Rect};
 use roxmltree::{Document, NodeId};
 use std::{collections::HashMap, sync::Arc};
-use usvg::{fontdb::Source, Options, Tree};
+use usvg::{fontdb::Source, Node, Options, Tree};
 use xmlwriter::XmlWriter;
 
-fn recursive_svg(
+fn recursive_svg<C: FnMut(Node, PassDown) -> (Option<Geometry>, PassDown)>(
     node: usvg::Node,
     pass_down: PassDown,
     geometries: &mut Vec<Geometry>,
-    callback: &mut InitCallback,
+    callback: &mut C,
 ) {
-    let (geometry, pass_down) = callback.process_events(&(node.clone(), pass_down));
+    let (geometry, pass_down) = callback(node.clone(), pass_down);
     if let Some(geometry) = geometry {
         geometries.push(geometry);
     }
@@ -88,7 +85,10 @@ impl<'a> SvgSet<'a> {
         let node = self.document.get_node(*node_id).ok_or("Not in document")?;
         Ok(node)
     }
-    pub fn new(xml: &'a str, mut callback: InitCallback) -> Self {
+    pub fn new<C: FnMut(Node, PassDown) -> (Option<Geometry>, PassDown)>(
+        xml: &'a str,
+        mut callback: C,
+    ) -> Self {
         let font = include_bytes!("../fallback_font/Roboto-Medium.ttf");
         let mut opt = Options::default();
         opt.fontdb

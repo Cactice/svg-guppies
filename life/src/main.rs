@@ -1,11 +1,11 @@
 use bytemuck::{cast_slice, Pod, Zeroable};
-use concept::regex::{get_center, get_default_init_callback};
+use concept::regex::get_center;
 use concept::scroll::ScrollState;
 use concept::spring::SpringMat4;
+use concept::uses::use_svg;
 use guppies::glam::{Mat4, Vec2};
 use guppies::winit::event::Event;
 use regex::Regex;
-use salvage::callback::InitCallback;
 use salvage::svg_set::SvgSet;
 use salvage::usvg::NodeExt;
 use std::f32::consts::PI;
@@ -59,15 +59,14 @@ pub fn main() {
     let mut position_to_dollar: Vec<i32> = vec![];
     let mut position_to_coordinates: Vec<Vec2> = vec![];
     let mut tip_center = Mat4::IDENTITY;
-    let mut default_callback = get_default_init_callback();
     let coord = Regex::new(r"#coord(?:$| |#)").unwrap();
     let stops = Regex::new(r"^(\d+)\.((?:\+|-)\d+):").unwrap();
-    let callback = InitCallback::new(|(node, pass_down)| {
+    let mut svg_set = use_svg(include_str!("../../svg/life.svg"), |node, pass_down| {
         let id = node.id();
         for captures in stops.captures_iter(&id) {
             let stop: usize = captures[1].parse().unwrap();
             let dollar: i32 = captures[2].parse().unwrap();
-            let coordinate = get_center(node);
+            let coordinate = get_center(&node);
             if stop >= position_to_dollar.len() {
                 position_to_dollar.resize(stop, dollar);
                 position_to_coordinates.resize(stop, coordinate);
@@ -76,14 +75,12 @@ pub fn main() {
             position_to_coordinates.insert(stop, coordinate);
         }
         if coord.is_match(&id) {
-            let center = Mat4::from_translation((get_center(node), 0.).into());
+            let center = Mat4::from_translation((get_center(&node), 0.).into());
             if id.starts_with("Tip") {
                 tip_center = center;
             }
         };
-        default_callback.process_events(&(node.clone(), *pass_down))
     });
-    let mut svg_set = SvgSet::new(include_str!("../../svg/life.svg"), callback);
     let mut life_game = LifeGame {
         position_to_coordinates,
         position_to_dollar,

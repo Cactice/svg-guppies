@@ -14,5 +14,3 @@ pub struct PassDown {
     pub indices_priority: IndicesPriority,
     pub transform_id: u32,
 }
-
-pub type InitCallback<'a> = Callback<'a, (Node, PassDown), (Option<Geometry>, PassDown)>;
