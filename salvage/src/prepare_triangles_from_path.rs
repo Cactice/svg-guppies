@@ -9,7 +9,7 @@ pub const FALLBACK_COLOR: Vec4 = Vec4::ONE;
 
 pub fn prepare_triangles_from_path(p: &Path, transform_id: u32) -> Triangles {
     let mut vertex_buffer = VertexBuffers::<Vertex, Index>::new();
-    if let Some(ref stroke) = p.stroke {
+    if let Some(stroke) = &p.stroke {
         let color = match stroke.paint {
             usvg::Paint::Color(c) => Vec4::new(
                 c.red as f32 / u8::MAX as f32,
@@ -21,7 +21,7 @@ pub fn prepare_triangles_from_path(p: &Path, transform_id: u32) -> Triangles {
         };
         iterate_stroke(stroke, p, &mut vertex_buffer, color, transform_id);
     }
-    if let Some(ref fill) = p.fill {
+    if let Some(fill) = &p.fill {
         let color = match fill.paint {
             usvg::Paint::Color(c) => Vec4::new(
                 c.red as f32 / u8::MAX as f32,
