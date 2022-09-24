@@ -1,7 +1,3 @@
-use crate::geometry::Geometry;
-use guppies::callback::Callback;
-use usvg::Node;
-
 #[derive(PartialEq, PartialOrd, Eq, Ord, Clone, Copy, Debug, Default)]
 pub enum IndicesPriority {
     Variable,
