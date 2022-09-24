@@ -20,7 +20,11 @@ pub fn iterate_fill(
             convert_path(path),
             &FillOptions::tolerance(0.01),
             &mut BuffersBuilder::new(geometry, |v: FillVertex| Vertex {
-                position: [v.position().x, v.position().y, 0.],
+                position: [
+                    v.position().x + path.transform.e as f32,
+                    v.position().y + path.transform.f as f32,
+                    0.,
+                ],
                 color: color.to_array(),
                 transform_id: id,
             }),

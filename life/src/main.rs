@@ -136,8 +136,7 @@ pub fn main() {
                     animation.update(&mut texture.player_avatar_transforms[i], &mut svg_set);
                 });
         }
-        let geometry = svg_set.get_combined_geometries();
-        gpu_redraw.update_triangles(geometry.triangles, 0);
+        gpu_redraw.update_triangles(svg_set.get_combined_geometries().triangles, 0);
         gpu_redraw.update_texture(
             [
                 cast_slice(&[scroll_state.transform]),

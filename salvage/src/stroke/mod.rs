@@ -26,7 +26,7 @@ pub fn convert_stroke(s: &usvg::Stroke) -> StrokeOptions {
 
 pub fn iterate_stroke(
     s: &usvg::Stroke,
-    p: &Path,
+    path: &Path,
     geometry: &mut VertexBuffers<Vertex, Index>,
     color: Vec4,
     id: u32,
@@ -34,7 +34,7 @@ pub fn iterate_stroke(
     let mut stroke_tess = StrokeTessellator::new();
     let stroke_opts = convert_stroke(s);
     let _ = stroke_tess.tessellate(
-        convert_path(p),
+        convert_path(path),
         &stroke_opts,
         &mut BuffersBuilder::new(geometry, |v: StrokeVertex| Vertex {
             position: [v.position().x, v.position().y, 0.],

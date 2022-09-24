@@ -246,7 +246,7 @@ impl Redraw {
         });
 
         let surface_formats = surface.get_supported_formats(&adapter);
-        let surface_format = surface_formats.first().unwrap();
+        let surface_format = wgpu::TextureFormat::Bgra8Unorm;
 
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: None,
@@ -264,7 +264,7 @@ impl Redraw {
                 module: &shader,
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
-                    format: *surface_format,
+                    format: surface_format,
                     blend: Some(wgpu::BlendState::PREMULTIPLIED_ALPHA_BLENDING),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
@@ -281,7 +281,7 @@ impl Redraw {
 
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: *surface_format,
+            format: surface_format,
             width: size.width,
             height: size.height,
             present_mode: wgpu::PresentMode::AutoVsync,
