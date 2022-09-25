@@ -14,6 +14,9 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
 };
 
+// pub fn get_scale(_: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
+//     Mat4::from_scale([2. / svg_scale.x as f32, -2. / svg_scale.y as f32, 1.0].into())
+// }
 pub fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
     let ratio = f32::min(svg_scale.x, svg_scale.y) / f32::max(svg_scale.x, svg_scale.y);
     Mat4::from_scale(
