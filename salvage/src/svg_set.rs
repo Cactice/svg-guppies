@@ -2,7 +2,7 @@ use crate::{callback::PassDown, geometry::Geometry};
 use guppies::{glam::Vec2, primitives::Rect};
 use roxmltree::{Document, NodeId};
 use std::{collections::HashMap, sync::Arc};
-use usvg::{fontdb::Source, Node, NodeExt, Options, Tree};
+use usvg::{fontdb::Source, Node, Options, Tree};
 use xmlwriter::XmlWriter;
 
 fn recursive_svg<C: FnMut(Node, PassDown) -> (Option<Geometry>, PassDown)>(

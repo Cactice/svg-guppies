@@ -1,0 +1,18 @@
+<svg width="613" height="52" viewBox="0 0 613 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="613" height="52" fill="#F9F8F4"/>
+<path d="M14 16H43.02" stroke="#17395C" stroke-width="4.14571" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M14 26.3643H43.02" stroke="#17395C" stroke-width="4.14571" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M14 36.7285H43.02" stroke="#17395C" stroke-width="4.14571" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M565.75 20H588.5C592.366 20 595.5 23.1341 595.5 27C595.5 30.866 592.366 34 588.5 34H579.75" stroke="#17395C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M571 13L564 20L571 27" stroke="#17395C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="291.5" cy="19.5" r="4.5" fill="#17395C"/>
+<circle cx="306.5" cy="19.5" r="4.5" fill="#17395C"/>
+<circle cx="321.5" cy="19.5" r="4.5" fill="#17395C"/>
+<circle cx="321.5" cy="34.5" r="4.5" fill="#17395C"/>
+<circle cx="306.5" cy="34.5" r="4.5" fill="#17395C"/>
+<circle cx="291.5" cy="34.5" r="4.5" fill="#17395C"/>
+<mask id="path-12-inside-1_912_3009" fill="white">
+<path d="M0 0H613V52H0V0Z"/>
+</mask>
+<path d="M0 4H613V-4H0V4ZM613 48H0V56H613V48Z" fill="#17395C" mask="url(#path-12-inside-1_912_3009)"/>
+</svg>
