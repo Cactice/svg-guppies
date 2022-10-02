@@ -1,7 +1,7 @@
 use bytemuck::{cast_slice, Pod, Zeroable};
-use concept::regex::get_center;
 use concept::scroll::ScrollState;
 use concept::spring::SpringMat4;
+use concept::svg_init::get_center;
 use concept::uses::use_svg;
 use guppies::glam::{Mat4, Vec2};
 use guppies::winit::event::Event;

@@ -5,9 +5,9 @@ use std::{collections::HashMap, sync::Arc};
 use usvg::{fontdb::Source, Node, Options, Tree};
 use xmlwriter::XmlWriter;
 
-fn recursive_svg<C: FnMut(Node, PassDown) -> (Option<Geometry>, PassDown)>(
+fn recursive_svg<P: Copy, C: FnMut(Node, P) -> (Option<Geometry>, P)>(
     node: usvg::Node,
-    pass_down: PassDown,
+    pass_down: P,
     geometries: &mut Vec<Geometry>,
     callback: &mut C,
 ) {
@@ -84,8 +84,9 @@ impl<'a> SvgSet<'a> {
         let node = self.document.get_node(*node_id).ok_or("Not in document")?;
         Ok(node)
     }
-    pub fn new<C: FnMut(Node, PassDown) -> (Option<Geometry>, PassDown)>(
+    pub fn new<P: Copy, C: FnMut(Node, P) -> (Option<Geometry>, P)>(
         xml: &'a str,
+        initial_pass_down: P,
         mut callback: C,
     ) -> Self {
         let font = include_bytes!("../fallback_font/Roboto-Medium.ttf");
@@ -108,10 +109,7 @@ impl<'a> SvgSet<'a> {
         let mut geometries: Vec<Geometry> = vec![];
         recursive_svg(
             tree.root(),
-            PassDown {
-                transform_id: 1,
-                ..Default::default()
-            },
+            initial_pass_down,
             &mut geometries,
             &mut callback,
         );

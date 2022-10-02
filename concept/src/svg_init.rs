@@ -1,4 +1,5 @@
 use guppies::glam::Vec2;
+pub use regex;
 use regex::RegexSet;
 use salvage::{
     callback::{IndicesPriority, PassDown},
