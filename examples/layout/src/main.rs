@@ -1,7 +1,7 @@
 use bytemuck::cast_slice;
 use concept::{scroll::ScrollState, uses::use_svg};
 use guppies::glam::{Mat2, Mat4, Vec2};
-use salvage::usvg::{Node, NodeExt, PathBbox};
+use salvage::usvg::{Node, NodeExt};
 
 enum HorizontalConstraint {
     Left(f32),
@@ -9,6 +9,7 @@ enum HorizontalConstraint {
     LeftAndRight { left: f32, right: f32 },
     Center { rightward_from_center: f32 },
 }
+
 impl Default for HorizontalConstraint {
     fn default() -> Self {
         Self::LeftAndRight {
@@ -31,23 +32,23 @@ impl Default for VerticalConstraint {
         }
     }
 }
+
 struct Constraint {
     x: HorizontalConstraint,
     y: VerticalConstraint,
 }
 
-fn recursive_layout(node: Node, parent_box: Mat2, constraint: Constraint) {
+fn make_layout(node: &Node, parent_box: Mat2, constraint: Constraint) -> Mat2 {
     let Vec2 {
         x: parent_x,
         y: parent_width,
     } = parent_box.x_axis;
     let parent_center = parent_x + parent_width / 2.;
-    let x_constraint = constraint.x;
     let width = node.calculate_bbox().unwrap().width() as f32;
 
     let mut this_box = parent_box.clone();
     this_box.x_axis.y = width;
-    match x_constraint {
+    match constraint.x {
         HorizontalConstraint::Left(left) => this_box.x_axis.x += left,
         HorizontalConstraint::Right(right) => this_box.x_axis.x += parent_width - (right + width),
         HorizontalConstraint::LeftAndRight { left, right } => {
@@ -60,6 +61,7 @@ fn recursive_layout(node: Node, parent_box: Mat2, constraint: Constraint) {
             this_box.x_axis.x = parent_center + rightward_from_center;
         }
     };
+    this_box
 }
 
 pub fn main() {
