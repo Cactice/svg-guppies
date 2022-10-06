@@ -1,11 +1,11 @@
-use crate::{callback::PassDown, geometry::Geometry};
+use crate::geometry::Geometry;
 use guppies::{glam::Vec2, primitives::Rect};
 use roxmltree::{Document, NodeId};
 use std::{collections::HashMap, sync::Arc};
 use usvg::{fontdb::Source, Node, Options, Tree};
 use xmlwriter::XmlWriter;
 
-fn recursive_svg<P: Copy, C: FnMut(Node, P) -> (Option<Geometry>, P)>(
+fn recursive_svg<P: Clone, C: FnMut(Node, P) -> (Option<Geometry>, P)>(
     node: usvg::Node,
     pass_down: P,
     geometries: &mut Vec<Geometry>,
@@ -16,7 +16,7 @@ fn recursive_svg<P: Copy, C: FnMut(Node, P) -> (Option<Geometry>, P)>(
         geometries.push(geometry);
     }
     for child in node.children() {
-        recursive_svg(child, pass_down, geometries, callback);
+        recursive_svg(child, pass_down.clone(), geometries, callback);
     }
 }
 
@@ -84,7 +84,7 @@ impl<'a> SvgSet<'a> {
         let node = self.document.get_node(*node_id).ok_or("Not in document")?;
         Ok(node)
     }
-    pub fn new<P: Copy, C: FnMut(Node, P) -> (Option<Geometry>, P)>(
+    pub fn new<P: Clone, C: FnMut(Node, P) -> (Option<Geometry>, P)>(
         xml: &'a str,
         initial_pass_down: P,
         mut callback: C,
