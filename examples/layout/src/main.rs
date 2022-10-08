@@ -1,9 +1,12 @@
+mod call_back;
+mod rect;
 use bytemuck::cast_slice;
 use concept::{
     scroll::ScrollState,
     svg_init::{get_default_init_callback, regex::RegexSet, RegexPatterns},
 };
-use guppies::glam::{Mat2, Mat4};
+use guppies::glam::Mat4;
+use rect::{Constraint, MyRect, XConstraint};
 use salvage::{
     callback::{IndicesPriority, PassDown},
     svg_set::SvgSet,
@@ -16,72 +19,6 @@ pub struct MyPassDown {
     pub transform_id: u32,
     pub bbox: Option<PathBbox>,
 }
-#[derive(Copy, Clone, Default, Debug)]
-pub struct MyRect {
-    x: f32,
-    y: f32,
-    width: f32,
-    height: f32,
-}
-impl MyRect {
-    fn right(&mut self) -> f32 {
-        self.x + self.width
-    }
-    fn left(&mut self) -> f32 {
-        self.x
-    }
-    fn x_center(&mut self) -> f32 {
-        self.x + (self.width / 2.)
-    }
-}
-impl From<PathBbox> for MyRect {
-    fn from(bbox: PathBbox) -> Self {
-        Self {
-            x: bbox.x() as f32,
-            y: bbox.y() as f32,
-            width: bbox.width() as f32,
-            height: bbox.height() as f32,
-        }
-    }
-}
-
-enum XConstraint {
-    Left(f32),
-    Right(f32),
-    LeftAndRight { left: f32, right: f32 },
-    Center { rightward_from_center: f32 },
-    Scale,
-}
-
-impl Default for XConstraint {
-    fn default() -> Self {
-        Self::LeftAndRight {
-            left: 0.,
-            right: 0.,
-        }
-    }
-}
-enum YConstraint {
-    Top(f32),
-    Bottom(f32),
-    TopAndBottom { top: f32, bottom: f32 },
-    Center { downward_from_center: f32 },
-}
-
-impl Default for YConstraint {
-    fn default() -> Self {
-        Self::TopAndBottom {
-            top: 0.,
-            bottom: 0.,
-        }
-    }
-}
-
-struct Constraint {
-    x: XConstraint,
-    y: YConstraint,
-}
-
 fn layout_recursively(node: &Node, parent_bbox: Option<MyRect>, constraint: Constraint) {
     let id = node.id();
     // letMyRect {
