@@ -1,14 +1,13 @@
 use bytemuck::cast_slice;
 use concept::{
     scroll::ScrollState,
-    svg_init::{regex::RegexSet, RegexPatterns},
+    svg_init::{get_default_init_callback, regex::RegexSet, RegexPatterns},
 };
-use guppies::glam::{Mat2, Mat4, Vec2};
+use guppies::glam::{Mat2, Mat4};
 use salvage::{
-    callback::IndicesPriority,
-    geometry::Geometry,
+    callback::{IndicesPriority, PassDown},
     svg_set::SvgSet,
-    usvg::{self, Node, NodeExt, PathBbox},
+    usvg::{Node, NodeExt, PathBbox},
 };
 
 #[derive(Clone, Default)]
@@ -17,80 +16,36 @@ pub struct MyPassDown {
     pub transform_id: u32,
     pub bbox: Option<PathBbox>,
 }
-
-pub fn get_my_init_callback() -> impl FnMut(Node, MyPassDown) -> (Option<Geometry>, MyPassDown) {
-    let mut transform_count = 1;
-    let mut regex_patterns = RegexPatterns::default();
-    let hr = regex_patterns.add(r"#hr(?:$| |#)");
-    let hl = regex_patterns.add(r"#hl(?:$| |#)");
-    let hlr = regex_patterns.add(r"#hlr(?:$| |#)");
-    let hc = regex_patterns.add(r"#hc(?:$| |#)");
-    let dynamic = regex_patterns.add(r"#dynamic(?:$| |#)");
-    let dynamic_text = regex_patterns.add(r"#dynamicText(?:$| |#)");
-    let defaults = RegexSet::new(regex_patterns.inner.iter().map(|r| &r.regex_pattern)).unwrap();
-    move |node, pass_down| {
-        let id = node.id();
-        let default_matches = defaults.matches(&id);
-        let MyPassDown {
-            transform_id: parent_transform_id,
-            indices_priority: parent_priority,
-            bbox: parent_bbox,
-        } = pass_down;
-        let bbox = node.calculate_bbox();
-        if let (Some(parent_bbox), Some(bbox)) = (parent_bbox, bbox) {
-            dbg!(node.id());
-            let right_diff = (parent_bbox.right() - bbox.right()) as f32;
-            let left_diff = (parent_bbox.left() - bbox.left()) as f32;
-            let constraint_x = if default_matches.matched(hr.index) {
-                HorizontalConstraint::Right(right_diff)
-            } else if default_matches.matched(hl.index) {
-                HorizontalConstraint::Left(left_diff)
-            } else if default_matches.matched(hlr.index) {
-                HorizontalConstraint::LeftAndRight {
-                    left: left_diff,
-                    right: right_diff,
-                }
-            } else if default_matches.matched(hc.index) {
-                let parent_center = parent_bbox.left() + (parent_bbox.width() / 2.);
-                let center = bbox.left() + (bbox.width() / 2.);
-                HorizontalConstraint::Center {
-                    rightward_from_center: (parent_center - center) as f32,
-                }
-            } else {
-                HorizontalConstraint::Scale
-            };
-        };
-        let transform_id = if default_matches.matched(dynamic.index) {
-            transform_count += 1;
-            transform_count
-        } else {
-            parent_transform_id
-        };
-        let indices_priority = if !default_matches.matched(dynamic_text.index) {
-            IndicesPriority::Variable
-        } else {
-            IndicesPriority::Fixed
-        };
-        let indices_priority = parent_priority.max(indices_priority);
-        let geometry = {
-            if let usvg::NodeKind::Path(ref p) = *node.borrow() {
-                Some(Geometry::new(p, transform_id, indices_priority))
-            } else {
-                None
-            }
-        };
-        (
-            geometry,
-            MyPassDown {
-                indices_priority,
-                transform_id,
-                bbox,
-            },
-        )
+#[derive(Copy, Clone, Default, Debug)]
+pub struct MyRect {
+    x: f32,
+    y: f32,
+    width: f32,
+    height: f32,
+}
+impl MyRect {
+    fn right(&mut self) -> f32 {
+        self.x + self.width
+    }
+    fn left(&mut self) -> f32 {
+        self.x
+    }
+    fn x_center(&mut self) -> f32 {
+        self.x + (self.width / 2.)
+    }
+}
+impl From<PathBbox> for MyRect {
+    fn from(bbox: PathBbox) -> Self {
+        Self {
+            x: bbox.x() as f32,
+            y: bbox.y() as f32,
+            width: bbox.width() as f32,
+            height: bbox.height() as f32,
+        }
     }
 }
 
-enum HorizontalConstraint {
+enum XConstraint {
     Left(f32),
     Right(f32),
     LeftAndRight { left: f32, right: f32 },
@@ -98,7 +53,7 @@ enum HorizontalConstraint {
     Scale,
 }
 
-impl Default for HorizontalConstraint {
+impl Default for XConstraint {
     fn default() -> Self {
         Self::LeftAndRight {
             left: 0.,
@@ -106,13 +61,14 @@ impl Default for HorizontalConstraint {
         }
     }
 }
-enum VerticalConstraint {
+enum YConstraint {
     Top(f32),
     Bottom(f32),
     TopAndBottom { top: f32, bottom: f32 },
     Center { downward_from_center: f32 },
 }
-impl Default for VerticalConstraint {
+
+impl Default for YConstraint {
     fn default() -> Self {
         Self::TopAndBottom {
             top: 0.,
@@ -122,48 +78,73 @@ impl Default for VerticalConstraint {
 }
 
 struct Constraint {
-    x: HorizontalConstraint,
-    y: VerticalConstraint,
-}
-impl Constraint {
-    fn new_from_node() {}
+    x: XConstraint,
+    y: YConstraint,
 }
 
-fn make_layout(node: &Node, parent_box: Mat2, constraint: Constraint) -> Mat2 {
-    let Vec2 {
-        x: parent_x,
-        y: parent_width,
-    } = parent_box.x_axis;
-    let parent_center = parent_x + parent_width / 2.;
-    let width = node.calculate_bbox().unwrap().width() as f32;
+fn layout_recursively(node: &Node, parent_bbox: Option<MyRect>, constraint: Constraint) {
+    let id = node.id();
+    // letMyRect {
+    //     x: parent_x,
+    //     width: parent_width,
+    //     ..
+    // } = parent_bbox;
 
-    let mut this_box = parent_box.clone();
-    this_box.x_axis.y = width;
-    match constraint.x {
-        HorizontalConstraint::Left(left) => this_box.x_axis.x += left,
-        HorizontalConstraint::Right(right) => this_box.x_axis.x += parent_width - (right + width),
-        HorizontalConstraint::LeftAndRight { left, right } => {
-            this_box.x_axis.y = this_box.x_axis.y - (left + right);
-            this_box.x_axis.x += left;
-        }
-        HorizontalConstraint::Center {
-            rightward_from_center,
-        } => {
-            this_box.x_axis.x = parent_center + rightward_from_center;
-        }
-        HorizontalConstraint::Scale => {}
+    let mut regex_patterns = RegexPatterns::default();
+    let xr = regex_patterns.add(r"#xr(?:$| |#)");
+    let xl = regex_patterns.add(r"#xl(?:$| |#)");
+    let xlr = regex_patterns.add(r"#xlr(?:$| |#)");
+    let xc = regex_patterns.add(r"#xc(?:$| |#)");
+    let defaults = RegexSet::new(regex_patterns.inner.iter().map(|r| &r.regex_pattern)).unwrap();
+
+    let default_matches = defaults.matches(&id);
+    let bbox = node.calculate_bbox();
+    if let (Some(mut parent_bbox), Some(bbox)) = (parent_bbox, bbox) {
+        let mut bbox = MyRect::from(bbox);
+        let right_diff = (parent_bbox.right() - bbox.right()) as f32;
+        let left_diff = (parent_bbox.left() - bbox.left()) as f32;
+        let constraint_x = if default_matches.matched(xr.index) {
+            XConstraint::Right(right_diff)
+        } else if default_matches.matched(xl.index) {
+            XConstraint::Left(left_diff)
+        } else if default_matches.matched(xlr.index) {
+            XConstraint::LeftAndRight {
+                left: left_diff,
+                right: right_diff,
+            }
+        } else if default_matches.matched(xc.index) {
+            XConstraint::Center {
+                rightward_from_center: (parent_bbox.x_center() - parent_bbox.x_center()) as f32,
+            }
+        } else {
+            XConstraint::Scale
+        };
+
+        match constraint.x {
+            XConstraint::Left(left) => bbox.x += left,
+            XConstraint::Right(right) => bbox.x += parent_bbox.width - (right + bbox.width),
+            XConstraint::LeftAndRight { left, right } => {
+                bbox.width = bbox.width - (left + right);
+                bbox.x += left;
+            }
+            XConstraint::Center {
+                rightward_from_center,
+            } => {
+                bbox.x = parent_bbox.x_center() + rightward_from_center;
+            }
+            XConstraint::Scale => {}
+        };
     };
-    this_box
 }
 
 pub fn main() {
     let svg_set = SvgSet::new(
         include_str!("../Menu.svg"),
-        MyPassDown {
+        PassDown {
             transform_id: 1,
             ..Default::default()
         },
-        get_my_init_callback(),
+        get_default_init_callback(),
     );
     let mut scroll_state = ScrollState::new_from_svg_set(&svg_set);
     guppies::render_loop(move |event, gpu_redraw| {
