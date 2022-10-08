@@ -29,6 +29,7 @@ impl From<PathBbox> for MyRect {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub enum XConstraint {
     Left(f32),
     Right(f32),

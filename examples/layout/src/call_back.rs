@@ -32,15 +32,18 @@ pub fn get_my_init_callback() -> impl FnMut(Node, MyPassDown) -> (Option<Geometr
             bbox: parent_bbox,
         } = pass_down;
         let bbox = node.calculate_bbox();
-        if let (Some(parent_bbox), Some(bbox)) = (parent_bbox, bbox) {
-            get_constraint(&id, &bbox.into(), &parent_bbox.into());
-        };
-        let transform_id = if default_matches.matched(dynamic.index) {
-            transform_count += 1;
-            transform_count
+        let x_constraint = if let (Some(parent_bbox), Some(bbox)) = (parent_bbox, bbox) {
+            get_constraint(&id, &bbox.into(), &parent_bbox.into())
         } else {
-            parent_transform_id
+            XConstraint::Scale
         };
+        let transform_id =
+            if default_matches.matched(dynamic.index) || x_constraint != XConstraint::Scale {
+                transform_count += 1;
+                transform_count
+            } else {
+                parent_transform_id
+            };
         let indices_priority = if !default_matches.matched(dynamic_text.index) {
             IndicesPriority::Variable
         } else {

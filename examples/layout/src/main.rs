@@ -2,11 +2,11 @@ mod call_back;
 mod rect;
 use bytemuck::cast_slice;
 use call_back::{get_constraint, get_my_init_callback};
-use concept::scroll::ScrollState;
+use concept::{scroll::ScrollState, svg_init::get_default_init_callback};
 use guppies::glam::Mat4;
 use rect::{MyRect, XConstraint};
 use salvage::{
-    callback::IndicesPriority,
+    callback::{IndicesPriority, PassDown},
     svg_set::SvgSet,
     usvg::{Node, NodeExt, PathBbox},
 };
@@ -43,11 +43,11 @@ fn layout_recursively(node: &Node, parent_bbox: MyRect, transforms: &mut Mat4) {
 pub fn main() {
     let svg_set = SvgSet::new(
         include_str!("../Menu.svg"),
-        MyPassDown {
+        PassDown {
             transform_id: 1,
             ..Default::default()
         },
-        get_my_init_callback(),
+        get_default_init_callback(),
     );
     let mut scroll_state = ScrollState::new_from_svg_set(&svg_set);
     guppies::render_loop(move |event, gpu_redraw| {
