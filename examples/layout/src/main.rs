@@ -1,14 +1,12 @@
 mod call_back;
 mod rect;
 use bytemuck::cast_slice;
-use concept::{
-    scroll::ScrollState,
-    svg_init::{get_default_init_callback, regex::RegexSet, RegexPatterns},
-};
+use call_back::{get_constraint, get_my_init_callback};
+use concept::scroll::ScrollState;
 use guppies::glam::Mat4;
-use rect::{Constraint, MyRect, XConstraint};
+use rect::{MyRect, XConstraint};
 use salvage::{
-    callback::{IndicesPriority, PassDown},
+    callback::IndicesPriority,
     svg_set::SvgSet,
     usvg::{Node, NodeExt, PathBbox},
 };
@@ -19,45 +17,13 @@ pub struct MyPassDown {
     pub transform_id: u32,
     pub bbox: Option<PathBbox>,
 }
-fn layout_recursively(node: &Node, parent_bbox: Option<MyRect>, constraint: Constraint) {
-    let id = node.id();
-    // letMyRect {
-    //     x: parent_x,
-    //     width: parent_width,
-    //     ..
-    // } = parent_bbox;
-
-    let mut regex_patterns = RegexPatterns::default();
-    let xr = regex_patterns.add(r"#xr(?:$| |#)");
-    let xl = regex_patterns.add(r"#xl(?:$| |#)");
-    let xlr = regex_patterns.add(r"#xlr(?:$| |#)");
-    let xc = regex_patterns.add(r"#xc(?:$| |#)");
-    let defaults = RegexSet::new(regex_patterns.inner.iter().map(|r| &r.regex_pattern)).unwrap();
-
-    let default_matches = defaults.matches(&id);
+fn layout_recursively(node: &Node, parent_bbox: MyRect, transforms: &mut Mat4) {
     let bbox = node.calculate_bbox();
-    if let (Some(mut parent_bbox), Some(bbox)) = (parent_bbox, bbox) {
+    if let Some(bbox) = bbox {
         let mut bbox = MyRect::from(bbox);
-        let right_diff = (parent_bbox.right() - bbox.right()) as f32;
-        let left_diff = (parent_bbox.left() - bbox.left()) as f32;
-        let constraint_x = if default_matches.matched(xr.index) {
-            XConstraint::Right(right_diff)
-        } else if default_matches.matched(xl.index) {
-            XConstraint::Left(left_diff)
-        } else if default_matches.matched(xlr.index) {
-            XConstraint::LeftAndRight {
-                left: left_diff,
-                right: right_diff,
-            }
-        } else if default_matches.matched(xc.index) {
-            XConstraint::Center {
-                rightward_from_center: (parent_bbox.x_center() - parent_bbox.x_center()) as f32,
-            }
-        } else {
-            XConstraint::Scale
-        };
+        let constraint_x = get_constraint(&node.id(), &bbox, &parent_bbox);
 
-        match constraint.x {
+        match constraint_x {
             XConstraint::Left(left) => bbox.x += left,
             XConstraint::Right(right) => bbox.x += parent_bbox.width - (right + bbox.width),
             XConstraint::LeftAndRight { left, right } => {
@@ -77,11 +43,11 @@ fn layout_recursively(node: &Node, parent_bbox: Option<MyRect>, constraint: Cons
 pub fn main() {
     let svg_set = SvgSet::new(
         include_str!("../Menu.svg"),
-        PassDown {
+        MyPassDown {
             transform_id: 1,
             ..Default::default()
         },
-        get_default_init_callback(),
+        get_my_init_callback(),
     );
     let mut scroll_state = ScrollState::new_from_svg_set(&svg_set);
     guppies::render_loop(move |event, gpu_redraw| {

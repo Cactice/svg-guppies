@@ -8,13 +8,13 @@ pub struct MyRect {
     pub height: f32,
 }
 impl MyRect {
-    pub fn right(&mut self) -> f32 {
+    pub fn right(&self) -> f32 {
         self.x + self.width
     }
-    pub fn left(&mut self) -> f32 {
+    pub fn left(&self) -> f32 {
         self.x
     }
-    pub fn x_center(&mut self) -> f32 {
+    pub fn x_center(&self) -> f32 {
         self.x + (self.width / 2.)
     }
 }
