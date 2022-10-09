@@ -3,18 +3,28 @@ use crate::{
     MyPassDown,
 };
 use concept::svg_init::{regex::RegexSet, RegexPatterns};
-use guppies::{glam::Mat4, winit::dpi::PhysicalSize};
+use guppies::{glam::Mat4, primitives::Rect, winit::dpi::PhysicalSize};
 use salvage::{
     callback::IndicesPriority,
     geometry::Geometry,
     usvg::{self, Node, NodeExt},
 };
 
-pub fn get_fullscreen_scale(svg_scale: MyRect) -> Mat4 {
-    Mat4::from_scale([2. / svg_scale.x as f32, -2. / svg_scale.y as f32, 1.0].into())
+pub fn get_fullscreen_scale(svg_scale: Rect) -> Mat4 {
+    Mat4::from_scale(
+        [
+            1. / svg_scale.size.x as f32,
+            1. / svg_scale.size.y as f32,
+            1.,
+        ]
+        .into(),
+    )
 }
-pub fn get_normalization_scale(size: PhysicalSize<u32>) -> Mat4 {
-    Mat4::from_scale([2.0 / size.width as f32, -2.0 / size.height as f32, 1.0].into())
+pub fn get_normalization() -> Mat4 {
+    Mat4::from_scale([2., -2., 1.].into()) * Mat4::from_translation([-0.5, -0.5, 1.].into())
+}
+pub fn get_svg_normalization(size: PhysicalSize<u32>) -> Mat4 {
+    Mat4::from_scale([1. / size.width as f32, 1. / size.height as f32, 1.].into())
 }
 
 pub fn get_my_init_callback() -> impl FnMut(Node, MyPassDown) -> (Option<Geometry>, MyPassDown) {
@@ -62,7 +72,7 @@ pub fn get_my_init_callback() -> impl FnMut(Node, MyPassDown) -> (Option<Geometr
             MyPassDown {
                 indices_priority,
                 transform_id,
-                bbox,
+                bbox: parent_bbox,
             },
         )
     }

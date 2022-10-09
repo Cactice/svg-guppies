@@ -1,12 +1,14 @@
 mod call_back;
 mod rect;
 use bytemuck::cast_slice;
-use call_back::{get_constraint, get_my_init_callback};
-use concept::{scroll::ScrollState, svg_init::get_default_init_callback};
+use call_back::{
+    get_constraint, get_fullscreen_scale, get_my_init_callback, get_normalization,
+    get_svg_normalization,
+};
 use guppies::glam::Mat4;
 use rect::{MyRect, XConstraint};
 use salvage::{
-    callback::{IndicesPriority, PassDown},
+    callback::IndicesPriority,
     svg_set::SvgSet,
     usvg::{Node, NodeExt, PathBbox},
 };
@@ -43,17 +45,30 @@ fn layout_recursively(node: &Node, parent_bbox: MyRect, transforms: &mut Mat4) {
 pub fn main() {
     let svg_set = SvgSet::new(
         include_str!("../Menu.svg"),
-        PassDown {
+        MyPassDown {
             transform_id: 1,
             ..Default::default()
         },
-        get_default_init_callback(),
+        get_my_init_callback(),
     );
-    let mut scroll_state = ScrollState::new_from_svg_set(&svg_set);
+    let mut normalize_svg = Mat4::IDENTITY;
     guppies::render_loop(move |event, gpu_redraw| {
-        scroll_state.event_handler(event);
+        match event {
+            guppies::winit::event::Event::WindowEvent { event, .. } => match event {
+                guppies::winit::event::WindowEvent::Resized(p) => {
+                    normalize_svg = get_svg_normalization(*p);
+                }
+                _ => {}
+            },
+            _ => {}
+        }
         gpu_redraw.update_triangles(svg_set.get_combined_geometries().triangles, 0);
-        gpu_redraw
-            .update_texture([cast_slice(&[scroll_state.transform, Mat4::default()])].concat());
+        gpu_redraw.update_texture(
+            [cast_slice(&[
+                get_normalization() * get_fullscreen_scale(svg_set.bbox),
+                Mat4::IDENTITY,
+            ])]
+            .concat(),
+        );
     });
 }
