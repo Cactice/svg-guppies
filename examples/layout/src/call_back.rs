@@ -72,7 +72,7 @@ pub fn get_my_init_callback() -> impl FnMut(Node, MyPassDown) -> (Option<Geometr
             MyPassDown {
                 indices_priority,
                 transform_id,
-                bbox: parent_bbox,
+                bbox,
             },
         )
     }
@@ -80,13 +80,13 @@ pub fn get_my_init_callback() -> impl FnMut(Node, MyPassDown) -> (Option<Geometr
 
 pub fn get_constraint(id: &str, bbox: &MyRect, parent_bbox: &MyRect) -> XConstraint {
     let mut regex_patterns = RegexPatterns::default();
-    let constraint_regex =
-        RegexSet::new(regex_patterns.inner.iter().map(|r| &r.regex_pattern)).unwrap();
-    let matches = constraint_regex.matches(id);
     let xl = regex_patterns.add(r"#xl(?:$| |#)");
     let xr = regex_patterns.add(r"#xr(?:$| |#)");
     let xlr = regex_patterns.add(r"#xlr(?:$| |#)");
     let xc = regex_patterns.add(r"#xc(?:$| |#)");
+    let constraint_regex =
+        RegexSet::new(regex_patterns.inner.iter().map(|r| &r.regex_pattern)).unwrap();
+    let matches = constraint_regex.matches(id);
     let right_diff = (parent_bbox.right() - bbox.right()) as f32;
     let left_diff = (parent_bbox.left() - bbox.left()) as f32;
     let constraint_x = if matches.matched(xr.index) {

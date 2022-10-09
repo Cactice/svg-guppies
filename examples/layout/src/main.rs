@@ -67,6 +67,9 @@ pub fn main() {
             [cast_slice(&[
                 get_normalization() * get_fullscreen_scale(svg_set.bbox),
                 Mat4::IDENTITY,
+                normalize_svg,
+                Mat4::IDENTITY,
+                Mat4::IDENTITY,
             ])]
             .concat(),
         );
