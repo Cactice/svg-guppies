@@ -17,6 +17,15 @@ impl MyRect {
     pub fn x_center(&self) -> f32 {
         self.x + (self.width / 2.)
     }
+    pub fn top(&self) -> f32 {
+        self.y + self.height
+    }
+    pub fn bottom(&self) -> f32 {
+        self.y
+    }
+    pub fn y_center(&self) -> f32 {
+        self.y + (self.height / 2.)
+    }
 }
 impl From<PathBbox> for MyRect {
     fn from(bbox: PathBbox) -> Self {
@@ -51,6 +60,7 @@ pub enum YConstraint {
     Bottom(f32),
     TopAndBottom { top: f32, bottom: f32 },
     Center { downward_from_center: f32 },
+    Scale,
 }
 
 impl Default for YConstraint {

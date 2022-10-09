@@ -1,5 +1,5 @@
 use crate::{
-    rect::{MyRect, XConstraint},
+    rect::{MyRect, XConstraint, YConstraint},
     MyPassDown,
 };
 use concept::svg_init::{regex::RegexSet, RegexPatterns};
@@ -20,11 +20,20 @@ pub fn get_fullscreen_scale(svg_scale: Rect) -> Mat4 {
         .into(),
     )
 }
+
 pub fn get_normalization() -> Mat4 {
     Mat4::from_scale([2., -2., 1.].into()) * Mat4::from_translation([-0.5, -0.5, 1.].into())
 }
-pub fn get_svg_normalization(size: PhysicalSize<u32>) -> Mat4 {
-    Mat4::from_scale([1. / size.width as f32, 1. / size.height as f32, 1.].into())
+
+pub fn get_svg_normalization(size: PhysicalSize<u32>, svg_scale: Rect) -> Mat4 {
+    Mat4::from_scale(
+        [
+            size.width as f32 / svg_scale.size.x,
+            size.height as f32 / svg_scale.size.y,
+            1.,
+        ]
+        .into(),
+    )
 }
 
 pub fn get_my_init_callback() -> impl FnMut(Node, MyPassDown) -> (Option<Geometry>, MyPassDown) {
@@ -43,7 +52,7 @@ pub fn get_my_init_callback() -> impl FnMut(Node, MyPassDown) -> (Option<Geometr
         } = pass_down;
         let bbox = node.calculate_bbox();
         let x_constraint = if let (Some(parent_bbox), Some(bbox)) = (parent_bbox, bbox) {
-            get_constraint(&id, &bbox.into(), &parent_bbox.into())
+            get_x_constraint(&id, &bbox.into(), &parent_bbox.into())
         } else {
             XConstraint::Scale
         };
@@ -78,7 +87,36 @@ pub fn get_my_init_callback() -> impl FnMut(Node, MyPassDown) -> (Option<Geometr
     }
 }
 
-pub fn get_constraint(id: &str, bbox: &MyRect, parent_bbox: &MyRect) -> XConstraint {
+pub fn get_y_constraint(id: &str, bbox: &MyRect, parent_bbox: &MyRect) -> YConstraint {
+    let mut regex_patterns = RegexPatterns::default();
+    let yt = regex_patterns.add(r"#yt(?:$| |#)");
+    let yb = regex_patterns.add(r"#yb(?:$| |#)");
+    let ytb = regex_patterns.add(r"#ytb(?:$| |#)");
+    let yc = regex_patterns.add(r"#yc(?:$| |#)");
+    let constraint_regex =
+        RegexSet::new(regex_patterns.inner.iter().map(|r| &r.regex_pattern)).unwrap();
+    let matches = constraint_regex.matches(id);
+    let top_diff = (parent_bbox.bottom() - bbox.bottom()) as f32;
+    let bottom_diff = (parent_bbox.top() - bbox.top()) as f32;
+    if matches.matched(yt.index) {
+        YConstraint::Top(top_diff)
+    } else if matches.matched(yb.index) {
+        YConstraint::Bottom(bottom_diff)
+    } else if matches.matched(ytb.index) {
+        YConstraint::TopAndBottom {
+            top: top_diff,
+            bottom: bottom_diff,
+        }
+    } else if matches.matched(yc.index) {
+        YConstraint::Center {
+            downward_from_center: (parent_bbox.y_center() - parent_bbox.y_center()) as f32,
+        }
+    } else {
+        YConstraint::Scale
+    }
+}
+
+pub fn get_x_constraint(id: &str, bbox: &MyRect, parent_bbox: &MyRect) -> XConstraint {
     let mut regex_patterns = RegexPatterns::default();
     let xl = regex_patterns.add(r"#xl(?:$| |#)");
     let xr = regex_patterns.add(r"#xr(?:$| |#)");
@@ -89,7 +127,7 @@ pub fn get_constraint(id: &str, bbox: &MyRect, parent_bbox: &MyRect) -> XConstra
     let matches = constraint_regex.matches(id);
     let right_diff = (parent_bbox.right() - bbox.right()) as f32;
     let left_diff = (parent_bbox.left() - bbox.left()) as f32;
-    let constraint_x = if matches.matched(xr.index) {
+    if matches.matched(xr.index) {
         XConstraint::Right(right_diff)
     } else if matches.matched(xl.index) {
         XConstraint::Left(left_diff)
@@ -104,6 +142,5 @@ pub fn get_constraint(id: &str, bbox: &MyRect, parent_bbox: &MyRect) -> XConstra
         }
     } else {
         XConstraint::Scale
-    };
-    constraint_x
+    }
 }
