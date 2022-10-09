@@ -2,11 +2,11 @@ mod call_back;
 mod rect;
 use bytemuck::cast_slice;
 use call_back::{
-    get_constraint, get_fullscreen_scale, get_my_init_callback, get_normalization,
-    get_svg_normalization,
+    get_fullscreen_scale, get_my_init_callback, get_normalization, get_svg_normalization,
+    get_svg_normalization_1, get_x_constraint,
 };
 use guppies::glam::Mat4;
-use rect::{MyRect, XConstraint};
+use rect::{Constraint, MyRect, XConstraint, YConstraint};
 use salvage::{
     callback::IndicesPriority,
     svg_set::SvgSet,
@@ -23,7 +23,7 @@ fn layout_recursively(node: &Node, parent_bbox: MyRect, transforms: &mut Mat4) {
     let bbox = node.calculate_bbox();
     if let Some(bbox) = bbox {
         let mut bbox = MyRect::from(bbox);
-        let constraint_x = get_constraint(&node.id(), &bbox, &parent_bbox);
+        let constraint_x = get_x_constraint(&node.id(), &bbox, &parent_bbox);
 
         match constraint_x {
             XConstraint::Left(left) => bbox.x += left,
@@ -56,7 +56,7 @@ pub fn main() {
         match event {
             guppies::winit::event::Event::WindowEvent { event, .. } => match event {
                 guppies::winit::event::WindowEvent::Resized(p) => {
-                    normalize_svg = get_svg_normalization(*p);
+                    normalize_svg = get_svg_normalization_1(*p);
                 }
                 _ => {}
             },
@@ -65,8 +65,8 @@ pub fn main() {
         gpu_redraw.update_triangles(svg_set.get_combined_geometries().triangles, 0);
         gpu_redraw.update_texture(
             [cast_slice(&[
-                get_normalization() * get_fullscreen_scale(svg_set.bbox),
-                Mat4::IDENTITY,
+                get_normalization(),
+                Mat4::ZERO,
                 normalize_svg,
                 Mat4::IDENTITY,
                 Mat4::IDENTITY,

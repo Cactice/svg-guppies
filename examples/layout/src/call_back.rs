@@ -1,5 +1,5 @@
 use crate::{
-    rect::{MyRect, XConstraint, YConstraint},
+    rect::{Constraint, MyRect, XConstraint, YConstraint},
     MyPassDown,
 };
 use concept::svg_init::{regex::RegexSet, RegexPatterns};
@@ -24,16 +24,25 @@ pub fn get_fullscreen_scale(svg_scale: Rect) -> Mat4 {
 pub fn get_normalization() -> Mat4 {
     Mat4::from_scale([2., -2., 1.].into()) * Mat4::from_translation([-0.5, -0.5, 1.].into())
 }
+pub fn get_svg_normalization_1(size: PhysicalSize<u32>) -> Mat4 {
+    Mat4::from_scale([1. / size.width as f32, 1. / size.height as f32, 1.].into())
+}
 
-pub fn get_svg_normalization(size: PhysicalSize<u32>, svg_scale: Rect) -> Mat4 {
-    Mat4::from_scale(
-        [
-            size.width as f32 / svg_scale.size.x,
-            size.height as f32 / svg_scale.size.y,
-            1.,
-        ]
-        .into(),
-    )
+pub fn get_svg_normalization(
+    size: PhysicalSize<u32>,
+    svg_scale: Rect,
+    constraint: Constraint,
+) -> Mat4 {
+    Mat4::from_translation((svg_scale.position, 0.).into()).inverse()
+        * Mat4::from_scale(
+            [
+                1. / (size.width as f32 * svg_scale.size.x),
+                1. / (size.height as f32 * svg_scale.size.y),
+                1.,
+            ]
+            .into(),
+        )
+        * Mat4::from_translation((svg_scale.position, 0.).into())
 }
 
 pub fn get_my_init_callback() -> impl FnMut(Node, MyPassDown) -> (Option<Geometry>, MyPassDown) {
