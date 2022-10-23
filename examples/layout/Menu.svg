@@ -1,20 +1,20 @@
 <svg width="613" height="52" viewBox="0 0 613 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g id="Menu">
+<g id="MenuBar">
 <rect width="613" height="52" fill="#F9F8F4"/>
-<g id="Menu #xl">
+<g id="Menu">
 <g id="Group">
 <path id="Vector" d="M14 16H43.02" stroke="#17395C" stroke-width="4.14571" stroke-linecap="round" stroke-linejoin="round"/>
 <path id="Vector_2" d="M14 26.3643H43.02" stroke="#17395C" stroke-width="4.14571" stroke-linecap="round" stroke-linejoin="round"/>
 <path id="Vector_3" d="M14 36.7285H43.02" stroke="#17395C" stroke-width="4.14571" stroke-linecap="round" stroke-linejoin="round"/>
 </g>
 </g>
-<g id="Undo #xr">
+<g id="Undo">
 <g id="Group_2">
 <path id="Vector_4" d="M565.75 20H588.5C592.366 20 595.5 23.1341 595.5 27C595.5 30.866 592.366 34 588.5 34H579.75" stroke="#17395C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
 <path id="Vector_5" d="M571 13L564 20L571 27" stroke="#17395C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
 </g>
 </g>
-<g id="Grab #xc">
+<g id="Grab">
 <circle id="Ellipse 4" cx="291.5" cy="19.5" r="4.5" fill="#17395C"/>
 <circle id="Ellipse 5" cx="306.5" cy="19.5" r="4.5" fill="#17395C"/>
 <circle id="Ellipse 6" cx="321.5" cy="19.5" r="4.5" fill="#17395C"/>

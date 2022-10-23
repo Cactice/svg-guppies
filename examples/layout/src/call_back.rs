@@ -28,21 +28,8 @@ pub fn get_svg_normalization_1(size: PhysicalSize<u32>) -> Mat4 {
     Mat4::from_scale([1. / size.width as f32, 1. / size.height as f32, 1.].into())
 }
 
-pub fn get_svg_normalization(
-    size: PhysicalSize<u32>,
-    svg_scale: Rect,
-    constraint: Constraint,
-) -> Mat4 {
-    Mat4::from_translation((svg_scale.position, 0.).into()).inverse()
-        * Mat4::from_scale(
-            [
-                1. / (size.width as f32 * svg_scale.size.x),
-                1. / (size.height as f32 * svg_scale.size.y),
-                1.,
-            ]
-            .into(),
-        )
-        * Mat4::from_translation((svg_scale.position, 0.).into())
+pub fn get_svg_normalization(size: PhysicalSize<u32>, svg: Rect, constraint: Constraint) -> Mat4 {
+    Mat4::from_scale([1. / size.width as f32, 1. / size.height as f32, 1.].into())
 }
 
 pub fn get_my_init_callback() -> impl FnMut(Node, MyPassDown) -> (Option<Geometry>, MyPassDown) {
@@ -61,7 +48,7 @@ pub fn get_my_init_callback() -> impl FnMut(Node, MyPassDown) -> (Option<Geometr
         } = pass_down;
         let bbox = node.calculate_bbox();
         let x_constraint = if let (Some(parent_bbox), Some(bbox)) = (parent_bbox, bbox) {
-            get_x_constraint(&id, &bbox.into(), &parent_bbox.into())
+            get_x_constraint(&id)
         } else {
             XConstraint::Scale
         };
@@ -125,30 +112,20 @@ pub fn get_y_constraint(id: &str, bbox: &MyRect, parent_bbox: &MyRect) -> YConst
     }
 }
 
-pub fn get_x_constraint(id: &str, bbox: &MyRect, parent_bbox: &MyRect) -> XConstraint {
+pub fn get_x_constraint(id: &str) -> XConstraint {
     let mut regex_patterns = RegexPatterns::default();
-    let xl = regex_patterns.add(r"#xl(?:$| |#)");
-    let xr = regex_patterns.add(r"#xr(?:$| |#)");
-    let xlr = regex_patterns.add(r"#xlr(?:$| |#)");
-    let xc = regex_patterns.add(r"#xc(?:$| |#)");
+    let menu = regex_patterns.add(r"Menu");
+    let grab = regex_patterns.add(r"Grab");
+    let undo = regex_patterns.add(r"Undo");
     let constraint_regex =
         RegexSet::new(regex_patterns.inner.iter().map(|r| &r.regex_pattern)).unwrap();
     let matches = constraint_regex.matches(id);
-    let right_diff = (parent_bbox.right() - bbox.right()) as f32;
-    let left_diff = (parent_bbox.left() - bbox.left()) as f32;
-    if matches.matched(xr.index) {
-        XConstraint::Right(right_diff)
-    } else if matches.matched(xl.index) {
-        XConstraint::Left(left_diff)
-    } else if matches.matched(xlr.index) {
-        XConstraint::LeftAndRight {
-            left: left_diff,
-            right: right_diff,
-        }
-    } else if matches.matched(xc.index) {
-        XConstraint::Center {
-            rightward_from_center: (parent_bbox.x_center() - parent_bbox.x_center()) as f32,
-        }
+    if matches.matched(menu.index) {
+        XConstraint::Left(15.)
+    } else if matches.matched(grab.index) {
+        XConstraint::Center(0.)
+    } else if matches.matched(undo.index) {
+        XConstraint::Right(15.)
     } else {
         XConstraint::Scale
     }

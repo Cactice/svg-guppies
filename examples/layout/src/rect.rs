@@ -43,7 +43,7 @@ pub enum XConstraint {
     Left(f32),
     Right(f32),
     LeftAndRight { left: f32, right: f32 },
-    Center { rightward_from_center: f32 },
+    Center(f32), //rightward_from_center
     Scale,
 }
 
