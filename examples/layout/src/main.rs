@@ -2,10 +2,7 @@ mod call_back;
 mod rect;
 use bytemuck::cast_slice;
 use call_back::{get_my_init_callback, get_normalization, get_svg_normalization, get_x_constraint};
-use guppies::{
-    glam::{Mat4, Vec2},
-    primitives::Rect,
-};
+use guppies::glam::{Mat4, Vec3};
 use rect::{Constraint, MyRect, XConstraint, YConstraint};
 use salvage::{
     callback::IndicesPriority,
@@ -19,50 +16,52 @@ pub struct MyPassDown {
     pub transform_id: u32,
     pub bbox: Option<PathBbox>,
 }
-fn layout_recursively(node: &Node, parent_bbox: MyRect, transforms: &mut Vec<Mat4>) {
+fn layout_recursively(
+    display_mat4: Mat4,
+    node: &Node,
+    parent_mat4: Mat4,
+    transforms: &mut Vec<Mat4>,
+) {
     let bbox = node.calculate_bbox();
     if let Some(bbox) = bbox {
-        let original_bbox = MyRect::from(bbox);
-        let mut bbox = MyRect::from(bbox);
+        let mut bbox = Mat4::from_scale((bbox.x() as f32, bbox.y() as f32, 0.0).into());
         let constraint_x = get_x_constraint(&node.id());
+        let mut new_display_mat4 = display_mat4;
 
-        match constraint_x {
+        let mat4 = match constraint_x {
             XConstraint::Left(left) => {
-                bbox.x = parent_bbox.x + left;
-                transforms.push(Mat4::from_translation(
-                    [bbox.x - original_bbox.x, 0., 0.].into(),
-                ));
+                let align_left = Mat4::from_translation((-0.5, 0., 0.).into());
+                let constraint_translation = Mat4::from_translation((left, 0., 0.).into());
+                new_display_mat4 = Mat4::IDENTITY;
+                constraint_translation * display_mat4 * align_left * parent_mat4
             }
             XConstraint::Right(right) => {
-                bbox.x = parent_bbox.x + parent_bbox.width - (right + bbox.width);
-                transforms.push(Mat4::from_translation(
-                    [bbox.x - original_bbox.x, 0., 0.].into(),
-                ));
+                let align_right = Mat4::from_translation((0.5, 0., 0.).into());
+                let constraint_translation = Mat4::from_translation((right, 0., 0.).into());
+                new_display_mat4 = Mat4::IDENTITY;
+                constraint_translation * display_mat4 * align_right * parent_mat4
             }
             XConstraint::LeftAndRight { left, right } => {
-                bbox.width = bbox.width - (left + right);
-                bbox.x += left;
-                // TODO: Scale
-                transforms.push(Mat4::from_translation(
-                    [bbox.x - original_bbox.x, 0., 0.].into(),
-                ))
+                let (bbox_scale, _, _) = bbox.to_scale_rotation_translation();
+                let (parent_scale, _, _) = parent_mat4.to_scale_rotation_translation();
+                let constraint_scale = Mat4::from_scale(
+                    (parent_scale.x + left + right / parent_scale.x, 1., 1.).into(),
+                );
+                let constraint_translation = Mat4::from_translation((left, 0., 0.).into());
+                constraint_translation * constraint_scale * parent_mat4
             }
             XConstraint::Center(rightward_from_center) => {
-                bbox.x = parent_bbox.x_center() + rightward_from_center;
-                transforms.push(Mat4::from_translation(
-                    [bbox.x - original_bbox.x, 0., 0.].into(),
-                ))
+                let constraint_translation =
+                    Mat4::from_translation((rightward_from_center, 0., 0.).into());
+                new_display_mat4 = Mat4::IDENTITY;
+                constraint_translation * display_mat4 * parent_mat4
             }
-            XConstraint::Scale => {
-                // TODO: Scale
-                bbox.width = parent_bbox.width;
-                transforms.push(Mat4::from_scale([1., 1., 1.].into()))
-            }
+            XConstraint::Scale => Mat4::IDENTITY,
         };
 
         node.children()
             .into_iter()
-            .for_each(|child| layout_recursively(&child, bbox, transforms));
+            .for_each(|child| layout_recursively(new_display_mat4, &child, bbox, transforms));
     };
 }
 
@@ -80,17 +79,15 @@ pub fn main() {
         match event {
             guppies::winit::event::Event::WindowEvent { event, .. } => match event {
                 guppies::winit::event::WindowEvent::Resized(p) => {
-                    normalize_svg = get_svg_normalization(
-                        *p,
-                        Rect {
-                            position: Vec2::new(12., 14.),
-                            size: Vec2::new(33., 24.),
-                        },
-                        Constraint {
-                            x: XConstraint::Scale,
-                            y: YConstraint::Scale,
-                        },
-                    );
+                    normalize_svg = get_normalization()
+                        * get_svg_normalization(
+                            *p,
+                            svg_set.bbox,
+                            Constraint {
+                                x: XConstraint::Scale,
+                                y: YConstraint::Scale,
+                            },
+                        );
                 }
                 _ => {}
             },
@@ -99,9 +96,9 @@ pub fn main() {
         gpu_redraw.update_triangles(svg_set.get_combined_geometries().triangles, 0);
         gpu_redraw.update_texture(
             [cast_slice(&[
-                get_normalization(),
-                Mat4::ZERO,
                 normalize_svg,
+                Mat4::IDENTITY,
+                Mat4::IDENTITY,
                 Mat4::IDENTITY,
                 Mat4::IDENTITY,
             ])]
