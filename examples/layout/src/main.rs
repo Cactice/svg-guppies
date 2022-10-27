@@ -59,6 +59,9 @@ fn layout_recursively(
             XConstraint::Scale => Mat4::IDENTITY,
         };
 
+        if &node.id().contains("#transform") {
+            transforms.push()
+        }
         node.children()
             .into_iter()
             .for_each(|child| layout_recursively(new_display_mat4, &child, bbox, transforms));
@@ -79,15 +82,7 @@ pub fn main() {
         match event {
             guppies::winit::event::Event::WindowEvent { event, .. } => match event {
                 guppies::winit::event::WindowEvent::Resized(p) => {
-                    normalize_svg = get_normalization()
-                        * get_svg_normalization(
-                            *p,
-                            svg_set.bbox,
-                            Constraint {
-                                x: XConstraint::Scale,
-                                y: YConstraint::Scale,
-                            },
-                        );
+                    normalize_svg = get_normalization() * get_svg_normalization(*p);
                 }
                 _ => {}
             },
