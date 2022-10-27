@@ -28,7 +28,7 @@ pub fn get_svg_normalization_1(size: PhysicalSize<u32>) -> Mat4 {
     Mat4::from_scale([1. / size.width as f32, 1. / size.height as f32, 1.].into())
 }
 
-pub fn get_svg_normalization(size: PhysicalSize<u32>, svg: Rect, constraint: Constraint) -> Mat4 {
+pub fn get_svg_normalization(size: PhysicalSize<u32>) -> Mat4 {
     Mat4::from_scale([1. / size.width as f32, 1. / size.height as f32, 1.].into())
 }
 
