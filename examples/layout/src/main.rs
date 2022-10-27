@@ -59,8 +59,8 @@ fn layout_recursively(
             XConstraint::Scale => Mat4::IDENTITY,
         };
 
-        if &node.id().contains("#transform") {
-            transforms.push()
+        if node.id().contains("#transform") {
+            transforms.push(mat4)
         }
         node.children()
             .into_iter()
