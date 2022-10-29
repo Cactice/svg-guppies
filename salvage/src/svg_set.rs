@@ -38,6 +38,7 @@ fn find_text_node_path(node: roxmltree::Node, path: &mut Vec<roxmltree::NodeId>)
 pub struct SvgSet<'a> {
     pub geometries: Vec<Geometry>,
     pub document: roxmltree::Document<'a>,
+    pub root: usvg::Node,
     pub id_to_svg: HashMap<String, NodeId>,
     pub id_to_geometry_index: HashMap<String, usize>,
     pub bbox: Rect,
@@ -49,6 +50,9 @@ impl<'a> Default for SvgSet<'a> {
         Self {
             geometries: vec![],
             document: Document::parse("<e/>").unwrap(),
+            root: Tree::from_str("<e/>", &Options::default().to_ref())
+                .unwrap()
+                .root(),
             id_to_svg: Default::default(),
             id_to_geometry_index: Default::default(),
             bbox: Default::default(),
@@ -130,6 +134,7 @@ impl<'a> SvgSet<'a> {
         Self {
             geometries,
             document,
+            root: tree.root(),
             id_to_svg,
             id_to_geometry_index,
             bbox,
