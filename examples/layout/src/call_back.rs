@@ -1,5 +1,5 @@
 use crate::{
-    rect::{Constraint, MyRect, XConstraint, YConstraint},
+    rect::{MyRect, XConstraint, YConstraint},
     MyPassDown,
 };
 use concept::svg_init::{regex::RegexSet, RegexPatterns};
@@ -10,7 +10,10 @@ use salvage::{
     usvg::{self, Node, NodeExt},
 };
 
-pub fn get_fullscreen_scale(svg_scale: Rect) -> Mat4 {
+pub fn get_svg_size(svg_scale: Rect) -> Mat4 {
+    Mat4::from_scale([svg_scale.size.x as f32, svg_scale.size.y as f32, 1.].into())
+}
+pub fn get_svg_normalization(svg_scale: Rect) -> Mat4 {
     Mat4::from_scale(
         [
             1. / svg_scale.size.x as f32,
@@ -21,14 +24,7 @@ pub fn get_fullscreen_scale(svg_scale: Rect) -> Mat4 {
     )
 }
 
-pub fn get_normalization() -> Mat4 {
-    Mat4::from_scale([2., -2., 1.].into()) * Mat4::from_translation([-0.5, -0.5, 1.].into())
-}
-pub fn get_svg_normalization_1(size: PhysicalSize<u32>) -> Mat4 {
-    Mat4::from_scale([1. / size.width as f32, 1. / size.height as f32, 1.].into())
-}
-
-pub fn get_svg_normalization(size: PhysicalSize<u32>) -> Mat4 {
+pub fn get_screen_normalization(size: PhysicalSize<u32>) -> Mat4 {
     Mat4::from_scale([1. / size.width as f32, 1. / size.height as f32, 1.].into())
 }
 
@@ -125,7 +121,7 @@ pub fn get_x_constraint(id: &str) -> XConstraint {
     } else if matches.matched(grab.index) {
         XConstraint::Center(0.)
     } else if matches.matched(undo.index) {
-        XConstraint::Right(15.)
+        XConstraint::Right(-45.)
     } else {
         XConstraint::Scale
     }
