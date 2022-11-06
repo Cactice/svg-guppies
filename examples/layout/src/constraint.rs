@@ -164,7 +164,8 @@ impl Constraint {
 
         let pre_xy = pre_x * pre_y;
         let post_xy = post_x * post_y;
-        let normalize_scale = Mat4::from_scale([2., 2., 1.].into()) * display.inverse();
+        let normalize_scale = Mat4::from_scale([2., 2., 1.].into())
+            * (Mat4::from_scale([0.5, 0.5, 1.].into()) * display).inverse();
 
         return post_xy * normalize_scale * pre_xy;
     }
