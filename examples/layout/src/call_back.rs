@@ -119,7 +119,7 @@ pub fn get_x_constraint(id: &str) -> XConstraint {
     } else if matches.matched(grab.index) {
         XConstraint::Center(0.)
     } else if matches.matched(undo.index) {
-        XConstraint::Right(-45.)
+        XConstraint::Right(-15.)
     } else {
         XConstraint::Scale
     }

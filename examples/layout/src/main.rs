@@ -1,8 +1,9 @@
 mod call_back;
 mod rect;
 use bytemuck::cast_slice;
-use call_back::{get_my_init_callback, get_screen_size, get_svg_size};
+use call_back::{get_my_init_callback, get_screen_size, get_svg_size, get_x_constraint};
 use guppies::glam::Mat4;
+use rect::XConstraint;
 use salvage::{
     callback::IndicesPriority,
     svg_set::SvgSet,
@@ -31,7 +32,28 @@ fn layout_recursively(
 
     let bbox = node.calculate_bbox();
     if let Some(bbox) = bbox {
-        let bbox_mat4 = Mat4::from_translation(
+        let fill_mat4 = Mat4::from_scale(
+            [
+                display_mat4.to_scale_rotation_translation().0.x
+                    / svg_mat4.to_scale_rotation_translation().0.x,
+                display_mat4.to_scale_rotation_translation().0.y
+                    / svg_mat4.to_scale_rotation_translation().0.y,
+                1.,
+            ]
+            .into(),
+        );
+        let left_align_mat4 =
+            Mat4::from_translation([bbox.x() as f32, bbox.y() as f32, 0.0 as f32].into()).inverse();
+        let right_align_mat4 = Mat4::from_translation(
+            [
+                (bbox.x() + bbox.width()) as f32,
+                (bbox.y() + bbox.height()) as f32,
+                0.0 as f32,
+            ]
+            .into(),
+        )
+        .inverse();
+        let center_mat4 = Mat4::from_translation(
             [
                 (bbox.x() + bbox.width() / 2.) as f32,
                 (bbox.y() + bbox.height() / 2.) as f32,
@@ -40,47 +62,50 @@ fn layout_recursively(
             .into(),
         )
         .inverse();
-        // let constraint_x = get_x_constraint(&node.id());
-        // match constraint_x {
-        //     XConstraint::Left(left) => {
-        //         let align_left = parent_mat4.inverse()
-        //             * Mat4::from_translation((-0.5, 0., 0.).into())
-        //             * parent_mat4;
-        //         let constraint_translation = Mat4::from_translation((left, 0., 0.).into());
-        //         this_mat4 = parent_mat4 * constraint_translation
-        //     }
-        //     XConstraint::Right(right) => {
-        //         let align_right = Mat4::from_translation((0.5, 0., 0.).into());
-        //         let constraint_translation = Mat4::from_translation((right, 0., 0.).into());
-        //         this_mat4 = constraint_translation * display_mat4 * parent_mat4
-        //     }
-        //     XConstraint::LeftAndRight { left, right } => {
-        //         let (bbox_scale, _, _) = bbox_mat4.to_scale_rotation_translation();
-        //         let (parent_scale, _, _) = parent_mat4.to_scale_rotation_translation();
-        //         let constraint_scale = Mat4::from_scale(
-        //             (parent_scale.x + left + right / parent_scale.x, 1., 1.).into(),
-        //         );
-        //         let constraint_translation = Mat4::from_translation((left, 0., 0.).into());
-        //         this_mat4 =
-        //             constraint_translation * constraint_translation * constraint_scale * parent_mat4
-        //     }
-        //     XConstraint::Center(rightward_from_center) => {
-        //         let constraint_translation =
-        //             Mat4::from_translation((rightward_from_center, 0., 0.).into());
-        //         this_mat4 = display_mat4 * constraint_translation * parent_mat4
-        //     }
-        //     XConstraint::Scale => this_mat4 = parent_mat4,
-        // }
+
+        let constraint_x = get_x_constraint(&node.id());
+        let pre_translation_mat4;
+        let post_translation_mat4;
+        let scale_mat4;
+        match constraint_x {
+            XConstraint::Left(left) => {
+                pre_translation_mat4 =
+                    left_align_mat4 * Mat4::from_translation([left, 0., 0.].into());
+                post_translation_mat4 = Mat4::from_translation([-1.0, 0., 0.].into());
+                scale_mat4 = Mat4::IDENTITY;
+            }
+            XConstraint::Right(right) => {
+                pre_translation_mat4 =
+                    right_align_mat4 * Mat4::from_translation([right, 0., 0.].into());
+                post_translation_mat4 = Mat4::from_translation([1.0, 0., 0.].into());
+                scale_mat4 = Mat4::IDENTITY;
+            }
+            XConstraint::Center(rightward_from_center) => {
+                pre_translation_mat4 =
+                    center_mat4 * Mat4::from_translation([rightward_from_center, 0., 0.].into());
+                post_translation_mat4 = Mat4::IDENTITY;
+                scale_mat4 = Mat4::IDENTITY;
+            }
+            XConstraint::LeftAndRight { left, right } => {
+                todo!();
+            }
+            XConstraint::Scale => {
+                pre_translation_mat4 = center_mat4;
+                post_translation_mat4 = Mat4::IDENTITY;
+                scale_mat4 = fill_mat4;
+            }
+        }
         if node.id().contains("#transform") {
-            dbg!(node.id());
             children_transforms.insert(
                 0,
-                Mat4::from_scale([2., 2., 1.].into()) * display_mat4.inverse() * bbox_mat4,
+                post_translation_mat4
+                    * Mat4::from_scale([2., 2., 1.].into())
+                    * display_mat4.inverse()
+                    * scale_mat4
+                    * pre_translation_mat4,
             );
         }
-    } else {
-    };
-
+    }
     return children_transforms;
 }
 
@@ -99,15 +124,13 @@ pub fn main() {
                 guppies::winit::event::WindowEvent::Resized(p) => {
                     let display_mat4 = get_screen_size(*p);
                     let svg_mat4 = get_svg_size(svg_set.bbox);
-                    // let svg_normalization = Mat4::from_translation([-0.5, -0.5, 1.0].into())
-                    //     * get_svg_normalization(svg_set.bbox);
 
                     let mut transforms =
                         layout_recursively(svg_mat4, display_mat4, svg_set.root.clone(), svg_mat4);
                     let mut answer_transforms = vec![Mat4::IDENTITY, Mat4::IDENTITY];
-                    transforms.iter().enumerate().for_each(|(i, transform)| {
-                        dbg!(i, transform.to_scale_rotation_translation());
-                    });
+                    // transforms.iter().enumerate().for_each(|(i, transform)| {
+                    // dbg!(i, transform.to_scale_rotation_translation());
+                    // });
                     answer_transforms.append(&mut transforms);
                     gpu_redraw.update_texture([cast_slice(&answer_transforms[..])].concat());
                 }
