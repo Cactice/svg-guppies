@@ -9,9 +9,9 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 
 [dependencies]
 mobile-entry-point = "0.1.0"
-guppies = { path = "../guppies" }
-salvage = { path = "../salvage" }
-concept = { path = "../concept" }
+guppies = { path = "../../guppies" }
+salvage = { path = "../../salvage" }
+concept = { path = "../../concept" }
 regex = "1"
 bytemuck = "1.9.1"
 fastrand = "1.8.0"

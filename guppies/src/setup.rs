@@ -245,7 +245,6 @@ impl Redraw {
             ..Default::default()
         });
 
-        let surface_formats = surface.get_supported_formats(&adapter);
         let surface_format = wgpu::TextureFormat::Bgra8Unorm;
 
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -285,6 +284,7 @@ impl Redraw {
             width: size.width,
             height: size.height,
             present_mode: wgpu::PresentMode::AutoVsync,
+            alpha_mode: wgpu::CompositeAlphaMode::Auto,
         };
 
         surface.configure(&device, &config);

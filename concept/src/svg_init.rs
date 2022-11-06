@@ -1,4 +1,5 @@
 use guppies::glam::Vec2;
+pub use regex;
 use regex::RegexSet;
 use salvage::{
     callback::{IndicesPriority, PassDown},
@@ -30,7 +31,7 @@ pub fn get_default_init_callback() -> impl FnMut(Node, PassDown) -> (Option<Geom
     let mut transform_count = 1;
     let mut regex_patterns = RegexPatterns::default();
     let _clickable_regex_pattern = regex_patterns.add(r"#clickable(?:$| |#)");
-    let dynamic_regex_pattern = regex_patterns.add(r"#dynamic(?:$| |#)");
+    let transform_regex_pattern = regex_patterns.add(r"#transform(?:$| |#)");
     let dynamic_text_regex_pattern = regex_patterns.add(r"#dynamicText(?:$| |#)");
     let defaults = RegexSet::new(regex_patterns.inner.iter().map(|r| &r.regex_pattern)).unwrap();
     move |node, pass_down| {
@@ -40,7 +41,7 @@ pub fn get_default_init_callback() -> impl FnMut(Node, PassDown) -> (Option<Geom
         } = pass_down;
         let id = node.id();
         let default_matches = defaults.matches(&id);
-        let transform_id = if default_matches.matched(dynamic_regex_pattern.index) {
+        let transform_id = if default_matches.matched(transform_regex_pattern.index) {
             transform_count += 1;
             transform_count
         } else {

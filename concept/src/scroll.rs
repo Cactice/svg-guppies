@@ -1,5 +1,4 @@
 use guppies::{
-    get_scale,
     glam::{Mat4, Vec2, Vec3},
     winit::{
         dpi::PhysicalSize,
@@ -8,6 +7,17 @@ use guppies::{
 };
 use salvage::svg_set::SvgSet;
 const UNMOVED_RADIUS: f32 = 40.;
+pub fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
+    let ratio = f32::min(svg_scale.x, svg_scale.y) / f32::max(svg_scale.x, svg_scale.y);
+    Mat4::from_scale(
+        [
+            2.0 * ratio / size.width as f32,
+            -2.0 * ratio / size.height as f32,
+            1.0,
+        ]
+        .into(),
+    )
+}
 
 #[derive(Default, Debug, Clone)]
 pub struct ScrollState {

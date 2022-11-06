@@ -1,13 +1,13 @@
-use crate::{callback::PassDown, geometry::Geometry};
+use crate::geometry::Geometry;
 use guppies::{glam::Vec2, primitives::Rect};
 use roxmltree::{Document, NodeId};
 use std::{collections::HashMap, sync::Arc};
-use usvg::{fontdb::Source, Node, NodeExt, Options, Tree};
+use usvg::{fontdb::Source, Node, Options, Tree};
 use xmlwriter::XmlWriter;
 
-fn recursive_svg<C: FnMut(Node, PassDown) -> (Option<Geometry>, PassDown)>(
+fn recursive_svg<P: Clone, C: FnMut(Node, P) -> (Option<Geometry>, P)>(
     node: usvg::Node,
-    pass_down: PassDown,
+    pass_down: P,
     geometries: &mut Vec<Geometry>,
     callback: &mut C,
 ) {
@@ -16,7 +16,7 @@ fn recursive_svg<C: FnMut(Node, PassDown) -> (Option<Geometry>, PassDown)>(
         geometries.push(geometry);
     }
     for child in node.children() {
-        recursive_svg(child, pass_down, geometries, callback);
+        recursive_svg(child, pass_down.clone(), geometries, callback);
     }
 }
 
@@ -38,6 +38,7 @@ fn find_text_node_path(node: roxmltree::Node, path: &mut Vec<roxmltree::NodeId>)
 pub struct SvgSet<'a> {
     pub geometries: Vec<Geometry>,
     pub document: roxmltree::Document<'a>,
+    pub root: usvg::Node,
     pub id_to_svg: HashMap<String, NodeId>,
     pub id_to_geometry_index: HashMap<String, usize>,
     pub bbox: Rect,
@@ -49,6 +50,9 @@ impl<'a> Default for SvgSet<'a> {
         Self {
             geometries: vec![],
             document: Document::parse("<e/>").unwrap(),
+            root: Tree::from_str("<e/>", &Options::default().to_ref())
+                .unwrap()
+                .root(),
             id_to_svg: Default::default(),
             id_to_geometry_index: Default::default(),
             bbox: Default::default(),
@@ -84,8 +88,9 @@ impl<'a> SvgSet<'a> {
         let node = self.document.get_node(*node_id).ok_or("Not in document")?;
         Ok(node)
     }
-    pub fn new<C: FnMut(Node, PassDown) -> (Option<Geometry>, PassDown)>(
+    pub fn new<P: Clone, C: FnMut(Node, P) -> (Option<Geometry>, P)>(
         xml: &'a str,
+        initial_pass_down: P,
         mut callback: C,
     ) -> Self {
         let font = include_bytes!("../fallback_font/Roboto-Medium.ttf");
@@ -108,10 +113,7 @@ impl<'a> SvgSet<'a> {
         let mut geometries: Vec<Geometry> = vec![];
         recursive_svg(
             tree.root(),
-            PassDown {
-                transform_id: 1,
-                ..Default::default()
-            },
+            initial_pass_down,
             &mut geometries,
             &mut callback,
         );
@@ -132,6 +134,7 @@ impl<'a> SvgSet<'a> {
         Self {
             geometries,
             document,
+            root: tree.root(),
             id_to_svg,
             id_to_geometry_index,
             bbox,

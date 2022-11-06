@@ -1,30 +1,16 @@
-pub mod callback;
 pub mod primitives;
 mod setup;
 pub use glam;
-use glam::{Mat4, Vec2};
+use glam::Mat4;
 use primitives::Triangles;
 use setup::Redraw;
 pub use winit;
-use winit::dpi::PhysicalSize;
 use winit::event_loop::EventLoopWindowTarget;
 use winit::window::{Window, WindowBuilder, WindowId};
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
 };
-
-pub fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
-    let ratio = f32::min(svg_scale.x, svg_scale.y) / f32::max(svg_scale.x, svg_scale.y);
-    Mat4::from_scale(
-        [
-            2.0 * ratio / size.width as f32,
-            -2.0 * ratio / size.height as f32,
-            1.0,
-        ]
-        .into(),
-    )
-}
 
 fn init(
     event_loop: &EventLoopWindowTarget<()>,
@@ -68,6 +54,7 @@ pub struct GpuRedraw {
     texture: Vec<u8>,
     triangles: Triangles,
 }
+
 impl GpuRedraw {
     pub fn update_texture(&mut self, textures: Vec<u8>) {
         self.texture = textures;
@@ -107,6 +94,9 @@ pub fn render_loop<F: FnMut(&Event<()>, &mut GpuRedraw) + 'static>(mut render_lo
             Event::NewEvents(start_cause) => match start_cause {
                 winit::event::StartCause::Init => {
                     init(event_loop, &gpu_redraw.triangles, &mut redraw, &mut window);
+
+                    // I think below is necessary when running on mobile...
+                    // I forgot and don't want to test now.
                     let size = window.as_ref().unwrap().inner_size();
                     render_loop(
                         &Event::WindowEvent {

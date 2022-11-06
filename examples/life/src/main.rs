@@ -1,7 +1,7 @@
 use bytemuck::{cast_slice, Pod, Zeroable};
-use concept::regex::get_center;
 use concept::scroll::ScrollState;
 use concept::spring::SpringMat4;
+use concept::svg_init::get_center;
 use concept::uses::use_svg;
 use guppies::glam::{Mat4, Vec2};
 use guppies::winit::event::Event;
@@ -61,7 +61,7 @@ pub fn main() {
     let mut tip_center = Mat4::IDENTITY;
     let coord = Regex::new(r"#coord(?:$| |#)").unwrap();
     let stops = Regex::new(r"^(\d+)\.((?:\+|-)\d+):").unwrap();
-    let mut svg_set = use_svg(include_str!("../../svg/life.svg"), |node, pass_down| {
+    let mut svg_set = use_svg(include_str!("../life.svg"), |node, pass_down| {
         let id = node.id();
         for captures in stops.captures_iter(&id) {
             let stop: usize = captures[1].parse().unwrap();
