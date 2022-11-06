@@ -12,7 +12,7 @@ pub fn use_svg<C: FnMut(Node, PassDown)>(xml: &str, mut callback: C) -> SvgSet {
         },
         |node, passdown| {
             callback(node.clone(), passdown);
-            default_callback(node.clone(), passdown)
+            default_callback(node, passdown)
         },
     )
 }
