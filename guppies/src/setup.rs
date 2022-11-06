@@ -245,7 +245,6 @@ impl Redraw {
             ..Default::default()
         });
 
-        let surface_formats = surface.get_supported_formats(&adapter);
         let surface_format = wgpu::TextureFormat::Bgra8Unorm;
 
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {

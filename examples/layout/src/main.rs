@@ -1,22 +1,16 @@
 mod call_back;
 mod rect;
 use bytemuck::cast_slice;
-use call_back::{get_my_init_callback, get_screen_size, get_svg_size, get_x_constraint};
+use call_back::{get_screen_size, get_svg_size, get_x_constraint};
+use concept::svg_init::get_default_init_callback;
 use guppies::glam::Mat4;
 use rect::XConstraint;
 use salvage::{
-    callback::IndicesPriority,
+    callback::PassDown,
     svg_set::SvgSet,
-    usvg::{self, NodeExt, PathBbox},
+    usvg::{self, NodeExt},
 };
 use std::vec;
-
-#[derive(Clone, Default)]
-pub struct MyPassDown {
-    pub indices_priority: IndicesPriority,
-    pub transform_id: u32,
-    pub bbox: Option<PathBbox>,
-}
 
 fn layout_recursively(
     svg_mat4: Mat4,
@@ -72,7 +66,7 @@ fn layout_recursively(
                 post_scale_x_mat4 = Mat4::IDENTITY;
                 scale_x_mat4 = Mat4::IDENTITY;
             }
-            XConstraint::LeftAndRight { left, right } => {
+            XConstraint::LeftAndRight { left: _, right: _ } => {
                 todo!();
             }
             XConstraint::Scale => {
@@ -92,39 +86,33 @@ fn layout_recursively(
             );
         }
     }
-    return children_transforms;
+    children_transforms
 }
 
 pub fn main() {
     let svg_set = SvgSet::new(
         include_str!("../MenuBar.svg"),
-        MyPassDown {
+        PassDown {
             transform_id: 1,
             ..Default::default()
         },
-        get_my_init_callback(),
+        get_default_init_callback(),
     );
     guppies::render_loop(move |event, gpu_redraw| {
-        match event {
-            guppies::winit::event::Event::WindowEvent { event, .. } => match event {
-                guppies::winit::event::WindowEvent::Resized(p) => {
-                    let display_mat4 = get_screen_size(*p);
-                    let svg_mat4 = get_svg_size(svg_set.bbox);
+        if let guppies::winit::event::Event::WindowEvent {
+            event: guppies::winit::event::WindowEvent::Resized(p),
+            ..
+        } = event
+        {
+            let display_mat4 = get_screen_size(*p);
+            let svg_mat4 = get_svg_size(svg_set.bbox);
 
-                    let mut transforms =
-                        layout_recursively(svg_mat4, display_mat4, svg_set.root.clone(), svg_mat4);
-                    let mut answer_transforms = vec![Mat4::IDENTITY, Mat4::IDENTITY];
-                    // transforms.iter().enumerate().for_each(|(i, transform)| {
-                    // dbg!(i, transform.to_scale_rotation_translation());
-                    // });
-                    answer_transforms.append(&mut transforms);
-                    gpu_redraw.update_texture([cast_slice(&answer_transforms[..])].concat());
-                }
-                _ => {}
-            },
-            _ => {}
+            let mut transforms =
+                layout_recursively(svg_mat4, display_mat4, svg_set.root.clone(), svg_mat4);
+            let mut answer_transforms = vec![Mat4::IDENTITY, Mat4::IDENTITY];
+            answer_transforms.append(&mut transforms);
+            gpu_redraw.update_texture([cast_slice(&answer_transforms[..])].concat());
+            gpu_redraw.update_triangles(svg_set.get_combined_geometries().triangles, 0);
         }
-        gpu_redraw.update_triangles(svg_set.get_combined_geometries().triangles, 0);
-        // gpu_redraw.update_texture([cast_slice(&transforms[..])].concat());
     });
 }
