@@ -1,7 +1,7 @@
 use crate::constraint::{XConstraint, YConstraint};
 use concept::svg_init::{regex::RegexSet, RegexPatterns};
 
-pub fn get_y_constraint(id: &str) -> YConstraint {
+pub fn get_y_constraint(_id: &str) -> YConstraint {
     YConstraint::Center(0.)
 }
 

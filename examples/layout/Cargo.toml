@@ -3,6 +3,11 @@ name = "layout"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+crate-type = ["staticlib", "cdylib", "rlib"]
+name = "layout"
+path = "src/main.rs"
+
 [[bin]]
 name = "layout"
 path = "src/main.rs"
@@ -13,3 +18,8 @@ bytemuck = "1.12.1"
 guppies= { path = "../../guppies" }
 salvage = { path = "../../salvage" }
 concept = { path = "../../concept" }
+
+[target.'cfg(target_os = "android")'.dependencies]
+android_logger = "0.11.0"
+log = "0.4.11"
+ndk-glue = "0.7.0"
