@@ -1,32 +1,16 @@
 pub mod primitives;
 mod setup;
 pub use glam;
-use glam::{Mat4, Vec2};
+use glam::Mat4;
 use primitives::Triangles;
 use setup::Redraw;
 pub use winit;
-use winit::dpi::PhysicalSize;
 use winit::event_loop::EventLoopWindowTarget;
-use winit::window::{Window, WindowBuilder};
+use winit::window::{Window, WindowBuilder, WindowId};
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
 };
-pub fn get_scale(_: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
-    Mat4::from_scale([2. / svg_scale.x as f32, -2. / svg_scale.y as f32, 1.0].into())
-}
-
-// pub fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
-//     let ratio = f32::min(svg_scale.x, svg_scale.y) / f32::max(svg_scale.x, svg_scale.y);
-//     Mat4::from_scale(
-//         [
-//             2.0 * ratio / size.width as f32,
-//             -2.0 * ratio / size.height as f32,
-//             1.0,
-//         ]
-//         .into(),
-//     )
-// }
 
 fn init(
     event_loop: &EventLoopWindowTarget<()>,
@@ -110,14 +94,17 @@ pub fn render_loop<F: FnMut(&Event<()>, &mut GpuRedraw) + 'static>(mut render_lo
             Event::NewEvents(start_cause) => match start_cause {
                 winit::event::StartCause::Init => {
                     init(event_loop, &gpu_redraw.triangles, &mut redraw, &mut window);
-                    // let size = window.as_ref().unwrap().inner_size();
-                    // render_loop(
-                    //     &Event::WindowEvent {
-                    //         window_id: unsafe { WindowId::dummy() },
-                    //         event: WindowEvent::Resized(size),
-                    //     },
-                    //     &mut gpu_redraw,
-                    // );
+
+                    // I think below is necessary when running on mobile...
+                    // I forgot and don't want to test now.
+                    let size = window.as_ref().unwrap().inner_size();
+                    render_loop(
+                        &Event::WindowEvent {
+                            window_id: unsafe { WindowId::dummy() },
+                            event: WindowEvent::Resized(size),
+                        },
+                        &mut gpu_redraw,
+                    );
                 }
                 _ => (),
             },

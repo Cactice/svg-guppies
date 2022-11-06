@@ -1,14 +1,5 @@
 use crate::constraint::{XConstraint, YConstraint};
 use concept::svg_init::{regex::RegexSet, RegexPatterns};
-use guppies::{glam::Mat4, primitives::Rect, winit::dpi::PhysicalSize};
-
-pub fn get_svg_size(svg_scale: Rect) -> Mat4 {
-    Mat4::from_scale([svg_scale.size.x as f32, svg_scale.size.y as f32, 1.].into())
-}
-
-pub fn get_screen_size(size: PhysicalSize<u32>) -> Mat4 {
-    Mat4::from_scale([size.width as f32, size.height as f32, 1.].into())
-}
 
 pub fn get_y_constraint(id: &str) -> YConstraint {
     YConstraint::Center(0.)

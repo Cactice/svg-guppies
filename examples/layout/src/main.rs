@@ -1,16 +1,24 @@
 mod call_back;
 mod constraint;
 use bytemuck::cast_slice;
-use call_back::{get_screen_size, get_svg_size, get_x_constraint, get_y_constraint};
+use call_back::{get_x_constraint, get_y_constraint};
 use concept::svg_init::get_default_init_callback;
-use constraint::{Constraint, XConstraint};
-use guppies::glam::Mat4;
+use constraint::Constraint;
+use guppies::{glam::Mat4, primitives::Rect, winit::dpi::PhysicalSize};
 use salvage::{
     callback::PassDown,
     svg_set::SvgSet,
     usvg::{self, NodeExt},
 };
 use std::vec;
+
+pub fn get_svg_size(svg_scale: Rect) -> Mat4 {
+    Mat4::from_scale([svg_scale.size.x as f32, svg_scale.size.y as f32, 1.].into())
+}
+
+pub fn get_screen_size(size: PhysicalSize<u32>) -> Mat4 {
+    Mat4::from_scale([size.width as f32, size.height as f32, 1.].into())
+}
 
 fn layout_recursively(svg: Mat4, display: Mat4, node: usvg::Node, parent: Mat4) -> Vec<Mat4> {
     let mut children_transforms: Vec<Mat4> = node

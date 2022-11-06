@@ -73,6 +73,24 @@ impl XConstraint {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum YConstraint {
+    Top(f32),
+    Bottom(f32),
+    TopAndBottom { top: f32, bottom: f32 },
+    Center(f32), //downward_from_center
+    Scale,
+}
+
+impl Default for YConstraint {
+    fn default() -> Self {
+        Self::TopAndBottom {
+            top: 0.,
+            bottom: 0.,
+        }
+    }
+}
+
 impl YConstraint {
     fn to_pre_post_transform(self, display: Mat4, svg: Mat4, bbox: PathBbox) -> (Mat4, Mat4) {
         let fill_y = Mat4::from_scale(
@@ -125,23 +143,6 @@ impl YConstraint {
             pre_scale_scale_y * pre_scale_translate_y,
             post_scale_translate_y,
         )
-    }
-}
-#[derive(Debug, Clone, Copy)]
-pub enum YConstraint {
-    Top(f32),
-    Bottom(f32),
-    TopAndBottom { top: f32, bottom: f32 },
-    Center(f32),
-    Scale,
-}
-
-impl Default for YConstraint {
-    fn default() -> Self {
-        Self::TopAndBottom {
-            top: 0.,
-            bottom: 0.,
-        }
     }
 }
 
