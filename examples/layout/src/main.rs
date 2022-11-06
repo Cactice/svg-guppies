@@ -30,79 +30,65 @@ fn layout_recursively(
         .flat_map(|child| layout_recursively(svg_mat4, display_mat4, child, parent_mat4))
         .collect();
 
-    let bbox = node.calculate_bbox();
-    if let Some(bbox) = bbox {
+    if let Some(bbox) = node.calculate_bbox() {
         let fill_mat4 = Mat4::from_scale(
             [
                 display_mat4.to_scale_rotation_translation().0.x
                     / svg_mat4.to_scale_rotation_translation().0.x,
-                display_mat4.to_scale_rotation_translation().0.y
-                    / svg_mat4.to_scale_rotation_translation().0.y,
+                1.,
                 1.,
             ]
             .into(),
         );
-        let left_align_mat4 =
-            Mat4::from_translation([bbox.x() as f32, bbox.y() as f32, 0.0 as f32].into()).inverse();
-        let right_align_mat4 = Mat4::from_translation(
-            [
-                (bbox.x() + bbox.width()) as f32,
-                (bbox.y() + bbox.height()) as f32,
-                0.0 as f32,
-            ]
-            .into(),
-        )
-        .inverse();
-        let center_mat4 = Mat4::from_translation(
-            [
-                (bbox.x() + bbox.width() / 2.) as f32,
-                (bbox.y() + bbox.height() / 2.) as f32,
-                0.0 as f32,
-            ]
-            .into(),
-        )
-        .inverse();
+
+        let left_align_mat4 = Mat4::from_translation([bbox.x() as f32, 0.0, 0.0].into()).inverse();
+
+        let right_align_mat4 =
+            Mat4::from_translation([(bbox.x() + bbox.width()) as f32, 0.0, 0.0].into()).inverse();
+
+        let center_x_mat4 =
+            Mat4::from_translation([(bbox.x() + bbox.width() / 2.) as f32, 0.0, 0.0].into())
+                .inverse();
 
         let constraint_x = get_x_constraint(&node.id());
-        let pre_translation_mat4;
-        let post_translation_mat4;
-        let scale_mat4;
+        let pre_scale_x_mat4;
+        let post_scale_x_mat4;
+        let scale_x_mat4;
         match constraint_x {
             XConstraint::Left(left) => {
-                pre_translation_mat4 =
-                    left_align_mat4 * Mat4::from_translation([left, 0., 0.].into());
-                post_translation_mat4 = Mat4::from_translation([-1.0, 0., 0.].into());
-                scale_mat4 = Mat4::IDENTITY;
+                pre_scale_x_mat4 = left_align_mat4 * Mat4::from_translation([left, 0., 0.].into());
+                post_scale_x_mat4 = Mat4::from_translation([-1.0, 0., 0.].into());
+                scale_x_mat4 = Mat4::IDENTITY;
             }
             XConstraint::Right(right) => {
-                pre_translation_mat4 =
+                pre_scale_x_mat4 =
                     right_align_mat4 * Mat4::from_translation([right, 0., 0.].into());
-                post_translation_mat4 = Mat4::from_translation([1.0, 0., 0.].into());
-                scale_mat4 = Mat4::IDENTITY;
+                post_scale_x_mat4 = Mat4::from_translation([1.0, 0., 0.].into());
+                scale_x_mat4 = Mat4::IDENTITY;
             }
             XConstraint::Center(rightward_from_center) => {
-                pre_translation_mat4 =
-                    center_mat4 * Mat4::from_translation([rightward_from_center, 0., 0.].into());
-                post_translation_mat4 = Mat4::IDENTITY;
-                scale_mat4 = Mat4::IDENTITY;
+                pre_scale_x_mat4 =
+                    center_x_mat4 * Mat4::from_translation([rightward_from_center, 0., 0.].into());
+                post_scale_x_mat4 = Mat4::IDENTITY;
+                scale_x_mat4 = Mat4::IDENTITY;
             }
             XConstraint::LeftAndRight { left, right } => {
                 todo!();
             }
             XConstraint::Scale => {
-                pre_translation_mat4 = center_mat4;
-                post_translation_mat4 = Mat4::IDENTITY;
-                scale_mat4 = fill_mat4;
+                pre_scale_x_mat4 = center_x_mat4;
+                post_scale_x_mat4 = Mat4::IDENTITY;
+                scale_x_mat4 = fill_mat4;
             }
         }
         if node.id().contains("#transform") {
             children_transforms.insert(
                 0,
-                post_translation_mat4
+                post_scale_x_mat4
                     * Mat4::from_scale([2., 2., 1.].into())
                     * display_mat4.inverse()
-                    * scale_mat4
-                    * pre_translation_mat4,
+                    * scale_x_mat4
+                    * pre_scale_x_mat4,
             );
         }
     }
