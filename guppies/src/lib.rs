@@ -7,7 +7,7 @@ use setup::Redraw;
 pub use winit;
 use winit::dpi::PhysicalSize;
 use winit::event_loop::EventLoopWindowTarget;
-use winit::window::{Window, WindowBuilder, WindowId};
+use winit::window::{Window, WindowBuilder};
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -110,14 +110,14 @@ pub fn render_loop<F: FnMut(&Event<()>, &mut GpuRedraw) + 'static>(mut render_lo
             Event::NewEvents(start_cause) => match start_cause {
                 winit::event::StartCause::Init => {
                     init(event_loop, &gpu_redraw.triangles, &mut redraw, &mut window);
-                    let size = window.as_ref().unwrap().inner_size();
-                    render_loop(
-                        &Event::WindowEvent {
-                            window_id: unsafe { WindowId::dummy() },
-                            event: WindowEvent::Resized(size),
-                        },
-                        &mut gpu_redraw,
-                    );
+                    // let size = window.as_ref().unwrap().inner_size();
+                    // render_loop(
+                    //     &Event::WindowEvent {
+                    //         window_id: unsafe { WindowId::dummy() },
+                    //         event: WindowEvent::Resized(size),
+                    //     },
+                    //     &mut gpu_redraw,
+                    // );
                 }
                 _ => (),
             },

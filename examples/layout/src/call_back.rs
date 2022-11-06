@@ -28,10 +28,14 @@ pub fn get_screen_normalization(size: PhysicalSize<u32>) -> Mat4 {
     Mat4::from_scale([1. / size.width as f32, 1. / size.height as f32, 1.].into())
 }
 
+pub fn get_screen_size(size: PhysicalSize<u32>) -> Mat4 {
+    Mat4::from_scale([size.width as f32, size.height as f32, 1.].into())
+}
+
 pub fn get_my_init_callback() -> impl FnMut(Node, MyPassDown) -> (Option<Geometry>, MyPassDown) {
     let mut transform_count = 1;
     let mut regex_patterns = RegexPatterns::default();
-    let dynamic = regex_patterns.add(r"#dynamic(?:$| |#)");
+    let transform = regex_patterns.add(r"#transform(?:$| |#)");
     let dynamic_text = regex_patterns.add(r"#dynamicText(?:$| |#)");
     let defaults = RegexSet::new(regex_patterns.inner.iter().map(|r| &r.regex_pattern)).unwrap();
     move |node, pass_down| {
@@ -43,18 +47,12 @@ pub fn get_my_init_callback() -> impl FnMut(Node, MyPassDown) -> (Option<Geometr
             bbox: parent_bbox,
         } = pass_down;
         let bbox = node.calculate_bbox();
-        let x_constraint = if let (Some(parent_bbox), Some(bbox)) = (parent_bbox, bbox) {
-            get_x_constraint(&id)
+        let transform_id = if default_matches.matched(transform.index) {
+            transform_count += 1;
+            transform_count
         } else {
-            XConstraint::Scale
+            parent_transform_id
         };
-        let transform_id =
-            if default_matches.matched(dynamic.index) || x_constraint != XConstraint::Scale {
-                transform_count += 1;
-                transform_count
-            } else {
-                parent_transform_id
-            };
         let indices_priority = if !default_matches.matched(dynamic_text.index) {
             IndicesPriority::Variable
         } else {
