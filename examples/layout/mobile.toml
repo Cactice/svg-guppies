@@ -1,0 +1,8 @@
+[app]
+name = "layout"
+stylized-name = "Layout"
+domain = "users.noreply.github.com"
+template-pack = "winit"
+
+[apple]
+development-team = "29BWQ53ETH"

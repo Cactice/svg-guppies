@@ -1,10 +1,12 @@
 mod call_back;
 mod constraint;
+
 use bytemuck::cast_slice;
 use call_back::{get_x_constraint, get_y_constraint};
 use concept::svg_init::get_default_init_callback;
 use constraint::Constraint;
 use guppies::{glam::Mat4, primitives::Rect, winit::dpi::PhysicalSize};
+use mobile_entry_point::mobile_entry_point;
 use salvage::{
     callback::PassDown,
     svg_set::SvgSet,
@@ -12,11 +14,11 @@ use salvage::{
 };
 use std::vec;
 
-pub fn get_svg_size(svg_scale: Rect) -> Mat4 {
+fn get_svg_size(svg_scale: Rect) -> Mat4 {
     Mat4::from_scale([svg_scale.size.x as f32, svg_scale.size.y as f32, 1.].into())
 }
 
-pub fn get_screen_size(size: PhysicalSize<u32>) -> Mat4 {
+fn get_screen_size(size: PhysicalSize<u32>) -> Mat4 {
     Mat4::from_scale([size.width as f32, size.height as f32, 1.].into())
 }
 
@@ -65,4 +67,9 @@ pub fn main() {
             gpu_redraw.update_triangles(svg_set.get_combined_geometries().triangles, 0);
         }
     });
+}
+
+#[mobile_entry_point]
+pub fn mobile_main() {
+    main()
 }
