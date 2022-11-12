@@ -164,7 +164,7 @@ impl Constraint {
 
         let pre_xy = pre_x * pre_y;
         let post_xy = post_x * post_y;
-        // TODO: Why 4., 4., 1.? I thought 2., 2., 1. should come here but that seemed too small
+        // TODO: Why 4., 4., 1.? I thought 2., 2., 1. should come here but that looked too small
         let normalize_scale = Mat4::from_scale([4., 4., 1.].into()) * display.inverse();
 
         return post_xy * normalize_scale * pre_xy;
