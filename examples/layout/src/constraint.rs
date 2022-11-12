@@ -19,7 +19,8 @@ impl Default for XConstraint {
     }
 }
 impl XConstraint {
-    fn to_pre_post_transform(self, display: Mat4, svg: Mat4, bbox: PathBbox) -> (Mat4, Mat4) {
+    fn to_pre_post_transform(self, display: Mat4, svg: Mat4, bbox: Mat4) -> (Mat4, Mat4) {
+        let (bbox_scale, _, bbox_translation) = bbox.to_scale_rotation_translation();
         let fill_x = Mat4::from_scale(
             [
                 display.to_scale_rotation_translation().0.x
@@ -29,12 +30,14 @@ impl XConstraint {
             ]
             .into(),
         );
-        let left_align = Mat4::from_translation([bbox.x() as f32, 0.0, 0.0].into()).inverse();
+        let left_align = Mat4::from_translation([bbox_translation.x, 0.0, 0.0].into()).inverse();
         let right_align =
-            Mat4::from_translation([(bbox.x() + bbox.width()) as f32, 0.0, 0.0].into()).inverse();
-        let center_x =
-            Mat4::from_translation([(bbox.x() + bbox.width() / 2.) as f32, 0.0, 0.0].into())
+            Mat4::from_translation([(bbox_translation.x + bbox_scale.x) as f32, 0.0, 0.0].into())
                 .inverse();
+        let center_x = Mat4::from_translation(
+            [(bbox_translation.x + bbox_scale.x / 2.) as f32, 0.0, 0.0].into(),
+        )
+        .inverse();
 
         let pre_scale_translate_x;
         let pre_scale_scale_x;
@@ -92,7 +95,8 @@ impl Default for YConstraint {
 }
 
 impl YConstraint {
-    fn to_pre_post_transform(self, display: Mat4, svg: Mat4, bbox: PathBbox) -> (Mat4, Mat4) {
+    fn to_pre_post_transform(self, display: Mat4, svg: Mat4, bbox: Mat4) -> (Mat4, Mat4) {
+        let (bbox_scale, _, bbox_translation) = bbox.to_scale_rotation_translation();
         let fill_y = Mat4::from_scale(
             [
                 1.,
@@ -102,12 +106,15 @@ impl YConstraint {
             ]
             .into(),
         );
-        let top_align = Mat4::from_translation([0.0, bbox.y() as f32, 0.0].into()).inverse();
+        let top_align =
+            Mat4::from_translation([0.0, bbox_translation.y as f32, 0.0].into()).inverse();
         let bottom_align =
-            Mat4::from_translation([0.0, (bbox.y() + bbox.height()) as f32, 0.0].into()).inverse();
-        let center_y =
-            Mat4::from_translation([0.0, (bbox.y() + bbox.height() / 2.) as f32, 0.0].into())
+            Mat4::from_translation([0.0, (bbox_translation.y + bbox_scale.y) as f32, 0.0].into())
                 .inverse();
+        let center_y = Mat4::from_translation(
+            [0.0, (bbox_translation.y + bbox_scale.y / 2.) as f32, 0.0].into(),
+        )
+        .inverse();
 
         let pre_scale_translate_y;
         let pre_scale_scale_y;
@@ -153,7 +160,7 @@ pub struct Constraint {
 }
 
 impl Constraint {
-    pub fn to_mat4(self, display: Mat4, svg: Mat4, bbox: PathBbox) -> Mat4 {
+    pub fn to_mat4(self, display: Mat4, svg: Mat4, bbox: Mat4) -> Mat4 {
         let Constraint {
             x: constraint_x,
             y: constraint_y,
@@ -164,8 +171,13 @@ impl Constraint {
 
         let pre_xy = pre_x * pre_y;
         let post_xy = post_x * post_y;
-        // TODO: Why 4., 4., 1.? I thought 2., 2., 1. should come here but that looked too small
-        let normalize_scale = Mat4::from_scale([4., 4., 1.].into()) * display.inverse();
+
+        // Y is flipped because the y axis is in different directions in GPU vs SVG
+        // doubling is necessary because GPU expectation left tip is -1 and right tip is at 1
+        // This means the width is 2, as opposed to 1 which is the standard used prior to this conversion.
+        // TODO: Why second doubling is necessary only god knows.
+        // I added it because it looked too small in comparison to figma's prototyping feature.
+        let normalize_scale = Mat4::from_scale([4., -4., 1.].into()) * display.inverse();
 
         return post_xy * normalize_scale * pre_xy;
     }

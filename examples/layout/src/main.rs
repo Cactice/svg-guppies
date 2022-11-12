@@ -35,8 +35,13 @@ fn layout_recursively(svg: Mat4, display: Mat4, node: usvg::Node, parent: Mat4) 
             x: get_x_constraint(&id),
             y: get_y_constraint(&id),
         };
+        let bbox_mat4 = Mat4::from_scale_rotation_translation(
+            [bbox.width() as f32, bbox.height() as f32, 0.].into(),
+            Default::default(),
+            [bbox.x() as f32, bbox.y() as f32, 0.].into(),
+        );
         if node.id().contains("#transform") {
-            children_transforms.insert(0, constraint.to_mat4(display, svg, bbox));
+            children_transforms.insert(0, constraint.to_mat4(display, svg, bbox_mat4));
         }
     }
     children_transforms
@@ -57,10 +62,14 @@ pub fn main() {
             let display = get_screen_size(*p);
             let svg = get_svg_size(svg_set.bbox);
 
-            let mut transforms = layout_recursively(svg, display, svg_set.root.clone(), svg);
-            let mut answer_transforms = vec![Mat4::IDENTITY, Mat4::IDENTITY];
-            answer_transforms.append(&mut transforms);
-            gpu_redraw.update_texture([cast_slice(&answer_transforms[..])].concat());
+            let mut transforms = vec![Mat4::IDENTITY, Mat4::IDENTITY];
+            transforms.append(&mut layout_recursively(
+                svg,
+                display,
+                svg_set.root.clone(),
+                svg,
+            ));
+            gpu_redraw.update_texture([cast_slice(&transforms[..])].concat());
             gpu_redraw.update_triangles(svg_set.get_combined_geometries().triangles, 0);
         }
     });
