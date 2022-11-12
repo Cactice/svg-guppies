@@ -45,10 +45,7 @@ fn layout_recursively(svg: Mat4, display: Mat4, node: usvg::Node, parent: Mat4) 
 pub fn main() {
     let svg_set = SvgSet::new(
         include_str!("../MenuBar.svg"),
-        PassDown {
-            transform_id: 1,
-            ..Default::default()
-        },
+        PassDown::default(),
         get_default_init_callback(),
     );
     guppies::render_loop(move |event, gpu_redraw| {
