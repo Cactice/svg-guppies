@@ -15,7 +15,7 @@ use guppies::{
 };
 use mobile_entry_point::mobile_entry_point;
 use salvage::usvg::{self, NodeExt};
-use std::{collections::HashMap, vec};
+use std::vec;
 
 struct Layout {
     constraint: Constraint,
@@ -43,7 +43,7 @@ fn get_layout(node: &usvg::Node) -> Option<Layout> {
             let constraint = get_constraint(&id);
 
             return Some(Layout {
-                constraint: constraint,
+                constraint,
                 bbox: bbox_mat4,
             });
         }
@@ -52,19 +52,13 @@ fn get_layout(node: &usvg::Node) -> Option<Layout> {
 }
 
 pub fn main() {
-    let mut svg_id_to_transform_id = HashMap::<String, usize>::new();
-    let mut transform_count = 1;
     let mut layouts = Vec::new();
+    let mut display_mat4 = Mat4::IDENTITY;
+    let mut svg_mat4 = Mat4::IDENTITY;
 
-    let svg_set = use_svg(include_str!("../MenuBar.svg"), |node, pass_down| {
-        let id = node.id();
-        let transform_regex = Regex::new(TRANSFORM_REGEX).unwrap();
-        if transform_regex.is_match(&id) {
-            transform_count += 1;
-            svg_id_to_transform_id.insert(id.to_string(), transform_count);
-            if let Some(layout) = get_layout(&node) {
-                layouts.push(layout);
-            }
+    let svg_set = use_svg(include_str!("../MenuBar.svg"), |node, _pass_down| {
+        if let Some(layout) = get_layout(&node) {
+            layouts.push(layout);
         }
     });
 
@@ -72,13 +66,17 @@ pub fn main() {
         if let guppies::winit::event::Event::WindowEvent { event, .. } = event {
             match event {
                 guppies::winit::event::WindowEvent::Resized(p) => {
-                    let display = get_screen_size(*p);
-                    let svg = get_svg_size(svg_set.bbox);
+                    display_mat4 = get_screen_size(*p);
+                    svg_mat4 = get_svg_size(svg_set.bbox);
                     let mut transforms = vec![Mat4::IDENTITY, Mat4::IDENTITY];
                     transforms.append(
                         &mut layouts
                             .iter()
-                            .map(|layout| layout.constraint.to_mat4(display, svg, layout.bbox))
+                            .map(|layout| {
+                                layout
+                                    .constraint
+                                    .to_mat4(display_mat4, svg_mat4, layout.bbox)
+                            })
                             .collect(),
                     );
                     gpu_redraw.update_texture([cast_slice(&transforms[..])].concat());
