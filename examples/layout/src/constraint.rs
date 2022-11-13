@@ -1,5 +1,4 @@
 use guppies::glam::Mat4;
-use salvage::usvg::PathBbox;
 
 #[derive(Debug, Clone, Copy)]
 pub enum XConstraint {
@@ -45,28 +44,28 @@ impl XConstraint {
         match self {
             XConstraint::Left(left) => {
                 pre_scale_translate_x = left_align * Mat4::from_translation([left, 0., 0.].into());
-                post_scale_translate_x = Mat4::from_translation([-1.0, 0., 0.].into());
                 pre_scale_scale_x = Mat4::IDENTITY;
+                post_scale_translate_x = Mat4::from_translation([-1.0, 0., 0.].into());
             }
             XConstraint::Right(right) => {
                 pre_scale_translate_x =
                     right_align * Mat4::from_translation([right, 0., 0.].into());
-                post_scale_translate_x = Mat4::from_translation([1.0, 0., 0.].into());
                 pre_scale_scale_x = Mat4::IDENTITY;
+                post_scale_translate_x = Mat4::from_translation([1.0, 0., 0.].into());
             }
             XConstraint::Center(rightward_from_center) => {
                 pre_scale_translate_x =
                     center_x * Mat4::from_translation([rightward_from_center, 0., 0.].into());
-                post_scale_translate_x = Mat4::IDENTITY;
                 pre_scale_scale_x = Mat4::IDENTITY;
+                post_scale_translate_x = Mat4::IDENTITY;
             }
             XConstraint::LeftAndRight { left: _, right: _ } => {
                 todo!();
             }
             XConstraint::Scale => {
                 pre_scale_translate_x = center_x;
-                post_scale_translate_x = Mat4::IDENTITY;
                 pre_scale_scale_x = fill_x;
+                post_scale_translate_x = Mat4::IDENTITY;
             }
         };
         (
@@ -122,28 +121,28 @@ impl YConstraint {
         match self {
             YConstraint::Top(top) => {
                 pre_scale_translate_y = bottom_align * Mat4::from_translation([0., top, 0.].into());
-                post_scale_translate_y = Mat4::from_translation([-1.0, 0., 0.].into());
                 pre_scale_scale_y = Mat4::IDENTITY;
+                post_scale_translate_y = Mat4::from_translation([-1.0, 0., 0.].into());
             }
             YConstraint::Bottom(bottom) => {
                 pre_scale_translate_y =
                     top_align * Mat4::from_translation([0., -bottom, 0.].into());
-                post_scale_translate_y = Mat4::from_translation([1.0, 0., 0.].into());
                 pre_scale_scale_y = Mat4::IDENTITY;
+                post_scale_translate_y = Mat4::from_translation([1.0, 0., 0.].into());
             }
             YConstraint::Center(downward_from_center) => {
                 pre_scale_translate_y =
                     center_y * Mat4::from_translation([0., downward_from_center, 0.].into());
-                post_scale_translate_y = Mat4::IDENTITY;
                 pre_scale_scale_y = Mat4::IDENTITY;
+                post_scale_translate_y = Mat4::IDENTITY;
             }
             YConstraint::TopAndBottom { top: _, bottom: _ } => {
                 todo!();
             }
             YConstraint::Scale => {
                 pre_scale_translate_y = center_y;
-                post_scale_translate_y = Mat4::IDENTITY;
                 pre_scale_scale_y = fill_y;
+                post_scale_translate_y = Mat4::IDENTITY;
             }
         };
         (
@@ -174,7 +173,7 @@ impl Constraint {
 
         // Y is flipped because the y axis is in different directions in GPU vs SVG
         // doubling is necessary because GPU expectation left tip is -1 and right tip is at 1
-        // This means the width is 2, as opposed to 1 which is the standard used prior to this conversion.
+        // so the width is 2, as opposed to 1 which is the standard used prior to this conversion.
         // TODO: Why second doubling is necessary only god knows.
         // I added it because it looked too small in comparison to figma's prototyping feature.
         let normalize_scale = Mat4::from_scale([4., -4., 1.].into()) * display.inverse();
