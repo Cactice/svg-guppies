@@ -27,12 +27,16 @@ impl RegexPatterns {
     }
 }
 
+pub const CLICKABLE_REGEX: &str = r"#clickable(?:$| |#)";
+pub const TRANSFORM_REGEX: &str = r"#transform(?:$| |#)";
+pub const DYNAMIC_TEXT_REGEX: &str = r"#dynamicText(?:$| |#)";
+
 pub fn get_default_init_callback() -> impl FnMut(Node, PassDown) -> (Option<Geometry>, PassDown) {
     let mut transform_count = 1;
     let mut regex_patterns = RegexPatterns::default();
-    let _clickable_regex_pattern = regex_patterns.add(r"#clickable(?:$| |#)");
-    let transform_regex_pattern = regex_patterns.add(r"#transform(?:$| |#)");
-    let dynamic_text_regex_pattern = regex_patterns.add(r"#dynamicText(?:$| |#)");
+    let _clickable_regex_pattern = regex_patterns.add(CLICKABLE_REGEX);
+    let transform_regex_pattern = regex_patterns.add(TRANSFORM_REGEX);
+    let dynamic_text_regex_pattern = regex_patterns.add(DYNAMIC_TEXT_REGEX);
     let defaults = RegexSet::new(regex_patterns.inner.iter().map(|r| &r.regex_pattern)).unwrap();
     move |node, pass_down| {
         let PassDown {
