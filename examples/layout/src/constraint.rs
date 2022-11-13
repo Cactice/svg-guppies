@@ -1,5 +1,8 @@
 use guppies::glam::Mat4;
 
+pub fn get_normalize_scale(display: Mat4) -> Mat4 {
+    Mat4::from_scale([4., -4., 1.].into()) * display.inverse()
+}
 #[derive(Debug, Clone, Copy)]
 pub enum XConstraint {
     Left(f32),
@@ -176,7 +179,7 @@ impl Constraint {
         // so the width is 2, as opposed to 1 which is the standard used prior to this conversion.
         // TODO: Why second doubling is necessary only god knows.
         // I added it because it looked too small in comparison to figma's prototyping feature.
-        let normalize_scale = Mat4::from_scale([4., -4., 1.].into()) * display.inverse();
+        let normalize_scale = get_normalize_scale(display);
 
         return post_xy * normalize_scale * pre_xy;
     }
