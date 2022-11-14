@@ -1,0 +1,5 @@
+[book]
+authors = ["cactice"]
+language = "en"
+multilingual = false
+src = "src"
