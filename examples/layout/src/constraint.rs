@@ -1,4 +1,4 @@
-use guppies::glam::Mat4;
+use guppies::glam::{Mat4, Vec3, Vec4};
 
 pub fn get_normalize_scale(display: Mat4) -> Mat4 {
     Mat4::from_scale([4., -4., 1.].into()) * display.inverse()
@@ -183,4 +183,39 @@ impl Constraint {
 
         return post_xy * normalize_scale * pre_xy;
     }
+}
+#[derive(Debug, Clone, Copy)]
+pub struct Layout {
+    pub constraint: Constraint,
+    pub bbox: Mat4,
+}
+
+impl Layout {
+    fn to_mat4(self, display: Mat4, svg: Mat4) -> Mat4 {
+        self.constraint.to_mat4(display, svg, self.bbox)
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum ClickableBbox {
+    Bbox(Mat4),
+    Layout(Layout),
+}
+impl ClickableBbox {
+    pub fn click_detection(&self, click: Vec3, display: Mat4, svg: Mat4) -> bool {
+        let bbox = match self {
+            ClickableBbox::Layout(layout) => layout.to_mat4(display, svg) * layout.bbox,
+            ClickableBbox::Bbox(bbox) => get_normalize_scale(display) * *bbox,
+        };
+        let click = bbox * Vec4::from((click, 0.));
+        if click.x.abs() < 1. && click.y.abs() < 1. {
+            return true;
+        }
+        false
+    }
+}
+
+pub struct Clickable {
+    pub bbox: ClickableBbox,
+    pub id: String,
 }
