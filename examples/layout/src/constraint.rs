@@ -1,8 +1,16 @@
-use guppies::glam::{Mat4, Vec3, Vec4};
+use guppies::glam::{Mat4, Vec4};
 
 pub fn get_normalize_scale(display: Mat4) -> Mat4 {
-    Mat4::from_scale([4., -4., 1.].into()) * display.inverse()
+    // Y is flipped because the y axis is in different directions in GPU vs SVG
+    // doubling is necessary because GPU expectation left tip is -1 and right tip is at 1
+    // so the width is 2, as opposed to 1 which is the standard used prior to this conversion.
+    // TODO: Why last doubling is necessary only god knows.
+    // I added it because it looked too small in comparison to figma's prototyping feature.
+    Mat4::from_scale([2., 2., 1.].into())
+        * Mat4::from_scale([2., -2., 1.].into())
+        * display.inverse()
 }
+
 #[derive(Debug, Clone, Copy)]
 pub enum XConstraint {
     Left(f32),
@@ -174,11 +182,6 @@ impl Constraint {
         let pre_xy = pre_x * pre_y;
         let post_xy = post_x * post_y;
 
-        // Y is flipped because the y axis is in different directions in GPU vs SVG
-        // doubling is necessary because GPU expectation left tip is -1 and right tip is at 1
-        // so the width is 2, as opposed to 1 which is the standard used prior to this conversion.
-        // TODO: Why second doubling is necessary only god knows.
-        // I added it because it looked too small in comparison to figma's prototyping feature.
         let normalize_scale = get_normalize_scale(display);
 
         return post_xy * normalize_scale * pre_xy;
@@ -201,13 +204,17 @@ pub enum ClickableBbox {
     Bbox(Mat4),
     Layout(Layout),
 }
+
 impl ClickableBbox {
-    pub fn click_detection(&self, click: Vec3, display: Mat4, svg: Mat4) -> bool {
+    pub fn click_detection(&self, click: Vec4, display: Mat4, svg: Mat4) -> bool {
         let bbox = match self {
             ClickableBbox::Layout(layout) => layout.to_mat4(display, svg) * layout.bbox,
-            ClickableBbox::Bbox(bbox) => get_normalize_scale(display) * *bbox,
+            ClickableBbox::Bbox(bbox) => *bbox,
         };
-        let click = bbox * Vec4::from((click, 0.));
+        let (s, _, _) = display.to_scale_rotation_translation();
+        let click = Mat4::from_scale([0.5, 0.5, 1.].into()) * get_normalize_scale(display) * click;
+        dbg!(click);
+        let click = bbox.inverse() * click;
         if click.x.abs() < 1. && click.y.abs() < 1. {
             return true;
         }

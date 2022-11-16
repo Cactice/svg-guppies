@@ -10,7 +10,7 @@ use concept::{
 };
 use constraint::{Clickable, ClickableBbox, Layout};
 use guppies::{
-    glam::{Mat4, Vec3},
+    glam::{Mat4, Vec4},
     primitives::Rect,
     winit::{
         dpi::PhysicalSize,
@@ -32,7 +32,7 @@ fn size_to_mat4(size: PhysicalSize<u32>) -> Mat4 {
 
 fn bbox_to_mat4(bbox: PathBbox) -> Mat4 {
     Mat4::from_scale_rotation_translation(
-        [bbox.width() as f32, bbox.height() as f32, 0.].into(),
+        [bbox.width() as f32, bbox.height() as f32, 1.].into(),
         Default::default(),
         [bbox.x() as f32, bbox.y() as f32, 0.].into(),
     )
@@ -114,13 +114,14 @@ pub fn main() {
                     state: ElementState::Pressed,
                     ..
                 } => {
-                    let click = Vec3::from((scroll_state.mouse_position, 0.));
+                    let click = Vec4::from((scroll_state.mouse_position, 0., 0.));
                     let clicked_ids = clickables
                         .iter()
                         .filter_map(|clickable| {
-                            if clickable
-                                .bbox
-                                .click_detection(click, display_mat4, svg_mat4)
+                            if clickable.id == "Undo #transform #clickable"
+                                && clickable
+                                    .bbox
+                                    .click_detection(click, display_mat4, svg_mat4)
                             {
                                 Some(clickable.id.clone())
                             } else {
@@ -128,7 +129,6 @@ pub fn main() {
                             }
                         })
                         .collect::<Vec<String>>();
-                    dbg!(clicked_ids);
                 }
                 _ => {}
             }
