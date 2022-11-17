@@ -1,11 +1,10 @@
-use crate::constraint::{XConstraint, YConstraint};
+use crate::constraint::{Constraint, XConstraint, YConstraint};
 use concept::svg_init::{regex::RegexSet, RegexPatterns};
 
-pub fn get_y_constraint(_id: &str) -> YConstraint {
+fn get_y_constraint(_id: &str) -> YConstraint {
     YConstraint::Center(0.)
 }
-
-pub fn get_x_constraint(id: &str) -> XConstraint {
+fn get_x_constraint(id: &str) -> XConstraint {
     let mut regex_patterns = RegexPatterns::default();
     let menu = regex_patterns.add(r"Menu #transform");
     let grab = regex_patterns.add(r"Grab #transform");
@@ -21,5 +20,12 @@ pub fn get_x_constraint(id: &str) -> XConstraint {
         XConstraint::Right(-15.)
     } else {
         XConstraint::Scale
+    }
+}
+
+pub fn get_constraint(id: &str) -> Constraint {
+    Constraint {
+        x: get_x_constraint(id),
+        y: get_y_constraint(id),
     }
 }

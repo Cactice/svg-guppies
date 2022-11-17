@@ -1,70 +1,136 @@
 mod call_back;
 mod constraint;
+mod scroll;
 
 use bytemuck::cast_slice;
-use call_back::{get_x_constraint, get_y_constraint};
-use concept::svg_init::get_default_init_callback;
-use constraint::Constraint;
-use guppies::{glam::Mat4, primitives::Rect, winit::dpi::PhysicalSize};
-use mobile_entry_point::mobile_entry_point;
-use salvage::{
-    callback::PassDown,
-    svg_set::SvgSet,
-    usvg::{self, NodeExt},
+use call_back::get_constraint;
+use concept::{
+    svg_init::{regex::Regex, CLICKABLE_REGEX, TRANSFORM_REGEX},
+    uses::use_svg,
 };
+use constraint::{Clickable, ClickableBbox, Layout};
+use guppies::{
+    glam::{Mat4, Vec4},
+    primitives::Rect,
+    winit::{
+        dpi::PhysicalSize,
+        event::{ElementState, WindowEvent},
+    },
+};
+use mobile_entry_point::mobile_entry_point;
+use salvage::usvg::{self, NodeExt, PathBbox};
+use scroll::ScrollState;
 use std::vec;
 
-fn get_svg_size(svg_scale: Rect) -> Mat4 {
+fn svg_to_mat4(svg_scale: Rect) -> Mat4 {
     Mat4::from_scale([svg_scale.size.x as f32, svg_scale.size.y as f32, 1.].into())
 }
 
-fn get_screen_size(size: PhysicalSize<u32>) -> Mat4 {
+fn size_to_mat4(size: PhysicalSize<u32>) -> Mat4 {
     Mat4::from_scale([size.width as f32, size.height as f32, 1.].into())
 }
 
-fn layout_recursively(svg: Mat4, display: Mat4, node: usvg::Node, parent: Mat4) -> Vec<Mat4> {
-    let mut children_transforms: Vec<Mat4> = node
-        .children()
-        .into_iter()
-        .flat_map(|child| layout_recursively(svg, display, child, parent))
-        .collect();
+fn bbox_to_mat4(bbox: PathBbox) -> Mat4 {
+    Mat4::from_scale_rotation_translation(
+        [bbox.width() as f32, bbox.height() as f32, 1.].into(),
+        Default::default(),
+        [bbox.x() as f32, bbox.y() as f32, 0.].into(),
+    )
+}
 
-    if let Some(bbox) = node.calculate_bbox() {
-        let id = node.id();
-        let constraint = Constraint {
-            x: get_x_constraint(&id),
-            y: get_y_constraint(&id),
-        };
-        if node.id().contains("#transform") {
-            children_transforms.insert(0, constraint.to_mat4(display, svg, bbox));
-        }
+fn get_layout(node: &usvg::Node) -> Option<Layout> {
+    let transform_regex = Regex::new(TRANSFORM_REGEX).unwrap();
+    let id = node.id();
+    if transform_regex.is_match(&id) {
+        let bbox_mat4 = bbox_to_mat4(
+            node.calculate_bbox()
+                .expect("Elements with #transform should be able to calculate bbox"),
+        );
+        let constraint = get_constraint(&id);
+
+        return Some(Layout {
+            constraint,
+            bbox: bbox_mat4,
+        });
     }
-    children_transforms
+    None
 }
 
 pub fn main() {
-    let svg_set = SvgSet::new(
-        include_str!("../MenuBar.svg"),
-        PassDown {
-            transform_id: 1,
-            ..Default::default()
-        },
-        get_default_init_callback(),
-    );
-    guppies::render_loop(move |event, gpu_redraw| {
-        if let guppies::winit::event::Event::WindowEvent {
-            event: guppies::winit::event::WindowEvent::Resized(p),
-            ..
-        } = event
-        {
-            let display = get_screen_size(*p);
-            let svg = get_svg_size(svg_set.bbox);
+    let mut layouts = Vec::new();
+    let mut display_mat4 = Mat4::IDENTITY;
+    let mut svg_mat4 = Mat4::IDENTITY;
+    let mut clickables = Vec::new();
+    let clickable_regex = Regex::new(CLICKABLE_REGEX).unwrap();
+    let mut scroll_state = ScrollState::default();
 
-            let mut transforms = layout_recursively(svg, display, svg_set.root.clone(), svg);
-            let mut answer_transforms = vec![Mat4::IDENTITY, Mat4::IDENTITY];
-            answer_transforms.append(&mut transforms);
-            gpu_redraw.update_texture([cast_slice(&answer_transforms[..])].concat());
-            gpu_redraw.update_triangles(svg_set.get_combined_geometries().triangles, 0);
+    let svg_set = use_svg(include_str!("../MenuBar.svg"), |node, _pass_down| {
+        let some_layout = get_layout(&node);
+        if let Some(layout) = some_layout {
+            layouts.push(layout);
+        };
+
+        let id = node.id().to_string();
+        if clickable_regex.is_match(&id) {
+            let clickable: Clickable = if let Some(layout) = some_layout {
+                Clickable {
+                    bbox: ClickableBbox::Layout(layout),
+                    id,
+                }
+            } else {
+                let bbox_mat4 = bbox_to_mat4(node.calculate_bbox().unwrap());
+                Clickable {
+                    bbox: ClickableBbox::Bbox(bbox_mat4),
+                    id,
+                }
+            };
+            clickables.push(clickable)
+        }
+    });
+
+    guppies::render_loop(move |event, gpu_redraw| {
+        if let guppies::winit::event::Event::WindowEvent { event, .. } = event {
+            scroll_state.event_handler(event);
+            match event {
+                WindowEvent::Resized(p) => {
+                    display_mat4 = size_to_mat4(*p);
+                    svg_mat4 = svg_to_mat4(svg_set.bbox);
+                    let mut transforms = vec![Mat4::IDENTITY, Mat4::IDENTITY];
+                    transforms.append(
+                        &mut layouts
+                            .iter()
+                            .map(|layout| {
+                                layout
+                                    .constraint
+                                    .to_mat4(display_mat4, svg_mat4, layout.bbox)
+                            })
+                            .collect(),
+                    );
+                    gpu_redraw.update_texture([cast_slice(&transforms[..])].concat());
+                    gpu_redraw.update_triangles(svg_set.get_combined_geometries().triangles, 0);
+                }
+
+                WindowEvent::MouseInput {
+                    state: ElementState::Pressed,
+                    ..
+                } => {
+                    let click = Vec4::from((scroll_state.mouse_position, 1., 1.));
+                    let clicked_ids = clickables
+                        .iter()
+                        .filter_map(|clickable| {
+                            if clickable
+                                .bbox
+                                .click_detection(click, display_mat4, svg_mat4)
+                            {
+                                Some(clickable.id.clone())
+                            } else {
+                                None
+                            }
+                        })
+                        .collect::<Vec<String>>();
+                }
+                _ => {}
+            }
         }
     });
 }
