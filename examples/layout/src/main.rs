@@ -114,14 +114,13 @@ pub fn main() {
                     state: ElementState::Pressed,
                     ..
                 } => {
-                    let click = Vec4::from((scroll_state.mouse_position, 0., 0.));
+                    let click = Vec4::from((scroll_state.mouse_position, 1., 1.));
                     let clicked_ids = clickables
                         .iter()
                         .filter_map(|clickable| {
-                            if clickable.id == "Undo #transform #clickable"
-                                && clickable
-                                    .bbox
-                                    .click_detection(click, display_mat4, svg_mat4)
+                            if clickable
+                                .bbox
+                                .click_detection(click, display_mat4, svg_mat4)
                             {
                                 Some(clickable.id.clone())
                             } else {

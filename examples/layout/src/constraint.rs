@@ -211,9 +211,10 @@ impl ClickableBbox {
             ClickableBbox::Layout(layout) => layout.to_mat4(display, svg) * layout.bbox,
             ClickableBbox::Bbox(bbox) => *bbox,
         };
-        let (s, _, _) = display.to_scale_rotation_translation();
-        let click = Mat4::from_scale([0.5, 0.5, 1.].into()) * get_normalize_scale(display) * click;
-        dbg!(click);
+        let click = Mat4::from_translation([-1., 1., 0.].into())
+            * Mat4::from_scale([0.5, 0.5, 1.].into())
+            * get_normalize_scale(display)
+            * click;
         let click = bbox.inverse() * click;
         if click.x.abs() < 1. && click.y.abs() < 1. {
             return true;
