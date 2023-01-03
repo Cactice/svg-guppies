@@ -35,28 +35,30 @@ fn find_text_node_path(node: roxmltree::Node, path: &mut Vec<roxmltree::NodeId>)
     false
 }
 #[derive(Debug)]
-pub struct SvgSet<'a> {
+pub struct SvgSet {
     pub geometries: Vec<Geometry>,
-    pub document: roxmltree::Document<'a>,
+    pub raw_xml: String,
     pub id_to_svg: HashMap<String, NodeId>,
     pub id_to_geometry_index: HashMap<String, usize>,
+    pub current_text_map: HashMap<String, String>,
     pub bbox: Rect,
     usvg_options: Options,
 }
 
-impl<'a> Default for SvgSet<'a> {
+impl Default for SvgSet {
     fn default() -> Self {
         Self {
             geometries: vec![],
-            document: Document::parse("<e/>").unwrap(),
+            raw_xml: Default::default(),
             id_to_svg: Default::default(),
             id_to_geometry_index: Default::default(),
             bbox: Default::default(),
             usvg_options: Default::default(),
+            current_text_map: Default::default(),
         }
     }
 }
-impl<'a> SvgSet<'a> {
+impl SvgSet {
     fn copy_element(&self, node: &roxmltree::Node, writer: &mut XmlWriter) {
         writer.start_element(node.tag_name().name());
         for a in node.attributes() {
@@ -79,13 +81,8 @@ impl<'a> SvgSet<'a> {
             },
         )
     }
-    pub fn get_node_with_id(&self, id: &String) -> Result<roxmltree::Node, &str> {
-        let node_id = self.id_to_svg.get(id).ok_or("Not in node_id")?;
-        let node = self.document.get_node(*node_id).ok_or("Not in document")?;
-        Ok(node)
-    }
     pub fn new<P: Clone, C: FnMut(Node, P) -> (Option<Geometry>, P)>(
-        xml: &'a str,
+        xml: &str,
         initial_pass_down: P,
         mut callback: C,
     ) -> Self {
@@ -100,9 +97,9 @@ impl<'a> SvgSet<'a> {
         let id_to_svg =
             document
                 .descendants()
-                .fold(HashMap::<String, NodeId>::new(), |mut acc, curr| {
-                    if let Some(attribute_id) = curr.attribute("id") {
-                        acc.insert(attribute_id.to_string(), curr.id());
+                .fold(HashMap::<String, NodeId>::new(), |mut acc, cur| {
+                    if let Some(attribute_id) = cur.attribute("id") {
+                        acc.insert(attribute_id.to_string(), cur.id());
                     }
                     acc
                 });
@@ -129,15 +126,31 @@ impl<'a> SvgSet<'a> {
         );
         Self {
             geometries,
-            document,
+            raw_xml: xml.to_string(),
             id_to_svg,
             id_to_geometry_index,
             bbox,
             usvg_options: opt,
+            ..Default::default()
         }
     }
     pub fn update_text(&mut self, id: &str, new_text: &str) {
-        let node = self.get_node_with_id(&id.to_string()).unwrap();
+        match self
+            .current_text_map
+            .insert(id.to_string(), new_text.to_string())
+        {
+            Some(old_text) if old_text == new_text => {
+                return;
+            }
+            _ => {}
+        };
+
+        let document = Document::parse(&self.raw_xml).unwrap();
+        let node_id = self.id_to_svg.get(id).ok_or("Not in node_id").unwrap();
+        let node = document
+            .get_node(*node_id)
+            .ok_or("Not in document")
+            .unwrap();
         let mut writer = XmlWriter::new(xmlwriter::Options {
             use_single_quote: true,
             ..Default::default()
@@ -149,7 +162,7 @@ impl<'a> SvgSet<'a> {
         find_text_node_path(node, &mut parent_ids);
 
         while let Some(parent_id) = parent_ids.pop() {
-            let parent = self.document.get_node(parent_id).unwrap();
+            let parent = document.get_node(parent_id).unwrap();
             self.copy_element(&parent, &mut writer);
         }
         writer.write_text(new_text);
