@@ -61,26 +61,29 @@ pub fn main() {
     let mut tip_center = Mat4::IDENTITY;
     let coord = Regex::new(r"#coord(?:$| |#)").unwrap();
     let stops = Regex::new(r"^(\d+)\.((?:\+|-)\d+):").unwrap();
-    let mut svg_set = use_svg(include_str!("../life.svg"), |node, pass_down| {
-        let id = node.id();
-        for captures in stops.captures_iter(&id) {
-            let stop: usize = captures[1].parse().unwrap();
-            let dollar: i32 = captures[2].parse().unwrap();
-            let coordinate = get_center(&node);
-            if stop >= position_to_dollar.len() {
-                position_to_dollar.resize(stop, dollar);
-                position_to_coordinates.resize(stop, coordinate);
+    let mut svg_set = use_svg(
+        include_str!("../life.svg").to_string(),
+        |node, pass_down| {
+            let id = node.id();
+            for captures in stops.captures_iter(&id) {
+                let stop: usize = captures[1].parse().unwrap();
+                let dollar: i32 = captures[2].parse().unwrap();
+                let coordinate = get_center(&node);
+                if stop >= position_to_dollar.len() {
+                    position_to_dollar.resize(stop, dollar);
+                    position_to_coordinates.resize(stop, coordinate);
+                }
+                position_to_dollar.insert(stop, dollar);
+                position_to_coordinates.insert(stop, coordinate);
             }
-            position_to_dollar.insert(stop, dollar);
-            position_to_coordinates.insert(stop, coordinate);
-        }
-        if coord.is_match(&id) {
-            let center = Mat4::from_translation((get_center(&node), 0.).into());
-            if id.starts_with("Tip") {
-                tip_center = center;
-            }
-        };
-    });
+            if coord.is_match(&id) {
+                let center = Mat4::from_translation((get_center(&node), 0.).into());
+                if id.starts_with("Tip") {
+                    tip_center = center;
+                }
+            };
+        },
+    );
     let mut life_game = LifeGame {
         position_to_coordinates,
         position_to_dollar,
