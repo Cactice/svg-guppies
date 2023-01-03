@@ -64,29 +64,32 @@ pub fn main() {
     let clickable_regex = Regex::new(CLICKABLE_REGEX).unwrap();
     let mut scroll_state = ScrollState::default();
 
-    let svg_set = use_svg(include_str!("../MenuBar.svg"), |node, _pass_down| {
-        let some_layout = get_layout(&node);
-        if let Some(layout) = some_layout {
-            layouts.push(layout);
-        };
-
-        let id = node.id().to_string();
-        if clickable_regex.is_match(&id) {
-            let clickable: Clickable = if let Some(layout) = some_layout {
-                Clickable {
-                    bbox: ClickableBbox::Layout(layout),
-                    id,
-                }
-            } else {
-                let bbox_mat4 = bbox_to_mat4(node.calculate_bbox().unwrap());
-                Clickable {
-                    bbox: ClickableBbox::Bbox(bbox_mat4),
-                    id,
-                }
+    let svg_set = use_svg(
+        include_str!("../MenuBar.svg").to_string(),
+        |node, _pass_down| {
+            let some_layout = get_layout(&node);
+            if let Some(layout) = some_layout {
+                layouts.push(layout);
             };
-            clickables.push(clickable)
-        }
-    });
+
+            let id = node.id().to_string();
+            if clickable_regex.is_match(&id) {
+                let clickable: Clickable = if let Some(layout) = some_layout {
+                    Clickable {
+                        bbox: ClickableBbox::Layout(layout),
+                        id,
+                    }
+                } else {
+                    let bbox_mat4 = bbox_to_mat4(node.calculate_bbox().unwrap());
+                    Clickable {
+                        bbox: ClickableBbox::Bbox(bbox_mat4),
+                        id,
+                    }
+                };
+                clickables.push(clickable)
+            }
+        },
+    );
 
     guppies::render_loop(move |event, gpu_redraw| {
         if let guppies::winit::event::Event::WindowEvent { event, .. } = event {
