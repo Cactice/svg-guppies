@@ -7,6 +7,10 @@ edition = "2018"
 [lib]
 crate-type = ["staticlib", "cdylib", "rlib"]
 
+[[bin]]
+name = "layout"
+path = "src/main.rs"
+
 [dependencies]
 mobile-entry-point = "0.1.0"
 guppies = { path = "../../guppies" }
