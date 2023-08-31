@@ -99,6 +99,15 @@ pub fn main() {
     let start_center = Mat4::from_translation((life_game.position_to_coordinates[0], 0.).into());
     guppies::render_loop(move |event, gpu_redraw| {
         let clicked = scroll_state.event_handler(event);
+        if let Event::RedrawRequested(_) = event {
+            tip_animation.update(&mut texture.tip_transform, &mut player_animations);
+            player_animations
+                .iter_mut()
+                .enumerate()
+                .for_each(|(i, animation)| {
+                    animation.update(&mut texture.player_avatar_transforms[i], &mut svg_set);
+                });
+        }
         if clicked {
             if tip_animation.is_animating
                 || player_animations.iter().any(|spring| spring.is_animating)
@@ -129,15 +138,6 @@ pub fn main() {
                     * tip_center.inverse(),
                 after_tip_animation,
             );
-        }
-        if let Event::RedrawRequested(_) = event {
-            tip_animation.update(&mut texture.tip_transform, &mut player_animations);
-            player_animations
-                .iter_mut()
-                .enumerate()
-                .for_each(|(i, animation)| {
-                    animation.update(&mut texture.player_avatar_transforms[i], &mut svg_set);
-                });
         }
         gpu_redraw.update_triangles(svg_set.get_combined_geometries().triangles, 0);
         gpu_redraw.update_texture(

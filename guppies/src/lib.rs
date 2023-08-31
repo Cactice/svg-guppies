@@ -4,6 +4,7 @@ pub use glam;
 use glam::Mat4;
 use primitives::Triangles;
 use setup::Redraw;
+pub use wgpu;
 pub use winit;
 use winit::event_loop::EventLoopWindowTarget;
 use winit::window::{Window, WindowBuilder, WindowId};
@@ -53,9 +54,13 @@ fn init(
 pub struct GpuRedraw {
     texture: Vec<u8>,
     triangles: Triangles,
+    shader: Option<Vec<u8>>,
 }
 
 impl GpuRedraw {
+    pub fn update_spirv_shader(&mut self, shader: Vec<u8>) {
+        self.shader = Some(shader);
+    }
     pub fn update_texture(&mut self, textures: Vec<u8>) {
         self.texture = textures;
     }
@@ -74,12 +79,22 @@ impl GpuRedraw {
 
 pub fn render_loop<F: FnMut(&Event<()>, &mut GpuRedraw) + 'static>(mut render_loop: F) {
     let event_loop = EventLoop::new();
-    let mut redraw = None;
+    let mut redraw: Option<Redraw> = None;
     // Type definition is required for android build
     let mut window: Option<Window> = None;
     let mut gpu_redraw = GpuRedraw::default();
 
     event_loop.run(move |event, event_loop, control_flow| {
+        match redraw {
+            Some(ref mut redraw) => match &gpu_redraw.shader.take() {
+                Some(shader) => {
+                    redraw.update_shader(shader);
+                }
+                _ => {}
+            },
+            _ => {}
+        }
+
         *control_flow = ControlFlow::Poll;
         // FIXME: why do some OS not redraw automatically without explicit call
         #[cfg(any(target_os = "ios", target_os = "android"))]

@@ -2,8 +2,9 @@ use crate::primitives::{Indices, Vertex, Vertices};
 use glam::Mat4;
 use std::borrow::Cow;
 use wgpu::{
-    util::DeviceExt, BindGroup, Buffer, Device, Extent3d, RenderPipeline, Surface,
-    SurfaceConfiguration, Texture,
+    util::{make_spirv, DeviceExt},
+    BindGroup, Buffer, Device, Extent3d, PipelineLayout, RenderPipeline, ShaderModule, Surface,
+    SurfaceConfiguration, Texture, TextureFormat,
 };
 use winit::{dpi::PhysicalSize, window::Window};
 
@@ -26,6 +27,8 @@ pub struct Redraw {
     pub vertex_buffer: Buffer,
     pub index_buffer: Buffer,
     pub transform_texture: Texture,
+    pub pipeline_layout: PipelineLayout,
+    pub surface_format: TextureFormat,
 }
 
 const SAMPLE_COUNT: u32 = 4;
@@ -110,6 +113,54 @@ impl Redraw {
         self.config.width = size.width;
         self.config.height = size.height;
         self.surface.configure(&self.device, &self.config);
+    }
+    pub fn update_shader(&mut self, spirv_shader: &Vec<u8>) {
+        let Redraw {
+            device,
+            render_pipeline,
+            surface_format,
+            ..
+        } = self;
+        let default_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: None,
+            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("shader.wgsl"))),
+        });
+        let custom_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: None,
+            source: make_spirv(&spirv_shader),
+        });
+
+        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: None,
+            layout: Some(&self.pipeline_layout),
+            vertex: wgpu::VertexState {
+                module: &default_shader,
+                entry_point: "vs_main",
+                buffers: &[wgpu::VertexBufferLayout {
+                    array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
+                    step_mode: wgpu::VertexStepMode::Vertex,
+                    attributes: &wgpu::vertex_attr_array![0 => Float32x3, 1 => Uint32, 2 => Float32x4],
+                }],
+            },
+            fragment: Some(wgpu::FragmentState {
+                module: &custom_shader,
+                entry_point: "fs_main",
+                targets: &[Some(wgpu::ColorTargetState {
+                    format: *surface_format,
+                    blend: Some(wgpu::BlendState::PREMULTIPLIED_ALPHA_BLENDING),
+                    write_mask: wgpu::ColorWrites::ALL,
+                })],
+            }),
+            primitive: wgpu::PrimitiveState::default(),
+            depth_stencil: None,
+            multisample: wgpu::MultisampleState {
+                count: SAMPLE_COUNT,
+                mask: !0,
+                alpha_to_coverage_enabled: false,
+            },
+            multiview: None,
+        });
+        self.render_pipeline = render_pipeline;
     }
     pub fn redraw(&self, texture: &[u8], vertices: &Vertices, indices: &Indices) {
         let Redraw {
@@ -245,7 +296,8 @@ impl Redraw {
             ..Default::default()
         });
 
-        let surface_format = wgpu::TextureFormat::Bgra8Unorm;
+        let surface_formats = surface.get_supported_formats(&adapter);
+        let surface_format = surface_formats.first().unwrap().clone();
 
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: None,
@@ -311,6 +363,8 @@ impl Redraw {
             index_buffer,
             transform: default_transform,
             transform_texture,
+            pipeline_layout,
+            surface_format,
         }
     }
 }
