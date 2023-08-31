@@ -4,7 +4,7 @@ pub use glam;
 use glam::Mat4;
 use primitives::Triangles;
 use setup::Redraw;
-use wgpu::ShaderModule;
+pub use wgpu;
 pub use winit;
 use winit::event_loop::EventLoopWindowTarget;
 use winit::window::{Window, WindowBuilder, WindowId};
@@ -54,10 +54,13 @@ fn init(
 pub struct GpuRedraw {
     texture: Vec<u8>,
     triangles: Triangles,
-    shader: Option<ShaderModule>,
+    shader: Option<Vec<u8>>,
 }
 
 impl GpuRedraw {
+    pub fn update_spirv_shader(&mut self, shader: Vec<u8>) {
+        self.shader = Some(shader);
+    }
     pub fn update_texture(&mut self, textures: Vec<u8>) {
         self.texture = textures;
     }

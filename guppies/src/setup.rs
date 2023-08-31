@@ -2,7 +2,7 @@ use crate::primitives::{Indices, Vertex, Vertices};
 use glam::Mat4;
 use std::borrow::Cow;
 use wgpu::{
-    util::{make_spirv_raw, DeviceExt},
+    util::{make_spirv, DeviceExt},
     BindGroup, Buffer, Device, Extent3d, PipelineLayout, RenderPipeline, ShaderModule, Surface,
     SurfaceConfiguration, Texture, TextureFormat,
 };
@@ -114,7 +114,7 @@ impl Redraw {
         self.config.height = size.height;
         self.surface.configure(&self.device, &self.config);
     }
-    pub fn update_shader(&mut self, shader: &ShaderModule) {
+    pub fn update_shader(&mut self, spirv_shader: &Vec<u8>) {
         let Redraw {
             device,
             render_pipeline,
@@ -124,6 +124,10 @@ impl Redraw {
         let default_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: None,
             source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("shader.wgsl"))),
+        });
+        let custom_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: None,
+            source: make_spirv(&spirv_shader),
         });
 
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -139,7 +143,7 @@ impl Redraw {
                 }],
             },
             fragment: Some(wgpu::FragmentState {
-                module: &shader,
+                module: &custom_shader,
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
                     format: *surface_format,
