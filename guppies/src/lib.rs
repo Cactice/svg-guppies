@@ -13,12 +13,7 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
 };
 
-fn init(
-    event_loop: &EventLoopWindowTarget<()>,
-    triangles: &Triangles,
-    redraw: &mut Option<setup::Redraw>,
-    window: &mut Option<winit::window::Window>,
-) {
+fn init(event_loop: &EventLoopWindowTarget<()>, window: &mut Option<winit::window::Window>) {
     *window = Some(
         WindowBuilder::new()
             .with_title("SVG-GUI")
@@ -42,12 +37,6 @@ fn init(
             })
             .expect("Couldn't append canvas to document body");
     }
-    *redraw = Some(pollster::block_on(Redraw::new(
-        window,
-        Mat4::IDENTITY,
-        &triangles.vertices,
-        &triangles.indices,
-    )));
 }
 
 #[derive(Debug, Default)]
@@ -77,23 +66,33 @@ impl GpuRedraw {
     }
 }
 
-pub fn render_loop<F: FnMut(&Event<()>, &mut GpuRedraw) + 'static>(mut render_loop: F) {
+pub fn render_loop<F: FnMut(&Event<()>, &mut Vec<GpuRedraw>) + 'static>(mut render_loop: F) {
     let event_loop = EventLoop::new();
-    let mut redraw: Option<Redraw> = None;
+    let mut redraws: Vec<Redraw> = Default::default();
+
     // Type definition is required for android build
     let mut window: Option<Window> = None;
-    let mut gpu_redraw = GpuRedraw::default();
+    let mut gpu_redraw: Vec<GpuRedraw> = Default::default();
 
     event_loop.run(move |event, event_loop, control_flow| {
-        match redraw {
-            Some(ref mut redraw) => match &gpu_redraw.shader.take() {
-                Some(shader) => {
-                    redraw.update_shader(shader);
-                }
-                _ => {}
-            },
-            _ => {}
+        if let Some(window) = window.as_mut() {
+            redraws.resize_with(gpu_redraw.len(), || {
+                pollster::block_on(Redraw::new(
+                    window,
+                    &Default::default(),
+                    &Default::default(),
+                ))
+            });
         }
+
+        redraws
+            .iter_mut()
+            .zip(gpu_redraw.iter_mut())
+            .for_each(|(redraw, new_redraw)| {
+                if let Some(shader) = new_redraw.shader.take() {
+                    redraw.update_shader(&shader);
+                }
+            });
 
         *control_flow = ControlFlow::Poll;
         // FIXME: why do some OS not redraw automatically without explicit call
@@ -104,11 +103,11 @@ pub fn render_loop<F: FnMut(&Event<()>, &mut GpuRedraw) + 'static>(mut render_lo
         render_loop(&event, &mut gpu_redraw);
         match event {
             #[cfg(target_os = "android")]
-            Event::Resumed => init(event_loop, &draw_primitive, &mut redraw, &mut window),
+            Event::Resumed => init(event_loop, &draw_primitive, &mut redraws, &mut window),
             #[cfg(not(target_os = "android"))]
             Event::NewEvents(start_cause) => match start_cause {
                 winit::event::StartCause::Init => {
-                    init(event_loop, &gpu_redraw.triangles, &mut redraw, &mut window);
+                    init(event_loop, &mut window);
 
                     // I think below is necessary when running on mobile...
                     // I forgot and don't want to test now.
@@ -130,22 +129,25 @@ pub fn render_loop<F: FnMut(&Event<()>, &mut GpuRedraw) + 'static>(mut render_lo
                 WindowEvent::CloseRequested => {
                     *control_flow = ControlFlow::Exit;
                 }
-                WindowEvent::Resized(p) => {
-                    if let Some(redraw) = redraw.as_mut() {
-                        redraw.resize(p);
-                    }
-                }
+                WindowEvent::Resized(p) => redraws.iter_mut().for_each(|r| {
+                    r.resize(p);
+                }),
                 _ => {}
             },
             Event::RedrawRequested(_) => {
-                if let (Some(redraw), Some(window)) = (redraw.as_mut(), window.as_mut()) {
-                    gpu_redraw.texture.resize(8192 * 16, 0);
-                    redraw.redraw(
-                        &gpu_redraw.texture[..],
-                        &gpu_redraw.triangles.vertices,
-                        &gpu_redraw.triangles.indices,
-                    );
-                    window.request_redraw();
+                if let Some(window) = window.as_mut() {
+                    redraws
+                        .iter()
+                        .zip(gpu_redraw.iter_mut())
+                        .for_each(|(redraw, gpu_redraw)| {
+                            gpu_redraw.texture.resize(8192 * 16, 0);
+                            redraw.redraw(
+                                &gpu_redraw.texture[..],
+                                &gpu_redraw.triangles.vertices,
+                                &gpu_redraw.triangles.indices,
+                            );
+                            window.request_redraw();
+                        });
                 }
             }
             _ => {}

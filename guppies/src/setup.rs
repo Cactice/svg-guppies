@@ -245,12 +245,7 @@ impl Redraw {
         frame.present();
     }
 
-    pub async fn new(
-        window: &Window,
-        default_transform: Mat4,
-        vertices: &Vertices,
-        indices: &Indices,
-    ) -> Self {
+    pub async fn new(window: &Window, vertices: &Vertices, indices: &Indices) -> Self {
         let size = window.inner_size();
         let instance = wgpu::Instance::new(wgpu::Backends::all());
         let surface = unsafe { instance.create_surface(&window) };
@@ -288,7 +283,7 @@ impl Redraw {
             get_uniform_buffer(
                 &device,
                 bytemuck::cast_slice(&[Uniform {
-                    transform: default_transform,
+                    transform: Mat4::IDENTITY,
                 }]),
             );
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
@@ -361,7 +356,7 @@ impl Redraw {
             uniform_buffer,
             vertex_buffer,
             index_buffer,
-            transform: default_transform,
+            transform: Mat4::IDENTITY,
             transform_texture,
             pipeline_layout,
             surface_format,

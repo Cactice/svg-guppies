@@ -139,8 +139,8 @@ pub fn main() {
                 after_tip_animation,
             );
         }
-        gpu_redraw.update_triangles(svg_set.get_combined_geometries().triangles, 0);
-        gpu_redraw.update_texture(
+        gpu_redraw[0].update_triangles(svg_set.get_combined_geometries().triangles, 0);
+        gpu_redraw[0].update_texture(
             [
                 cast_slice(&[scroll_state.transform]),
                 cast_slice(&[texture.clone()]),
