@@ -66,41 +66,34 @@ impl GpuRedraw {
     }
 }
 
-pub fn render_loop<F: FnMut(&Event<()>, &mut Vec<GpuRedraw>) + 'static>(mut render_loop: F) {
+pub fn render_loop<const COUNT: usize, F: FnMut(&Event<()>, &mut [GpuRedraw; COUNT]) + 'static>(
+    mut render_loop: F,
+) {
     let event_loop = EventLoop::new();
-    let mut redraws: Vec<Redraw> = Default::default();
 
     // Type definition is required for android build
     let mut window: Option<Window> = None;
-    let mut gpu_redraw: Vec<GpuRedraw> = Default::default();
+    let mut gpu_redraw: Option<[GpuRedraw; COUNT]> = None;
+    let mut redraws: Option<[Redraw; COUNT]> = None;
 
     event_loop.run(move |event, event_loop, control_flow| {
-        if let Some(window) = window.as_mut() {
-            redraws.resize_with(gpu_redraw.len(), || {
-                pollster::block_on(Redraw::new(
-                    window,
-                    &Default::default(),
-                    &Default::default(),
-                ))
-            });
-        }
-
-        redraws
-            .iter_mut()
-            .zip(gpu_redraw.iter_mut())
-            .for_each(|(redraw, new_redraw)| {
-                if let Some(shader) = new_redraw.shader.take() {
-                    redraw.update_shader(&shader);
-                }
-            });
-
         *control_flow = ControlFlow::Poll;
         // FIXME: why do some OS not redraw automatically without explicit call
         #[cfg(any(target_os = "ios", target_os = "android"))]
         if let Some(window) = window.as_mut() {
             window.request_redraw();
         }
-        render_loop(&event, &mut gpu_redraw);
+        if let (Some(ref mut gpu_redraw), Some(redraws)) = (gpu_redraw.as_mut(), redraws.as_mut()) {
+            render_loop(&event, gpu_redraw);
+            redraws
+                .iter_mut()
+                .zip(gpu_redraw.iter_mut())
+                .for_each(|(redraw, new_redraw)| {
+                    if let Some(shader) = new_redraw.shader.take() {
+                        redraw.update_shader(&shader);
+                    }
+                });
+        }
         match event {
             #[cfg(target_os = "android")]
             Event::Resumed => init(event_loop, &draw_primitive, &mut redraws, &mut window),
@@ -112,13 +105,24 @@ pub fn render_loop<F: FnMut(&Event<()>, &mut Vec<GpuRedraw>) + 'static>(mut rend
                     // I think below is necessary when running on mobile...
                     // I forgot and don't want to test now.
                     let size = window.as_ref().unwrap().inner_size();
-                    render_loop(
-                        &Event::WindowEvent {
-                            window_id: unsafe { WindowId::dummy() },
-                            event: WindowEvent::Resized(size),
-                        },
-                        &mut gpu_redraw,
-                    );
+                    if let Some(gpu_redraw) = gpu_redraw.as_mut() {
+                        render_loop(
+                            &Event::WindowEvent {
+                                window_id: unsafe { WindowId::dummy() },
+                                event: WindowEvent::Resized(size),
+                            },
+                            gpu_redraw,
+                        );
+                    }
+                    if let Some(window) = window.as_mut() {
+                        redraws = Some([(); COUNT].map(|_| {
+                            pollster::block_on(Redraw::new(
+                                window,
+                                &Default::default(),
+                                &Default::default(),
+                            ))
+                        }));
+                    }
                 }
                 _ => (),
             },
@@ -129,13 +133,18 @@ pub fn render_loop<F: FnMut(&Event<()>, &mut Vec<GpuRedraw>) + 'static>(mut rend
                 WindowEvent::CloseRequested => {
                     *control_flow = ControlFlow::Exit;
                 }
-                WindowEvent::Resized(p) => redraws.iter_mut().for_each(|r| {
-                    r.resize(p);
-                }),
+                WindowEvent::Resized(p) => match redraws.as_mut() {
+                    Some(redraws) => redraws.iter_mut().for_each(|r| {
+                        r.resize(p);
+                    }),
+                    _ => {}
+                },
                 _ => {}
             },
             Event::RedrawRequested(_) => {
-                if let Some(window) = window.as_mut() {
+                if let (Some(window), Some(gpu_redraw), Some(redraws)) =
+                    (window.as_mut(), gpu_redraw.as_mut(), redraws.as_mut())
+                {
                     redraws
                         .iter()
                         .zip(gpu_redraw.iter_mut())

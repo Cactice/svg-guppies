@@ -91,7 +91,7 @@ pub fn main() {
         },
     );
 
-    guppies::render_loop(move |event, gpu_redraw| {
+    guppies::render_loop::<1, _>(move |event, gpu_redraw| {
         if let guppies::winit::event::Event::WindowEvent { event, .. } = event {
             scroll_state.event_handler(event);
             match event {
@@ -109,8 +109,8 @@ pub fn main() {
                             })
                             .collect(),
                     );
-                    gpu_redraw.update_texture([cast_slice(&transforms[..])].concat());
-                    gpu_redraw.update_triangles(svg_set.get_combined_geometries().triangles, 0);
+                    gpu_redraw[0].update_texture([cast_slice(&transforms[..])].concat());
+                    gpu_redraw[0].update_triangles(svg_set.get_combined_geometries().triangles, 0);
                 }
 
                 WindowEvent::MouseInput {
