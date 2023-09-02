@@ -13,14 +13,11 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
 };
 
-fn init(event_loop: &EventLoopWindowTarget<()>, window: &mut Option<winit::window::Window>) {
-    *window = Some(
-        WindowBuilder::new()
-            .with_title("SVG-GUI")
-            .build(&event_loop)
-            .unwrap(),
-    );
-    let window = window.as_ref().expect("Window is None");
+fn init_window(event_loop: &EventLoopWindowTarget<()>) -> winit::window::Window {
+    let window = WindowBuilder::new()
+        .with_title("SVG-GUI")
+        .build(&event_loop)
+        .unwrap();
     #[cfg(target_arch = "wasm32")]
     {
         std::panic::set_hook(Box::new(console_error_panic_hook::hook));
@@ -37,6 +34,7 @@ fn init(event_loop: &EventLoopWindowTarget<()>, window: &mut Option<winit::windo
             })
             .expect("Couldn't append canvas to document body");
     }
+    window
 }
 
 #[derive(Debug, Default)]
@@ -96,11 +94,20 @@ pub fn render_loop<const COUNT: usize, F: FnMut(&Event<()>, &mut [GpuRedraw; COU
         }
         match event {
             #[cfg(target_os = "android")]
-            Event::Resumed => init(event_loop, &draw_primitive, &mut redraws, &mut window),
+            Event::Resumed => init_window(event_loop, &draw_primitive, &mut redraws, &mut window),
             #[cfg(not(target_os = "android"))]
             Event::NewEvents(start_cause) => match start_cause {
                 winit::event::StartCause::Init => {
-                    init(event_loop, &mut window);
+                    let mut new_window = init_window(event_loop);
+                    redraws = Some([(); COUNT].map(|_| {
+                        pollster::block_on(Redraw::new(
+                            &mut new_window,
+                            &Default::default(),
+                            &Default::default(),
+                        ))
+                    }));
+                    gpu_redraw = Some([(); COUNT].map(|_| GpuRedraw::default()));
+                    window = Some(new_window);
 
                     // I think below is necessary when running on mobile...
                     // I forgot and don't want to test now.
@@ -113,15 +120,6 @@ pub fn render_loop<const COUNT: usize, F: FnMut(&Event<()>, &mut [GpuRedraw; COU
                             },
                             gpu_redraw,
                         );
-                    }
-                    if let Some(window) = window.as_mut() {
-                        redraws = Some([(); COUNT].map(|_| {
-                            pollster::block_on(Redraw::new(
-                                window,
-                                &Default::default(),
-                                &Default::default(),
-                            ))
-                        }));
                     }
                 }
                 _ => (),
