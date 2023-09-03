@@ -1,11 +1,9 @@
 pub mod primitives;
 mod setup;
-use std::array;
-
 pub use glam;
-use glam::Mat4;
 use primitives::Triangles;
 use setup::{Redraw, RedrawMachine};
+use std::array;
 pub use wgpu;
 pub use winit;
 use winit::event_loop::EventLoopWindowTarget;
@@ -162,7 +160,7 @@ pub fn render_loop<const COUNT: usize, F: FnMut(&Event<()>, &mut [GpuRedraw; COU
                                 &gpu_redraw.texture[..],
                                 &gpu_redraw.triangles.vertices,
                                 &gpu_redraw.triangles.indices,
-                                redraw_machine,
+                                &redraw_machine,
                                 &mut frame,
                             );
                         },

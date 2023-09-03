@@ -69,8 +69,12 @@ impl RedrawMachine {
     }
     pub async fn new(window: &Window) -> Self {
         let size = window.inner_size();
-        let instance = wgpu::Instance::new(wgpu::Backends::all());
-        let surface = unsafe { instance.create_surface(&window) };
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::default());
+        let surface = unsafe {
+            instance
+                .create_surface(&window)
+                .expect("Surface creation failed")
+        };
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 power_preference: wgpu::PowerPreference::default(),
@@ -80,8 +84,8 @@ impl RedrawMachine {
             .await
             .expect("Failed to find an appropriate adapter");
 
-        let surface_formats = surface.get_supported_formats(&adapter);
-        let surface_format = surface_formats.first().unwrap().clone();
+        let surface_capabilities = surface.get_capabilities(&adapter);
+        let surface_format = surface_capabilities.formats.first().unwrap().clone();
         // Create the logical device and command queue
         let (device, queue) = adapter
             .request_device(
@@ -104,6 +108,7 @@ impl RedrawMachine {
             height: size.height,
             present_mode: wgpu::PresentMode::AutoVsync,
             alpha_mode: wgpu::CompositeAlphaMode::Auto,
+            view_formats: Default::default(),
         };
         RedrawMachine {
             device,
@@ -140,6 +145,7 @@ fn get_uniform_buffer(
         dimension: wgpu::TextureDimension::D1,
         format: wgpu::TextureFormat::Rgba32Float,
         usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+        view_formats: Default::default(),
     });
     let uniform_bind_group_layout =
         device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -241,11 +247,11 @@ impl Redraw {
         self.render_pipeline = render_pipeline;
     }
     pub fn redraw(
-        &mut self,
+        &self,
         texture: &[u8],
         vertices: &Vertices,
         indices: &Indices,
-        redraw_machine: &mut RedrawMachine,
+        redraw_machine: &RedrawMachine,
         reframe: &mut Reframe,
     ) {
         let Reframe {
@@ -291,6 +297,7 @@ impl Redraw {
                 dimension: wgpu::TextureDimension::D2,
                 format: config.format,
                 usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+                view_formats: Default::default(),
             })
             .create_view(&wgpu::TextureViewDescriptor::default());
         {
@@ -300,7 +307,7 @@ impl Redraw {
                     view: &msaa_texture,
                     resolve_target: Some(view),
                     ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::WHITE),
+                        load: wgpu::LoadOp::Clear(wgpu::Color::TRANSPARENT),
                         store: true,
                     },
                 })],

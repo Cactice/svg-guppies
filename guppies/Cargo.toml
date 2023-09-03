@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 winit = "0.27.4"
-wgpu = { version = "0.14.0", features = ["spirv"] }
+wgpu = { version = "0.17.0", features = ["spirv"] }
 pollster = "0.2"
 bytemuck = { version = "1.8", features = ["derive"] }
 glam = { version = "0.22.0", features = ["bytemuck"] }
