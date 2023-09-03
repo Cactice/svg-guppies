@@ -1,9 +1,11 @@
 pub mod primitives;
 mod setup;
+use std::array;
+
 pub use glam;
 use glam::Mat4;
 use primitives::Triangles;
-use setup::Redraw;
+use setup::{Redraw, RedrawMachine};
 pub use wgpu;
 pub use winit;
 use winit::event_loop::EventLoopWindowTarget;
@@ -73,6 +75,7 @@ pub fn render_loop<const COUNT: usize, F: FnMut(&Event<()>, &mut [GpuRedraw; COU
     let mut window: Option<Window> = None;
     let mut gpu_redraw: Option<[GpuRedraw; COUNT]> = None;
     let mut redraws: Option<[Redraw; COUNT]> = None;
+    let mut redraw_machine: Option<RedrawMachine> = None;
 
     event_loop.run(move |event, event_loop, control_flow| {
         *control_flow = ControlFlow::Poll;
@@ -81,14 +84,18 @@ pub fn render_loop<const COUNT: usize, F: FnMut(&Event<()>, &mut [GpuRedraw; COU
         if let Some(window) = window.as_mut() {
             window.request_redraw();
         }
-        if let (Some(ref mut gpu_redraw), Some(redraws)) = (gpu_redraw.as_mut(), redraws.as_mut()) {
+        if let (Some(ref mut gpu_redraw), Some(redraws), Some(redraw_machine)) = (
+            gpu_redraw.as_mut(),
+            redraws.as_mut(),
+            redraw_machine.as_ref(),
+        ) {
             render_loop(&event, gpu_redraw);
             redraws
                 .iter_mut()
                 .zip(gpu_redraw.iter_mut())
                 .for_each(|(redraw, new_redraw)| {
                     if let Some(shader) = new_redraw.shader.take() {
-                        redraw.update_shader(&shader);
+                        redraw.update_shader(&shader, redraw_machine);
                     }
                 });
         }
@@ -98,14 +105,17 @@ pub fn render_loop<const COUNT: usize, F: FnMut(&Event<()>, &mut [GpuRedraw; COU
             #[cfg(not(target_os = "android"))]
             Event::NewEvents(start_cause) => match start_cause {
                 winit::event::StartCause::Init => {
-                    let mut new_window = init_window(event_loop);
-                    redraws = Some([(); COUNT].map(|_| {
-                        pollster::block_on(Redraw::new(
-                            &mut new_window,
+                    let new_window = init_window(event_loop);
+                    let new_redraw_machine = pollster::block_on(RedrawMachine::new(&new_window));
+                    redraws = Some(array::from_fn(|i| {
+                        Redraw::new(
+                            &new_redraw_machine,
                             &Default::default(),
                             &Default::default(),
-                        ))
+                            i,
+                        )
                     }));
+                    redraw_machine = Some(new_redraw_machine);
                     gpu_redraw = Some([(); COUNT].map(|_| GpuRedraw::default()));
                     window = Some(new_window);
 
@@ -131,30 +141,34 @@ pub fn render_loop<const COUNT: usize, F: FnMut(&Event<()>, &mut [GpuRedraw; COU
                 WindowEvent::CloseRequested => {
                     *control_flow = ControlFlow::Exit;
                 }
-                WindowEvent::Resized(p) => match redraws.as_mut() {
-                    Some(redraws) => redraws.iter_mut().for_each(|r| {
-                        r.resize(p);
-                    }),
+                WindowEvent::Resized(p) => match redraw_machine.as_mut() {
+                    Some(redraw_machine) => redraw_machine.resize(p),
                     _ => {}
                 },
                 _ => {}
             },
             Event::RedrawRequested(_) => {
-                if let (Some(window), Some(gpu_redraw), Some(redraws)) =
-                    (window.as_mut(), gpu_redraw.as_mut(), redraws.as_mut())
-                {
-                    redraws
-                        .iter()
-                        .zip(gpu_redraw.iter_mut())
-                        .for_each(|(redraw, gpu_redraw)| {
+                if let (Some(window), Some(gpu_redraw), Some(redraws), Some(redraw_machine)) = (
+                    window.as_mut(),
+                    gpu_redraw.as_mut(),
+                    redraws.as_mut(),
+                    redraw_machine.as_mut(),
+                ) {
+                    let mut frame = redraw_machine.get_frame();
+                    redraws.iter_mut().zip(gpu_redraw.iter_mut()).for_each(
+                        |(redraw, gpu_redraw)| {
                             gpu_redraw.texture.resize(8192 * 16, 0);
                             redraw.redraw(
                                 &gpu_redraw.texture[..],
                                 &gpu_redraw.triangles.vertices,
                                 &gpu_redraw.triangles.indices,
+                                redraw_machine,
+                                &mut frame,
                             );
-                            window.request_redraw();
-                        });
+                        },
+                    );
+                    redraw_machine.submit(frame);
+                    window.request_redraw();
                 }
             }
             _ => {}
