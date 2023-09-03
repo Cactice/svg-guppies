@@ -1,4 +1,7 @@
-use crate::primitives::{Indices, Vertex, Vertices};
+use crate::{
+    primitives::{Indices, Vertex, Vertices},
+    GpuRedraw,
+};
 use glam::Mat4;
 use std::borrow::Cow;
 use wgpu::{
@@ -39,6 +42,92 @@ pub struct Reframe {
     pub encoder: CommandEncoder,
 }
 impl RedrawMachine {
+    pub fn redraw(&self, gpu_redraws: &mut [GpuRedraw], redraws: &[Redraw], reframe: &mut Reframe) {
+        let Reframe {
+            view,
+            frame,
+            encoder,
+        } = reframe;
+        let RedrawMachine {
+            queue,
+            device,
+            surface,
+            surface_format,
+            config,
+        } = self;
+        let msaa_texture = device
+            .create_texture(&wgpu::TextureDescriptor {
+                label: Some("Multisampled frame descriptor"),
+                size: wgpu::Extent3d {
+                    width: config.width,
+                    height: config.height,
+                    depth_or_array_layers: 1,
+                },
+                mip_level_count: 1,
+                sample_count: SAMPLE_COUNT,
+                dimension: wgpu::TextureDimension::D2,
+                format: config.format,
+                usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+                view_formats: Default::default(),
+            })
+            .create_view(&wgpu::TextureViewDescriptor::default());
+        let x = redraws
+            .iter()
+            .zip(gpu_redraws.iter_mut())
+            .for_each(|(redraw, gpu_redraw)| {
+                gpu_redraw.texture.resize(8192 * 16, 0);
+                let Redraw {
+                    transform,
+                    render_pipeline,
+                    bind_group,
+                    uniform_buffer,
+                    transform_texture,
+                    ..
+                } = redraw;
+                let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Index Buffer"),
+                    contents: bytemuck::cast_slice(&gpu_redraw.triangles.indices),
+                    usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
+                });
+                let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("SVG-GUI Vertex Buffer"),
+                    contents: (bytemuck::cast_slice(&gpu_redraw.triangles.vertices)),
+                    usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+                });
+                {
+                    let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                        label: None,
+                        color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                            view: &msaa_texture,
+                            resolve_target: Some(view),
+                            ops: wgpu::Operations {
+                                load: wgpu::LoadOp::Clear(wgpu::Color::WHITE),
+                                store: true,
+                            },
+                        })],
+                        depth_stencil_attachment: None,
+                    });
+                    rpass.set_pipeline(render_pipeline);
+                    rpass.set_bind_group(0, bind_group, &[]);
+                    rpass.set_vertex_buffer(0, vertex_buffer.slice(..));
+                    rpass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+                    rpass.draw_indexed(0..(gpu_redraw.triangles.indices.len() as u32), 0, 0..1);
+                }
+                queue.write_buffer(
+                    uniform_buffer,
+                    0,
+                    bytemuck::cast_slice(&[Uniform {
+                        transform: *transform,
+                    }]),
+                );
+                queue.write_texture(
+                    transform_texture.as_image_copy(),
+                    &gpu_redraw.texture,
+                    wgpu::ImageDataLayout::default(),
+                    TRANSFORM_TEXTURE_SIZE,
+                );
+            });
+    }
     pub fn get_frame(&self) -> Reframe {
         let frame = self
             .surface
@@ -245,94 +334,6 @@ impl Redraw {
             multiview: None,
         });
         self.render_pipeline = render_pipeline;
-    }
-    pub fn redraw(
-        &self,
-        texture: &[u8],
-        vertices: &Vertices,
-        indices: &Indices,
-        redraw_machine: &RedrawMachine,
-        reframe: &mut Reframe,
-    ) {
-        let Reframe {
-            view,
-            frame,
-            encoder,
-        } = reframe;
-        let RedrawMachine {
-            queue,
-            device,
-            surface,
-            surface_format,
-            config,
-        } = redraw_machine;
-        let Redraw {
-            transform,
-            render_pipeline,
-            bind_group,
-            uniform_buffer,
-            transform_texture,
-            ..
-        } = self;
-        let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Index Buffer"),
-            contents: bytemuck::cast_slice(indices),
-            usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
-        });
-        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("SVG-GUI Vertex Buffer"),
-            contents: (bytemuck::cast_slice(vertices)),
-            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
-        });
-        let msaa_texture = device
-            .create_texture(&wgpu::TextureDescriptor {
-                label: Some("Multisampled frame descriptor"),
-                size: wgpu::Extent3d {
-                    width: config.width,
-                    height: config.height,
-                    depth_or_array_layers: 1,
-                },
-                mip_level_count: 1,
-                sample_count: SAMPLE_COUNT,
-                dimension: wgpu::TextureDimension::D2,
-                format: config.format,
-                usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-                view_formats: Default::default(),
-            })
-            .create_view(&wgpu::TextureViewDescriptor::default());
-        {
-            let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: None,
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &msaa_texture,
-                    resolve_target: Some(view),
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::TRANSPARENT),
-                        store: true,
-                    },
-                })],
-                depth_stencil_attachment: None,
-            });
-            rpass.set_pipeline(render_pipeline);
-            rpass.set_bind_group(0, bind_group, &[]);
-            rpass.set_vertex_buffer(0, vertex_buffer.slice(..));
-            rpass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
-            rpass.draw_indexed(0..(indices.len() as u32), 0, 0..1);
-        }
-
-        queue.write_buffer(
-            uniform_buffer,
-            0,
-            bytemuck::cast_slice(&[Uniform {
-                transform: *transform,
-            }]),
-        );
-        queue.write_texture(
-            transform_texture.as_image_copy(),
-            texture,
-            wgpu::ImageDataLayout::default(),
-            TRANSFORM_TEXTURE_SIZE,
-        );
     }
 
     pub fn new(

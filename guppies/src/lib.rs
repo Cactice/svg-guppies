@@ -1,9 +1,10 @@
 pub mod primitives;
 mod setup;
+use std::array;
+
 pub use glam;
 use primitives::Triangles;
 use setup::{Redraw, RedrawMachine};
-use std::array;
 pub use wgpu;
 pub use winit;
 use winit::event_loop::EventLoopWindowTarget;
@@ -153,18 +154,7 @@ pub fn render_loop<const COUNT: usize, F: FnMut(&Event<()>, &mut [GpuRedraw; COU
                     redraw_machine.as_mut(),
                 ) {
                     let mut frame = redraw_machine.get_frame();
-                    redraws.iter_mut().zip(gpu_redraw.iter_mut()).for_each(
-                        |(redraw, gpu_redraw)| {
-                            gpu_redraw.texture.resize(8192 * 16, 0);
-                            redraw.redraw(
-                                &gpu_redraw.texture[..],
-                                &gpu_redraw.triangles.vertices,
-                                &gpu_redraw.triangles.indices,
-                                &redraw_machine,
-                                &mut frame,
-                            );
-                        },
-                    );
+                    redraw_machine.redraw(gpu_redraw, redraws, &mut frame);
                     redraw_machine.submit(frame);
                     window.request_redraw();
                 }
