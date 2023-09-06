@@ -2,6 +2,8 @@ use crate::{
     primitives::{Indices, Vertex, Vertices},
     GpuRedraw,
 };
+use bytemuck::{Pod, Zeroable};
+use core::fmt::Debug;
 use glam::Mat4;
 use std::borrow::Cow;
 use wgpu::{
@@ -42,7 +44,12 @@ pub struct Reframe {
     pub encoder: CommandEncoder,
 }
 impl RedrawMachine {
-    pub fn redraw(&self, gpu_redraws: &mut [GpuRedraw], redraws: &[Redraw], reframe: &mut Reframe) {
+    pub fn redraw<Vert: Pod + Zeroable + Debug + Clone + Default>(
+        &self,
+        gpu_redraws: &mut [GpuRedraw<Vert>],
+        redraws: &[Redraw],
+        reframe: &mut Reframe,
+    ) {
         let Reframe {
             view,
             frame,
@@ -71,10 +78,11 @@ impl RedrawMachine {
                 view_formats: Default::default(),
             })
             .create_view(&wgpu::TextureViewDescriptor::default());
-        let x = redraws
+        redraws
             .iter()
             .zip(gpu_redraws.iter_mut())
-            .for_each(|(redraw, gpu_redraw)| {
+            .enumerate()
+            .for_each(|(i, (redraw, gpu_redraw))| {
                 gpu_redraw.texture.resize(8192 * 16, 0);
                 let Redraw {
                     transform,
@@ -84,6 +92,7 @@ impl RedrawMachine {
                     transform_texture,
                     ..
                 } = redraw;
+
                 let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("Index Buffer"),
                     contents: bytemuck::cast_slice(&gpu_redraw.triangles.indices),
@@ -95,13 +104,18 @@ impl RedrawMachine {
                     usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
                 });
                 {
+                    let load_color = match i == 0 {
+                        true => wgpu::LoadOp::Clear(wgpu::Color::WHITE),
+                        false => wgpu::LoadOp::Load,
+                    };
+
                     let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                         label: None,
                         color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                             view: &msaa_texture,
                             resolve_target: Some(view),
                             ops: wgpu::Operations {
-                                load: wgpu::LoadOp::Clear(wgpu::Color::WHITE),
+                                load: load_color,
                                 store: true,
                             },
                         })],
@@ -320,7 +334,7 @@ impl Redraw {
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
                     format: *surface_format,
-                    blend: Some(wgpu::BlendState::PREMULTIPLIED_ALPHA_BLENDING),
+                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
             }),

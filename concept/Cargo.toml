@@ -11,5 +11,5 @@ natura = { git = "https://github.com/ziyasal/natura" }
 regex = "1"
 
 [dev-dependencies]
-bytemuck = "1.9.1"
+bytemuck = "1.13.1"
 fastrand = "1.8.0"

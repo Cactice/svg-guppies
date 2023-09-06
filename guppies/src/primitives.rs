@@ -1,3 +1,6 @@
+use std::fmt::Debug;
+
+use bytemuck::{Pod, Zeroable};
 use glam::{DVec2, Vec2, Vec4};
 
 pub type TextureBytes = Vec<u8>;
@@ -6,8 +9,8 @@ pub type Vertices = Vec<Vertex>;
 pub type Indices = Vec<Index>;
 
 #[derive(Clone, Debug, Default)]
-pub struct Triangles {
-    pub vertices: Vertices,
+pub struct Triangles<T: Pod + Zeroable + Debug + Clone + Default = Vertex> {
+    pub vertices: Vec<T>,
     pub indices: Indices,
 }
 

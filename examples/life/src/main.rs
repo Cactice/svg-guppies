@@ -97,7 +97,7 @@ pub fn main() {
         .player_avatar_transforms
         .map(|_| SpringMat4::default());
     let start_center = Mat4::from_translation((life_game.position_to_coordinates[0], 0.).into());
-    guppies::render_loop::<1, _>(move |event, gpu_redraw| {
+    guppies::render_loop::<1, _, _>(move |event, gpu_redraw| {
         let clicked = scroll_state.event_handler(event);
         if let Event::RedrawRequested(_) = event {
             tip_animation.update(&mut texture.tip_transform, &mut player_animations);

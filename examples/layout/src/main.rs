@@ -91,7 +91,7 @@ pub fn main() {
         },
     );
 
-    guppies::render_loop::<1, _>(move |event, gpu_redraw| {
+    guppies::render_loop::<1, _, _>(move |event, gpu_redraw| {
         if let guppies::winit::event::Event::WindowEvent { event, .. } = event {
             scroll_state.event_handler(event);
             match event {

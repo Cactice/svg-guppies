@@ -14,8 +14,8 @@ path = "src/main.rs"
 
 [dependencies]
 mobile-entry-point = "0.1.0"
-bytemuck = "1.12.1"
-guppies= { path = "../../guppies" }
+bytemuck = "1.13.1"
+guppies = { path = "../../guppies" }
 salvage = { path = "../../salvage" }
 concept = { path = "../../concept" }
 

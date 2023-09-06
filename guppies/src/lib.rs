@@ -1,10 +1,12 @@
 pub mod primitives;
 mod setup;
-use std::array;
-
+use bytemuck::{Pod, Zeroable};
 pub use glam;
-use primitives::Triangles;
+use primitives::{Triangles, Vertex};
 use setup::{Redraw, RedrawMachine};
+use std::array;
+use std::fmt::Debug;
+use std::time::Instant;
 pub use wgpu;
 pub use winit;
 use winit::event_loop::EventLoopWindowTarget;
@@ -39,9 +41,9 @@ fn init_window(event_loop: &EventLoopWindowTarget<()>) -> winit::window::Window 
 }
 
 #[derive(Debug, Default)]
-pub struct GpuRedraw {
+pub struct GpuRedraw<T: Pod + Zeroable + Debug + Clone + Default = Vertex> {
     texture: Vec<u8>,
-    triangles: Triangles,
+    triangles: Triangles<T>,
     shader: Option<Vec<u8>>,
 }
 
@@ -65,17 +67,24 @@ impl GpuRedraw {
     }
 }
 
-pub fn render_loop<const COUNT: usize, F: FnMut(&Event<()>, &mut [GpuRedraw; COUNT]) + 'static>(
+pub fn render_loop<
+    const COUNT: usize,
+    Vert: Pod + Zeroable + Debug + Clone + Default,
+    F: FnMut(&Event<()>, &mut [GpuRedraw<Vert>; COUNT]) + 'static,
+>(
     mut render_loop: F,
 ) {
     let event_loop = EventLoop::new();
 
     // Type definition is required for android build
     let mut window: Option<Window> = None;
-    let mut gpu_redraw: Option<[GpuRedraw; COUNT]> = None;
+    let mut gpu_redraw: Option<[GpuRedraw<Vert>; COUNT]> = None;
     let mut redraws: Option<[Redraw; COUNT]> = None;
     let mut redraw_machine: Option<RedrawMachine> = None;
-
+    #[cfg(not(target_arch = "wasm32"))]
+    let mut last_frame_inst = Instant::now();
+    #[cfg(not(target_arch = "wasm32"))]
+    let (mut frame_count, mut accum_time) = (0, 0.0);
     event_loop.run(move |event, event_loop, control_flow| {
         *control_flow = ControlFlow::Poll;
         // FIXME: why do some OS not redraw automatically without explicit call
@@ -118,8 +127,7 @@ pub fn render_loop<const COUNT: usize, F: FnMut(&Event<()>, &mut [GpuRedraw; COU
                     gpu_redraw = Some([(); COUNT].map(|_| GpuRedraw::default()));
                     window = Some(new_window);
 
-                    // I think below is necessary when running on mobile...
-                    // I forgot and don't want to test now.
+                    // Below is necessary when running on mobile...
                     let size = window.as_ref().unwrap().inner_size();
                     if let Some(gpu_redraw) = gpu_redraw.as_mut() {
                         render_loop(
@@ -157,6 +165,20 @@ pub fn render_loop<const COUNT: usize, F: FnMut(&Event<()>, &mut [GpuRedraw; COU
                     redraw_machine.redraw(gpu_redraw, redraws, &mut frame);
                     redraw_machine.submit(frame);
                     window.request_redraw();
+                    #[cfg(not(target_arch = "wasm32"))]
+                    {
+                        accum_time += last_frame_inst.elapsed().as_secs_f32();
+                        last_frame_inst = Instant::now();
+                        frame_count += 1;
+                        if frame_count == 100 {
+                            println!(
+                                "Avg frame time {}ms",
+                                accum_time * 1000.0 / frame_count as f32
+                            );
+                            accum_time = 0.0;
+                            frame_count = 0;
+                        }
+                    }
                 }
             }
             _ => {}
