@@ -1,7 +1,9 @@
 pub mod primitives;
 mod setup;
 use bytemuck::{Pod, Zeroable};
+use console_log::log;
 pub use glam;
+use log::info;
 use primitives::{Triangles, Vertex};
 use setup::{Redraw, RedrawMachine};
 use std::array;
@@ -9,8 +11,10 @@ use std::fmt::Debug;
 use std::time::Instant;
 pub use wgpu;
 pub use winit;
+use winit::dpi::PhysicalSize;
 use winit::event_loop::EventLoopWindowTarget;
-use winit::window::{Window, WindowBuilder, WindowId};
+use winit::platform::web::WindowBuilderExtWebSys;
+use winit::window::{self, Window, WindowBuilder, WindowId};
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -25,6 +29,7 @@ fn init_window(event_loop: &EventLoopWindowTarget<()>) -> winit::window::Window 
     {
         std::panic::set_hook(Box::new(console_error_panic_hook::hook));
         use winit::platform::web::WindowExtWebSys;
+        console_log::init();
 
         web_sys::window()
             .and_then(|win| win.document())
@@ -109,7 +114,9 @@ pub fn render_loop<
         }
         match event {
             #[cfg(target_os = "android")]
-            Event::Resumed => init_window(event_loop, &draw_primitive, &mut redraws, &mut window),
+            Event::Resumed => {
+                init_window(event_loop);
+            }
             #[cfg(not(target_os = "android"))]
             Event::NewEvents(start_cause) => match start_cause {
                 winit::event::StartCause::Init => {
