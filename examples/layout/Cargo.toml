@@ -13,7 +13,7 @@ name = "layout"
 path = "src/main.rs"
 
 [dependencies]
-mobile-entry-point = "0.1.0"
+mobile-entry-point = "0.1.1"
 bytemuck = "1.13.1"
 guppies = { path = "../../guppies" }
 salvage = { path = "../../salvage" }
@@ -22,4 +22,3 @@ concept = { path = "../../concept" }
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.11.0"
 log = "0.4.11"
-ndk-glue = "0.7.0"
