@@ -977,6 +977,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "list"
+version = "0.1.0"
+dependencies = [
+ "android_logger",
+ "bytemuck",
+ "concept",
+ "guppies",
+ "log",
+ "mobile-entry-point",
+ "ndk-glue",
+ "salvage",
+]
+
+[[package]]
 name = "lock_api"
 version = "0.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
