@@ -9,7 +9,7 @@ members = [
   "examples/layout",
   "examples/list",
 ]
-default-members = ["examples/list"]
+default-members = ["examples/layout"]
 
 [profile.release]
 lto = true

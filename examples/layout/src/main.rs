@@ -1,14 +1,13 @@
 mod call_back;
-mod constraint;
-mod scroll;
 
 use bytemuck::cast_slice;
 use call_back::get_constraint;
 use concept::{
+    constraint::{Clickable, ClickableBbox, Layout},
+    scroll::ScrollState,
     svg_init::{regex::Regex, CLICKABLE_REGEX, TRANSFORM_REGEX},
     uses::use_svg,
 };
-use constraint::{Clickable, ClickableBbox, Layout};
 use guppies::{
     glam::{Mat4, Vec4},
     primitives::Rect,
@@ -19,7 +18,6 @@ use guppies::{
 };
 use mobile_entry_point::mobile_entry_point;
 use salvage::usvg::{self, NodeExt, PathBbox};
-use scroll::ScrollState;
 use std::vec;
 
 fn svg_to_mat4(svg_scale: Rect) -> Mat4 {
@@ -92,8 +90,8 @@ pub fn main() {
     );
 
     guppies::render_loop::<1, _, _>(move |event, gpu_redraw| {
+        scroll_state.event_handler(event);
         if let guppies::winit::event::Event::WindowEvent { event, .. } = event {
-            scroll_state.event_handler(event);
             match event {
                 WindowEvent::Resized(p) => {
                     display_mat4 = size_to_mat4(*p);

@@ -1,4 +1,4 @@
-use crate::constraint::{Constraint, XConstraint, YConstraint};
+use concept::constraint::{Constraint, XConstraint, YConstraint};
 use concept::svg_init::{regex::RegexSet, RegexPatterns};
 
 fn get_y_constraint(_id: &str) -> YConstraint {
