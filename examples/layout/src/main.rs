@@ -1,11 +1,8 @@
-mod call_back;
-
 use bytemuck::cast_slice;
-use call_back::get_constraint;
 use concept::{
-    constraint::{Clickable, ClickableBbox, Layout},
+    constraint::{Clickable, ClickableBbox, Constraint, Layout},
     scroll::ScrollState,
-    svg_init::{regex::Regex, CLICKABLE_REGEX, TRANSFORM_REGEX},
+    svg_init::{regex::Regex, CLICKABLE_REGEX, LAYOUT_REGEX, TRANSFORM_REGEX},
     uses::use_svg,
 };
 use guppies::{
@@ -37,19 +34,10 @@ fn bbox_to_mat4(bbox: PathBbox) -> Mat4 {
 }
 
 fn get_layout(node: &usvg::Node) -> Option<Layout> {
-    let transform_regex = Regex::new(TRANSFORM_REGEX).unwrap();
+    let layout_regex = Regex::new(LAYOUT_REGEX).unwrap();
     let id = node.id();
-    if transform_regex.is_match(&id) {
-        let bbox_mat4 = bbox_to_mat4(
-            node.calculate_bbox()
-                .expect("Elements with #transform should be able to calculate bbox"),
-        );
-        let constraint = get_constraint(&id);
-
-        return Some(Layout {
-            constraint,
-            bbox: bbox_mat4,
-        });
+    if layout_regex.is_match(&id) {
+        return Some(Layout::new(node));
     }
     None
 }
@@ -100,11 +88,7 @@ pub fn main() {
                     transforms.append(
                         &mut layouts
                             .iter()
-                            .map(|layout| {
-                                layout
-                                    .constraint
-                                    .to_mat4(display_mat4, svg_mat4, layout.bbox)
-                            })
+                            .map(|layout| layout.to_mat4(display_mat4, svg_mat4))
                             .collect(),
                     );
                     gpu_redraw[0].update_texture([cast_slice(&transforms[..])].concat());

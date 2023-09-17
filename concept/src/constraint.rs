@@ -1,4 +1,9 @@
 use guppies::glam::{Mat4, Vec4};
+use regex::Regex;
+use salvage::usvg::{self, NodeExt, PathBbox};
+use serde::{Deserialize, Serialize};
+
+use crate::{constraint, svg_init::TRANSFORM_REGEX};
 
 pub fn get_normalize_scale(display: Mat4) -> Mat4 {
     // Y is flipped because the y axis is in different directions in GPU vs SVG
@@ -11,7 +16,7 @@ pub fn get_normalize_scale(display: Mat4) -> Mat4 {
         * display.inverse()
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum XConstraint {
     Left(f32),
     Right(f32),
@@ -86,7 +91,7 @@ impl XConstraint {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum YConstraint {
     Top(f32),
     Bottom(f32),
@@ -163,7 +168,7 @@ impl YConstraint {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Constraint {
     pub x: XConstraint,
     pub y: YConstraint,
@@ -194,8 +199,29 @@ pub struct Layout {
 }
 
 impl Layout {
-    fn to_mat4(self, display: Mat4, svg: Mat4) -> Mat4 {
+    pub fn to_mat4(self, display: Mat4, svg: Mat4) -> Mat4 {
+        let constraint = Constraint {
+            x: XConstraint::Scale,
+            y: YConstraint::Center(0.0),
+        };
+        let json = serde_json::to_string::<Constraint>(&constraint).unwrap();
+        println!("{}", json);
         self.constraint.to_mat4(display, svg, self.bbox)
+    }
+    pub fn new(node: &usvg::Node) -> Self {
+        let id = node.id();
+        let re = Regex::new(r"#layout (.+)").unwrap();
+        let json = &re.captures(&id).unwrap()[1];
+        let json = json.replace("'", "\"");
+        let constraint = serde_json::from_str::<Constraint>(&json).unwrap();
+        let bbox_mat4 = bbox_to_mat4(
+            node.calculate_bbox()
+                .expect("Elements with #transform should be able to calculate bbox"),
+        );
+        return Layout {
+            constraint,
+            bbox: bbox_mat4,
+        };
     }
 }
 
@@ -226,4 +252,12 @@ impl ClickableBbox {
 pub struct Clickable {
     pub bbox: ClickableBbox,
     pub id: String,
+}
+
+fn bbox_to_mat4(bbox: PathBbox) -> Mat4 {
+    Mat4::from_scale_rotation_translation(
+        [bbox.width() as f32, bbox.height() as f32, 1.].into(),
+        Default::default(),
+        [bbox.x() as f32, bbox.y() as f32, 0.].into(),
+    )
 }

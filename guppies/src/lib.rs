@@ -1,7 +1,6 @@
 pub mod primitives;
 mod setup;
 use bytemuck::{Pod, Zeroable};
-use console_log::log;
 pub use glam;
 use log::info;
 use primitives::{Triangles, Vertex};
@@ -13,7 +12,6 @@ pub use wgpu;
 pub use winit;
 use winit::dpi::PhysicalSize;
 use winit::event_loop::EventLoopWindowTarget;
-use winit::platform::web::WindowBuilderExtWebSys;
 use winit::window::{self, Window, WindowBuilder, WindowId};
 use winit::{
     event::{Event, WindowEvent},
@@ -28,6 +26,7 @@ fn init_window(event_loop: &EventLoopWindowTarget<()>) -> winit::window::Window 
     #[cfg(target_arch = "wasm32")]
     {
         std::panic::set_hook(Box::new(console_error_panic_hook::hook));
+        use console_log::log;
         use winit::platform::web::WindowExtWebSys;
         console_log::init();
 

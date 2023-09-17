@@ -336,6 +336,8 @@ dependencies = [
  "natura",
  "regex",
  "salvage",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

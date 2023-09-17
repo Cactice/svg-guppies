@@ -9,6 +9,8 @@ guppies = { path = "../guppies" }
 salvage = { path = "../salvage" }
 natura = { git = "https://github.com/ziyasal/natura" }
 regex = "1"
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
 
 [dev-dependencies]
 bytemuck = "1.13.1"

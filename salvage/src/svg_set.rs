@@ -157,6 +157,7 @@ impl SvgSet {
             "<?xml version='1.0' encoding='UTF-8' standalone='no'?><svg xmlns='http://www.w3.org/2000/svg'>{}</svg>",
             &writer.end_document()
         );
+        dbg!(&xml);
         let tree = Tree::from_str(&xml, &self.usvg_options.to_ref()).unwrap();
         let geometry_to_update =
             &mut self.geometries[*self.id_to_geometry_index.get(id).unwrap() as usize];
