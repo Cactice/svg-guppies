@@ -1,6 +1,10 @@
 use bytemuck::cast_slice;
 use concept::{
-    constraint::{Clickable, ClickableBbox, Constraint, Layout},
+    constraint::{
+        self,
+        clickable::{Clickable, ClickableBbox},
+        Layout,
+    },
     scroll::ScrollState,
     svg_init::{regex::Regex, CLICKABLE_REGEX, LAYOUT_REGEX, TRANSFORM_REGEX},
     uses::use_svg,
