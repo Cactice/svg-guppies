@@ -17,14 +17,6 @@ use mobile_entry_point::mobile_entry_point;
 use salvage::usvg::{self, NodeExt, PathBbox};
 use std::vec;
 
-fn svg_to_mat4(svg_scale: Rect) -> Mat4 {
-    Mat4::from_scale([svg_scale.size.x as f32, svg_scale.size.y as f32, 1.].into())
-}
-
-fn size_to_mat4(size: PhysicalSize<u32>) -> Mat4 {
-    Mat4::from_scale([size.width as f32, size.height as f32, 1.].into())
-}
-
 fn bbox_to_mat4(bbox: PathBbox) -> Mat4 {
     Mat4::from_scale_rotation_translation(
         [bbox.width() as f32, bbox.height() as f32, 1.].into(),
@@ -82,13 +74,11 @@ pub fn main() {
         if let guppies::winit::event::Event::WindowEvent { event, .. } = event {
             match event {
                 WindowEvent::Resized(p) => {
-                    display_mat4 = size_to_mat4(*p);
-                    svg_mat4 = svg_to_mat4(svg_set.bbox);
                     let mut transforms = vec![Mat4::IDENTITY, Mat4::IDENTITY];
                     transforms.append(
                         &mut layouts
                             .iter()
-                            .map(|layout| layout.to_mat4(display_mat4, svg_mat4))
+                            .map(|layout| layout.to_mat4_new(p, &svg_set))
                             .collect(),
                     );
                     gpu_redraw[0].update_texture([cast_slice(&transforms[..])].concat());

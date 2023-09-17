@@ -1,9 +1,22 @@
-use guppies::glam::{Mat4, Vec4};
+use guppies::{
+    glam::{Mat4, Vec4},
+    primitives::Rect,
+    winit::dpi::PhysicalSize,
+};
 use regex::Regex;
-use salvage::usvg::{self, NodeExt, PathBbox};
+use salvage::{
+    svg_set::SvgSet,
+    usvg::{self, NodeExt, PathBbox},
+};
 use serde::{Deserialize, Serialize};
 
-use crate::{constraint, svg_init::TRANSFORM_REGEX};
+fn svg_to_mat4(svg_scale: Rect) -> Mat4 {
+    Mat4::from_scale([svg_scale.size.x as f32, svg_scale.size.y as f32, 1.].into())
+}
+
+fn size_to_mat4(size: PhysicalSize<u32>) -> Mat4 {
+    Mat4::from_scale([size.width as f32, size.height as f32, 1.].into())
+}
 
 pub fn get_normalize_scale(display: Mat4) -> Mat4 {
     // Y is flipped because the y axis is in different directions in GPU vs SVG
@@ -199,13 +212,12 @@ pub struct Layout {
 }
 
 impl Layout {
+    pub fn to_mat4_new(self, p: &PhysicalSize<u32>, svg_set: &SvgSet) -> Mat4 {
+        let display = size_to_mat4(*p);
+        let svg = svg_to_mat4(svg_set.bbox);
+        self.constraint.to_mat4(display, svg, self.bbox)
+    }
     pub fn to_mat4(self, display: Mat4, svg: Mat4) -> Mat4 {
-        let constraint = Constraint {
-            x: XConstraint::Scale,
-            y: YConstraint::Center(0.0),
-        };
-        let json = serde_json::to_string::<Constraint>(&constraint).unwrap();
-        println!("{}", json);
         self.constraint.to_mat4(display, svg, self.bbox)
     }
     pub fn new(node: &usvg::Node) -> Self {
