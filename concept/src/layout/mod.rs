@@ -6,7 +6,6 @@ use salvage::{
     svg_set::SvgSet,
     usvg::{self, NodeExt, PathBbox},
 };
-use serde::{Deserialize, Serialize};
 
 fn svg_to_mat4(svg_scale: Rect) -> Mat4 {
     Mat4::from_scale([svg_scale.size.x as f32, svg_scale.size.y as f32, 1.].into())
