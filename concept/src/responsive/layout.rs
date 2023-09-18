@@ -1,17 +1,23 @@
-pub mod clickable;
-pub mod constraint;
-use guppies::{glam::Mat4, primitives::Rect, winit::dpi::PhysicalSize};
-use regex::Regex;
-use salvage::{
-    svg_set::SvgSet,
-    usvg::{self, NodeExt, PathBbox},
-};
+use salvage::usvg::{NodeExt, PathBbox};
 
-fn svg_to_mat4(svg_scale: Rect) -> Mat4 {
+use regex::Regex;
+
+use salvage::usvg;
+
+use salvage::svg_set::SvgSet;
+
+use guppies::winit::dpi::PhysicalSize;
+
+use guppies::glam::Mat4;
+
+use guppies::primitives::Rect;
+
+use super::constraint::Constraint;
+pub(crate) fn svg_to_mat4(svg_scale: Rect) -> Mat4 {
     Mat4::from_scale([svg_scale.size.x as f32, svg_scale.size.y as f32, 1.].into())
 }
 
-fn size_to_mat4(size: PhysicalSize<u32>) -> Mat4 {
+pub(crate) fn size_to_mat4(size: PhysicalSize<u32>) -> Mat4 {
     Mat4::from_scale([size.width as f32, size.height as f32, 1.].into())
 }
 
@@ -28,7 +34,7 @@ pub fn get_normalize_scale(display: Mat4) -> Mat4 {
 
 #[derive(Debug, Clone, Copy)]
 pub struct Layout {
-    pub constraint: constraint::Constraint,
+    pub constraint: Constraint,
     pub bbox: Mat4,
 }
 
@@ -46,7 +52,7 @@ impl Layout {
         let re = Regex::new(r"#layout (.+)").unwrap();
         let json = &re.captures(&id).unwrap()[1];
         let json = json.replace("'", "\"");
-        let constraint = serde_json::from_str::<constraint::Constraint>(&json).unwrap();
+        let constraint = serde_json::from_str::<Constraint>(&json).unwrap();
         let bbox_mat4 = bbox_to_mat4(
             node.calculate_bbox()
                 .expect("Elements with #transform should be able to calculate bbox"),

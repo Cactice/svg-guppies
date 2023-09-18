@@ -1,9 +1,9 @@
 use bytemuck::cast_slice;
 use concept::{
-    layout::{
+    responsive::{
         self,
         clickable::{Clickable, ClickableBbox},
-        Layout,
+        layout::Layout,
     },
     scroll::ScrollState,
     svg_init::{regex::Regex, CLICKABLE_REGEX, LAYOUT_REGEX, TRANSFORM_REGEX},

@@ -1,5 +1,4 @@
-use super::get_normalize_scale;
-
+use super::layout::get_normalize_scale;
 use guppies::glam::Mat4;
 use serde::{Deserialize, Serialize};
 
