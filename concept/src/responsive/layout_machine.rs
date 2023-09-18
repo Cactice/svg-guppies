@@ -10,7 +10,6 @@ use guppies::glam::Mat4;
 use guppies::glam::Vec4;
 use guppies::winit::dpi::PhysicalSize;
 use regex::Regex;
-use salvage::usvg;
 use salvage::usvg::Node;
 use salvage::usvg::NodeExt;
 
@@ -75,13 +74,4 @@ impl LayoutMachine {
             }
         }
     }
-}
-
-pub(crate) fn get_layout(node: &usvg::Node) -> Option<Layout> {
-    let layout_regex = Regex::new(LAYOUT_REGEX).unwrap();
-    let id = node.id();
-    if layout_regex.is_match(&id) {
-        return Some(Layout::new(node));
-    }
-    None
 }

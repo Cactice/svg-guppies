@@ -1,4 +1,4 @@
-use super::layout::get_normalize_scale;
+use super::constraint::get_normalize_scale;
 use super::layout::Layout;
 use guppies::glam::Mat4;
 use guppies::glam::Vec4;
