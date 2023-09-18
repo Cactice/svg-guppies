@@ -1,6 +1,6 @@
 use bytemuck::cast_slice;
 use concept::{
-    responsive::layout::{Layout, LayoutMachine},
+    responsive::{layout::Layout, layout_machine::LayoutMachine},
     scroll::ScrollState,
     uses::use_svg,
 };
