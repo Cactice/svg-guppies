@@ -27,6 +27,7 @@ impl ClickableBbox {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Clickable {
     pub bbox: ClickableBbox,
     pub id: String,
