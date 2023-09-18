@@ -78,9 +78,8 @@ pub struct LayoutMachine {
     pub display_mat4: Mat4,
 }
 impl LayoutMachine {
-    pub fn resize(mut self, p: PhysicalSize<u32>) -> Self {
-        self.display_mat4 = size_to_mat4(p);
-        self
+    pub fn resize(&mut self, p: &PhysicalSize<u32>) {
+        self.display_mat4 = size_to_mat4(*p);
     }
     pub fn get_transforms(&self) -> Vec<Mat4> {
         self.layouts

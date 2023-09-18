@@ -36,6 +36,7 @@ pub fn main() {
         if let guppies::winit::event::Event::WindowEvent { event, .. } = event {
             match event {
                 WindowEvent::Resized(p) => {
+                    layout_machine.resize(p);
                     let mut transforms = vec![Mat4::IDENTITY, Mat4::IDENTITY];
                     transforms.append(&mut layout_machine.get_transforms());
                     gpu_redraw[0].update_texture([cast_slice(&transforms[..])].concat());
