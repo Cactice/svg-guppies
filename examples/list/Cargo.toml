@@ -1,15 +1,15 @@
 [package]
-name = "life"
+name = "list"
 version = "0.1.0"
-authors = ["cactice <14835424+Cactice@users.noreply.github.com>"]
-edition = "2018"
+edition = "2021"
 
 [lib]
 crate-type = ["staticlib", "cdylib", "rlib"]
+name = "list"
 path = "src/main.rs"
 
 [[bin]]
-name = "life"
+name = "list"
 path = "src/main.rs"
 
 [dependencies]
@@ -17,12 +17,7 @@ mobile-entry-point = "0.1.0"
 guppies = { path = "../../guppies" }
 salvage = { path = "../../salvage" }
 concept = { path = "../../concept" }
-regex = "1"
-bytemuck = "1.13.1"
-fastrand = "2.0.0"
-log = "0.4.11"
-env_logger = "0.9.0"
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.11.0"
-# be careful with winit compatiblity
+log = "0.4.11"

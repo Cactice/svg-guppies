@@ -6,7 +6,6 @@ edition = "2021"
 [dependencies]
 usvg = { git = "https://github.com/Cactice/resvg" }
 guppies = { path = "../guppies" }
-bytemuck = "1.2.0"
 lyon = "1.0.0"
 roxmltree = "0.14.1"
 xmlwriter = "0.1.0"

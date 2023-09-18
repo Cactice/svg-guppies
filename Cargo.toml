@@ -1,6 +1,14 @@
 [workspace]
 resolver = "2"
-members = ["concept", "guppies", "salvage", "run-wasm", "examples/life", "examples/layout"]
+members = [
+  "concept",
+  "guppies",
+  "salvage",
+  "run-wasm",
+  "examples/life",
+  "examples/layout",
+  "examples/list",
+]
 default-members = ["examples/layout"]
 
 [profile.release]

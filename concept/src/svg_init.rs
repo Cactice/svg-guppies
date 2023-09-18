@@ -29,6 +29,7 @@ impl RegexPatterns {
 
 pub const CLICKABLE_REGEX: &str = r"#clickable(?:$| |#)";
 pub const TRANSFORM_REGEX: &str = r"#transform(?:$| |#)";
+pub const LAYOUT_REGEX: &str = r"#layout(?:$| |#)";
 pub const DYNAMIC_TEXT_REGEX: &str = r"#dynamicText(?:$| |#)";
 
 pub fn get_default_init_callback() -> impl FnMut(Node, PassDown) -> (Option<Geometry>, PassDown) {

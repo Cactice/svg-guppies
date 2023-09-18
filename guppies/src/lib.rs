@@ -1,35 +1,35 @@
 pub mod primitives;
 mod setup;
+pub use bytemuck;
+use bytemuck::{Pod, Zeroable};
 pub use glam;
-use glam::Mat4;
-use primitives::Triangles;
-use setup::Redraw;
+use log::info;
+use primitives::{Triangles, Vertex};
+use setup::{Redraw, RedrawMachine};
+use std::array;
+use std::fmt::Debug;
+use std::time::Instant;
 pub use wgpu;
 pub use winit;
+use winit::dpi::PhysicalSize;
 use winit::event_loop::EventLoopWindowTarget;
-use winit::window::{Window, WindowBuilder, WindowId};
+use winit::window::{self, Window, WindowBuilder, WindowId};
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
 };
 
-fn init(
-    event_loop: &EventLoopWindowTarget<()>,
-    triangles: &Triangles,
-    redraw: &mut Option<setup::Redraw>,
-    window: &mut Option<winit::window::Window>,
-) {
-    *window = Some(
-        WindowBuilder::new()
-            .with_title("SVG-GUI")
-            .build(&event_loop)
-            .unwrap(),
-    );
-    let window = window.as_ref().expect("Window is None");
+fn init_window(event_loop: &EventLoopWindowTarget<()>) -> winit::window::Window {
+    let window = WindowBuilder::new()
+        .with_title("SVG-GUI")
+        .build(&event_loop)
+        .unwrap();
     #[cfg(target_arch = "wasm32")]
     {
         std::panic::set_hook(Box::new(console_error_panic_hook::hook));
+        use console_log::log;
         use winit::platform::web::WindowExtWebSys;
+        console_log::init();
 
         web_sys::window()
             .and_then(|win| win.document())
@@ -42,18 +42,13 @@ fn init(
             })
             .expect("Couldn't append canvas to document body");
     }
-    *redraw = Some(pollster::block_on(Redraw::new(
-        window,
-        Mat4::IDENTITY,
-        &triangles.vertices,
-        &triangles.indices,
-    )));
+    window
 }
 
 #[derive(Debug, Default)]
-pub struct GpuRedraw {
+pub struct GpuRedraw<T: Pod + Zeroable + Debug + Clone + Default = Vertex> {
     texture: Vec<u8>,
-    triangles: Triangles,
+    triangles: Triangles<T>,
     shader: Option<Vec<u8>>,
 }
 
@@ -77,49 +72,107 @@ impl GpuRedraw {
     }
 }
 
-pub fn render_loop<F: FnMut(&Event<()>, &mut GpuRedraw) + 'static>(mut render_loop: F) {
+pub struct Guppy<const COUNT: usize, Vert>
+where
+    Vert: Pod + Zeroable + Debug + Clone + Default,
+{
+    init: [GpuRedraw<Vert>; COUNT],
+    functions: Vec<Box<dyn FnMut(&Event<()>, &mut [GpuRedraw<Vert>; COUNT])>>,
+}
+
+impl<const COUNT: usize, Vert: Pod + Zeroable + Debug + Clone + Default> Guppy<COUNT, Vert> {
+    pub fn register<F: FnMut(&Event<()>, &mut [GpuRedraw<Vert>; COUNT]) + 'static>(
+        &mut self,
+        f: F,
+    ) {
+        self.functions.push(Box::new(f));
+    }
+    pub fn new(init: [GpuRedraw<Vert>; COUNT]) -> Self {
+        Self {
+            init,
+            functions: Vec::default(),
+        }
+    }
+    pub fn start(self) {
+        render_loop(self.functions);
+    }
+}
+
+pub fn render_loop<const COUNT: usize, Vert>(
+    mut render_loop_fn: Vec<Box<dyn FnMut(&Event<()>, &mut [GpuRedraw<Vert>; COUNT])>>,
+) where
+    Vert: Pod + Zeroable + Debug + Clone + Default,
+{
     let event_loop = EventLoop::new();
-    let mut redraw: Option<Redraw> = None;
+
     // Type definition is required for android build
     let mut window: Option<Window> = None;
-    let mut gpu_redraw = GpuRedraw::default();
-
+    let mut gpu_redraw: Option<[GpuRedraw<Vert>; COUNT]> = None;
+    let mut redraws: Option<[Redraw; COUNT]> = None;
+    let mut redraw_machine: Option<RedrawMachine> = None;
+    #[cfg(not(target_arch = "wasm32"))]
+    let mut last_frame_inst = Instant::now();
+    #[cfg(not(target_arch = "wasm32"))]
+    let (mut frame_count, mut accum_time) = (0, 0.0);
     event_loop.run(move |event, event_loop, control_flow| {
-        match redraw {
-            Some(ref mut redraw) => match &gpu_redraw.shader.take() {
-                Some(shader) => {
-                    redraw.update_shader(shader);
-                }
-                _ => {}
-            },
-            _ => {}
-        }
-
         *control_flow = ControlFlow::Poll;
         // FIXME: why do some OS not redraw automatically without explicit call
         #[cfg(any(target_os = "ios", target_os = "android"))]
         if let Some(window) = window.as_mut() {
             window.request_redraw();
         }
-        render_loop(&event, &mut gpu_redraw);
+        if let (Some(ref mut gpu_redraw), Some(redraws), Some(redraw_machine)) = (
+            gpu_redraw.as_mut(),
+            redraws.as_mut(),
+            redraw_machine.as_ref(),
+        ) {
+            render_loop_fn.iter_mut().for_each(|func| {
+                func(&event, gpu_redraw);
+            });
+            redraws
+                .iter_mut()
+                .zip(gpu_redraw.iter_mut())
+                .for_each(|(redraw, new_redraw)| {
+                    if let Some(shader) = new_redraw.shader.take() {
+                        redraw.update_shader(&shader, redraw_machine);
+                    }
+                });
+        }
         match event {
             #[cfg(target_os = "android")]
-            Event::Resumed => init(event_loop, &draw_primitive, &mut redraw, &mut window),
+            Event::Resumed => {
+                init_window(event_loop);
+            }
             #[cfg(not(target_os = "android"))]
             Event::NewEvents(start_cause) => match start_cause {
                 winit::event::StartCause::Init => {
-                    init(event_loop, &gpu_redraw.triangles, &mut redraw, &mut window);
+                    let new_window = init_window(event_loop);
+                    let new_redraw_machine = pollster::block_on(RedrawMachine::new(&new_window));
+                    redraws = Some(array::from_fn(|i| {
+                        Redraw::new(
+                            &new_redraw_machine,
+                            &Default::default(),
+                            &Default::default(),
+                            i,
+                        )
+                    }));
+                    redraw_machine = Some(new_redraw_machine);
+                    gpu_redraw = Some([(); COUNT].map(|_| GpuRedraw::default()));
+                    window = Some(new_window);
 
-                    // I think below is necessary when running on mobile...
-                    // I forgot and don't want to test now.
+                    // Below is necessary when running on mobile...
                     let size = window.as_ref().unwrap().inner_size();
-                    render_loop(
-                        &Event::WindowEvent {
-                            window_id: unsafe { WindowId::dummy() },
-                            event: WindowEvent::Resized(size),
-                        },
-                        &mut gpu_redraw,
-                    );
+                    if let Some(gpu_redraw) = gpu_redraw.as_mut() {
+                        render_loop_fn.iter_mut().for_each(|func| {
+                            func(
+                                &Event::WindowEvent {
+                                    window_id: unsafe { WindowId::dummy() },
+                                    event: WindowEvent::Resized(size),
+                                },
+                                gpu_redraw,
+                            );
+                        });
+                    }
                 }
                 _ => (),
             },
@@ -130,22 +183,37 @@ pub fn render_loop<F: FnMut(&Event<()>, &mut GpuRedraw) + 'static>(mut render_lo
                 WindowEvent::CloseRequested => {
                     *control_flow = ControlFlow::Exit;
                 }
-                WindowEvent::Resized(p) => {
-                    if let Some(redraw) = redraw.as_mut() {
-                        redraw.resize(p);
-                    }
-                }
+                WindowEvent::Resized(p) => match redraw_machine.as_mut() {
+                    Some(redraw_machine) => redraw_machine.resize(p),
+                    _ => {}
+                },
                 _ => {}
             },
             Event::RedrawRequested(_) => {
-                if let (Some(redraw), Some(window)) = (redraw.as_mut(), window.as_mut()) {
-                    gpu_redraw.texture.resize(8192 * 16, 0);
-                    redraw.redraw(
-                        &gpu_redraw.texture[..],
-                        &gpu_redraw.triangles.vertices,
-                        &gpu_redraw.triangles.indices,
-                    );
+                if let (Some(window), Some(gpu_redraw), Some(redraws), Some(redraw_machine)) = (
+                    window.as_mut(),
+                    gpu_redraw.as_mut(),
+                    redraws.as_mut(),
+                    redraw_machine.as_mut(),
+                ) {
+                    let mut frame = redraw_machine.get_frame();
+                    redraw_machine.redraw(gpu_redraw, redraws, &mut frame);
+                    redraw_machine.submit(frame);
                     window.request_redraw();
+                    #[cfg(not(target_arch = "wasm32"))]
+                    {
+                        accum_time += last_frame_inst.elapsed().as_secs_f32();
+                        last_frame_inst = Instant::now();
+                        frame_count += 1;
+                        if frame_count == 100 {
+                            println!(
+                                "Avg frame time {}ms",
+                                accum_time * 1000.0 / frame_count as f32
+                            );
+                            accum_time = 0.0;
+                            frame_count = 0;
+                        }
+                    }
                 }
             }
             _ => {}

@@ -4,15 +4,16 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-winit = "0.27.4"
-wgpu = { version = "0.14.0", features = ["spirv"] }
-pollster = "0.2"
-bytemuck = { version = "1.8", features = ["derive"] }
-glam = { version = "0.22.0", features = ["bytemuck"] }
+winit = { version = "0.28.6", features = ["android-native-activity"] }
+wgpu = { version = "0.17.0", features = ["spirv"] }
+pollster = "0.3"
+bytemuck = { version = "1.14", features = ["derive"] }
+glam = { version = "0.24", features = ["bytemuck"] }
+log = "0.4"
 
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wgpu = { version = "0.14.0", features = ["webgl"] }
-web-sys = "0.3.57"
+wgpu = { version = "0.17.0", features = ["webgl", "spirv"] }
+web-sys = "0.3.64"
 console_error_panic_hook = "0.1.7"
-console_log = { version = "0.2" }
+console_log = { version = "1.0" }

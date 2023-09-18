@@ -1,0 +1,8 @@
+[app]
+name = "list"
+stylized-name = "list"
+domain = "users.noreply.github.com"
+template-pack = "winit"
+
+[apple]
+development-team = "29BWQ53ETH"

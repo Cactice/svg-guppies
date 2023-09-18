@@ -1,18 +1,17 @@
 use concept::{responsive::layout_machine::LayoutMachine, scroll::ScrollState, uses::use_svg};
 use guppies::bytemuck::cast_slice;
-use guppies::{
-    glam::Mat4,
-    winit::event::{ElementState, WindowEvent},
-    GpuRedraw, Guppy,
-};
+use guppies::{glam::Mat4, primitives::Vertex, GpuRedraw, Guppy};
 use mobile_entry_point::mobile_entry_point;
-use std::vec;
 
+struct ListItem {
+    word: String,
+    icon: String,
+}
 pub fn main() {
     let mut layout_machine = LayoutMachine::default();
 
     let svg_set = use_svg(
-        include_str!("../MenuBar.svg").to_string(),
+        include_str!("../Left.svg").to_string(),
         |node, _pass_down| {
             layout_machine.add_node(node);
         },
@@ -24,6 +23,7 @@ pub fn main() {
         gpu_redraws[0].update_texture([cast_slice(&layout_machine.transforms[..])].concat());
         gpu_redraws[0].update_triangles(svg_set.get_combined_geometries().triangles, 0);
     });
+
     guppy.start();
 }
 

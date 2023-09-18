@@ -34,7 +34,7 @@ fn find_text_node_path(node: roxmltree::Node, path: &mut Vec<roxmltree::NodeId>)
     }
     false
 }
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct SvgSet {
     pub geometries: Vec<Geometry>,
     pub raw_xml: String,
@@ -45,19 +45,6 @@ pub struct SvgSet {
     usvg_options: Options,
 }
 
-impl Default for SvgSet {
-    fn default() -> Self {
-        Self {
-            geometries: vec![],
-            raw_xml: Default::default(),
-            id_to_svg: Default::default(),
-            id_to_geometry_index: Default::default(),
-            bbox: Default::default(),
-            usvg_options: Default::default(),
-            current_text_map: Default::default(),
-        }
-    }
-}
 impl SvgSet {
     fn copy_element(&self, node: &roxmltree::Node, writer: &mut XmlWriter) {
         writer.start_element(node.tag_name().name());
@@ -170,6 +157,7 @@ impl SvgSet {
             "<?xml version='1.0' encoding='UTF-8' standalone='no'?><svg xmlns='http://www.w3.org/2000/svg'>{}</svg>",
             &writer.end_document()
         );
+        dbg!(&xml);
         let tree = Tree::from_str(&xml, &self.usvg_options.to_ref()).unwrap();
         let geometry_to_update =
             &mut self.geometries[*self.id_to_geometry_index.get(id).unwrap() as usize];

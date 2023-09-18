@@ -1,5 +1,5 @@
-use guppies::glam::{Mat4, Vec4};
-
+use guppies::glam::Mat4;
+use serde::{Deserialize, Serialize};
 pub fn get_normalize_scale(display: Mat4) -> Mat4 {
     // Y is flipped because the y axis is in different directions in GPU vs SVG
     // doubling is necessary because GPU expectation left tip is -1 and right tip is at 1
@@ -10,8 +10,7 @@ pub fn get_normalize_scale(display: Mat4) -> Mat4 {
         * Mat4::from_scale([2., -2., 1.].into())
         * display.inverse()
 }
-
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum XConstraint {
     Left(f32),
     Right(f32),
@@ -28,8 +27,14 @@ impl Default for XConstraint {
         }
     }
 }
+
 impl XConstraint {
-    fn to_pre_post_transform(self, display: Mat4, svg: Mat4, bbox: Mat4) -> (Mat4, Mat4) {
+    pub(crate) fn to_pre_post_transform(
+        self,
+        display: Mat4,
+        svg: Mat4,
+        bbox: Mat4,
+    ) -> (Mat4, Mat4) {
         let (bbox_scale, _, bbox_translation) = bbox.to_scale_rotation_translation();
         let fill_x = Mat4::from_scale(
             [
@@ -86,7 +91,7 @@ impl XConstraint {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum YConstraint {
     Top(f32),
     Bottom(f32),
@@ -105,7 +110,12 @@ impl Default for YConstraint {
 }
 
 impl YConstraint {
-    fn to_pre_post_transform(self, display: Mat4, svg: Mat4, bbox: Mat4) -> (Mat4, Mat4) {
+    pub(crate) fn to_pre_post_transform(
+        self,
+        display: Mat4,
+        svg: Mat4,
+        bbox: Mat4,
+    ) -> (Mat4, Mat4) {
         let (bbox_scale, _, bbox_translation) = bbox.to_scale_rotation_translation();
         let fill_y = Mat4::from_scale(
             [
@@ -163,7 +173,7 @@ impl YConstraint {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Constraint {
     pub x: XConstraint,
     pub y: YConstraint,
@@ -186,44 +196,4 @@ impl Constraint {
 
         return post_xy * normalize_scale * pre_xy;
     }
-}
-#[derive(Debug, Clone, Copy)]
-pub struct Layout {
-    pub constraint: Constraint,
-    pub bbox: Mat4,
-}
-
-impl Layout {
-    fn to_mat4(self, display: Mat4, svg: Mat4) -> Mat4 {
-        self.constraint.to_mat4(display, svg, self.bbox)
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum ClickableBbox {
-    Bbox(Mat4),
-    Layout(Layout),
-}
-
-impl ClickableBbox {
-    pub fn click_detection(&self, click: Vec4, display: Mat4, svg: Mat4) -> bool {
-        let bbox = match self {
-            ClickableBbox::Layout(layout) => layout.to_mat4(display, svg) * layout.bbox,
-            ClickableBbox::Bbox(bbox) => *bbox,
-        };
-        let click = Mat4::from_translation([-1., 1., 0.].into())
-            * Mat4::from_scale([0.5, 0.5, 1.].into())
-            * get_normalize_scale(display)
-            * click;
-        let click = bbox.inverse() * click;
-        if click.x.abs() < 1. && click.y.abs() < 1. {
-            return true;
-        }
-        false
-    }
-}
-
-pub struct Clickable {
-    pub bbox: ClickableBbox,
-    pub id: String,
 }
