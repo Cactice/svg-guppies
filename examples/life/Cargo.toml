@@ -19,7 +19,7 @@ salvage = { path = "../../salvage" }
 concept = { path = "../../concept" }
 regex = "1"
 bytemuck = "1.13.1"
-fastrand = "1.8.0"
+fastrand = "2.0.0"
 log = "0.4.11"
 env_logger = "0.9.0"
 

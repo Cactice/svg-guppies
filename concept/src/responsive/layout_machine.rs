@@ -6,9 +6,16 @@ use super::layout::Layout;
 use crate::scroll::ScrollState;
 use crate::svg_init::CLICKABLE_REGEX;
 use crate::svg_init::LAYOUT_REGEX;
+use core::fmt::Debug;
+use guppies::bytemuck::Pod;
+use guppies::bytemuck::Zeroable;
 use guppies::glam::Mat4;
 use guppies::glam::Vec4;
 use guppies::winit::dpi::PhysicalSize;
+use guppies::winit::event::ElementState;
+use guppies::winit::event::Event;
+use guppies::winit::event::WindowEvent;
+use guppies::GpuRedraw;
 use regex::Regex;
 use salvage::usvg::Node;
 use salvage::usvg::NodeExt;
@@ -19,9 +26,32 @@ pub struct LayoutMachine {
     pub clickables: Vec<Clickable>,
     pub svg_mat4: Mat4,
     pub display_mat4: Mat4,
+    pub scroll_state: ScrollState,
+    pub transforms: Vec<Mat4>,
 }
 
 impl LayoutMachine {
+    pub fn event_handler(&mut self, event: &Event<()>) {
+        self.scroll_state.event_handler(event);
+        if let guppies::winit::event::Event::WindowEvent { event, .. } = event {
+            match event {
+                WindowEvent::Resized(p) => {
+                    self.resize(p);
+                    let mut transforms = vec![Mat4::IDENTITY, Mat4::IDENTITY];
+                    transforms.append(&mut self.get_transforms());
+                    self.transforms = transforms;
+                }
+
+                WindowEvent::MouseInput {
+                    state: ElementState::Pressed,
+                    ..
+                } => {
+                    self.click_detection(&self.scroll_state);
+                }
+                _ => {}
+            }
+        }
+    }
     pub fn resize(&mut self, p: &PhysicalSize<u32>) {
         self.display_mat4 = size_to_mat4(*p);
     }

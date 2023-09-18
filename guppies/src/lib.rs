@@ -1,5 +1,6 @@
 pub mod primitives;
 mod setup;
+pub use bytemuck;
 use bytemuck::{Pod, Zeroable};
 pub use glam;
 use log::info;
@@ -71,13 +72,37 @@ impl GpuRedraw {
     }
 }
 
-pub fn render_loop<
-    const COUNT: usize,
+pub struct Guppy<const COUNT: usize, Vert>
+where
     Vert: Pod + Zeroable + Debug + Clone + Default,
-    F: FnMut(&Event<()>, &mut [GpuRedraw<Vert>; COUNT]) + 'static,
->(
-    mut render_loop: F,
-) {
+{
+    init: [GpuRedraw<Vert>; COUNT],
+    functions: Vec<Box<dyn FnMut(&Event<()>, &mut [GpuRedraw<Vert>; COUNT])>>,
+}
+
+impl<const COUNT: usize, Vert: Pod + Zeroable + Debug + Clone + Default> Guppy<COUNT, Vert> {
+    pub fn register<F: FnMut(&Event<()>, &mut [GpuRedraw<Vert>; COUNT]) + 'static>(
+        &mut self,
+        f: F,
+    ) {
+        self.functions.push(Box::new(f));
+    }
+    pub fn new(init: [GpuRedraw<Vert>; COUNT]) -> Self {
+        Self {
+            init,
+            functions: Vec::default(),
+        }
+    }
+    pub fn start(self) {
+        render_loop(self.functions);
+    }
+}
+
+pub fn render_loop<const COUNT: usize, Vert>(
+    mut render_loop_fn: Vec<Box<dyn FnMut(&Event<()>, &mut [GpuRedraw<Vert>; COUNT])>>,
+) where
+    Vert: Pod + Zeroable + Debug + Clone + Default,
+{
     let event_loop = EventLoop::new();
 
     // Type definition is required for android build
@@ -101,7 +126,9 @@ pub fn render_loop<
             redraws.as_mut(),
             redraw_machine.as_ref(),
         ) {
-            render_loop(&event, gpu_redraw);
+            render_loop_fn.iter_mut().for_each(|func| {
+                func(&event, gpu_redraw);
+            });
             redraws
                 .iter_mut()
                 .zip(gpu_redraw.iter_mut())
@@ -136,13 +163,15 @@ pub fn render_loop<
                     // Below is necessary when running on mobile...
                     let size = window.as_ref().unwrap().inner_size();
                     if let Some(gpu_redraw) = gpu_redraw.as_mut() {
-                        render_loop(
-                            &Event::WindowEvent {
-                                window_id: unsafe { WindowId::dummy() },
-                                event: WindowEvent::Resized(size),
-                            },
-                            gpu_redraw,
-                        );
+                        render_loop_fn.iter_mut().for_each(|func| {
+                            func(
+                                &Event::WindowEvent {
+                                    window_id: unsafe { WindowId::dummy() },
+                                    event: WindowEvent::Resized(size),
+                                },
+                                gpu_redraw,
+                            );
+                        });
                     }
                 }
                 _ => (),

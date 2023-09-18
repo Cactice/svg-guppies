@@ -1,10 +1,11 @@
-use bytemuck::{cast_slice, Pod, Zeroable};
 use concept::scroll::ScrollState;
 use concept::spring::SpringMat4;
 use concept::svg_init::get_center;
 use concept::uses::use_svg;
+use guppies::bytemuck::{cast_slice, Pod, Zeroable};
 use guppies::glam::{Mat4, Vec2};
 use guppies::winit::event::Event;
+use guppies::{GpuRedraw, Guppy};
 use regex::Regex;
 use salvage::svg_set::SvgSet;
 use salvage::usvg::NodeExt;
@@ -97,7 +98,8 @@ pub fn main() {
         .player_avatar_transforms
         .map(|_| SpringMat4::default());
     let start_center = Mat4::from_translation((life_game.position_to_coordinates[0], 0.).into());
-    guppies::render_loop::<1, _, _>(move |event, gpu_redraw| {
+    let mut guppy = Guppy::new([GpuRedraw::default()]);
+    guppy.register(move |event, gpu_redraw| {
         let clicked = scroll_state.event_handler(event);
         if let Event::RedrawRequested(_) = event {
             tip_animation.update(&mut texture.tip_transform, &mut player_animations);
@@ -148,4 +150,5 @@ pub fn main() {
             .concat(),
         );
     });
+    guppy.start();
 }

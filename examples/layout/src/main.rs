@@ -1,19 +1,15 @@
-use bytemuck::cast_slice;
-use concept::{
-    responsive::{layout::Layout, layout_machine::LayoutMachine},
-    scroll::ScrollState,
-    uses::use_svg,
-};
+use concept::{responsive::layout_machine::LayoutMachine, scroll::ScrollState, uses::use_svg};
+use guppies::bytemuck::cast_slice;
 use guppies::{
-    glam::{Mat4, Vec4},
+    glam::Mat4,
     winit::event::{ElementState, WindowEvent},
+    GpuRedraw, Guppy,
 };
 use mobile_entry_point::mobile_entry_point;
 use std::vec;
 
 pub fn main() {
     let mut layout_machine = LayoutMachine::default();
-    let mut scroll_state = ScrollState::default();
 
     let svg_set = use_svg(
         include_str!("../MenuBar.svg").to_string(),
@@ -22,28 +18,13 @@ pub fn main() {
         },
     );
 
-    guppies::render_loop::<1, _, _>(move |event, gpu_redraw| {
-        scroll_state.event_handler(event);
-        if let guppies::winit::event::Event::WindowEvent { event, .. } = event {
-            match event {
-                WindowEvent::Resized(p) => {
-                    layout_machine.resize(p);
-                    let mut transforms = vec![Mat4::IDENTITY, Mat4::IDENTITY];
-                    transforms.append(&mut layout_machine.get_transforms());
-                    gpu_redraw[0].update_texture([cast_slice(&transforms[..])].concat());
-                    gpu_redraw[0].update_triangles(svg_set.get_combined_geometries().triangles, 0);
-                }
-
-                WindowEvent::MouseInput {
-                    state: ElementState::Pressed,
-                    ..
-                } => {
-                    layout_machine.click_detection(&scroll_state);
-                }
-                _ => {}
-            }
-        }
+    let mut guppy = Guppy::new([GpuRedraw::default()]);
+    guppy.register(move |event, gpu_redraws| {
+        layout_machine.event_handler(event);
+        gpu_redraws[0].update_texture([cast_slice(&layout_machine.transforms[..])].concat());
+        gpu_redraws[0].update_triangles(svg_set.get_combined_geometries().triangles, 0);
     });
+    guppy.start();
 }
 
 #[mobile_entry_point]
