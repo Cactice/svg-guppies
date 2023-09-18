@@ -1,23 +1,14 @@
 use bytemuck::cast_slice;
 use concept::{
-    responsive::{
-        clickable::{Clickable, ClickableBbox},
-        layout::{Layout, LayoutMachine},
-    },
+    responsive::layout::{Layout, LayoutMachine},
     scroll::ScrollState,
-    svg_init::{regex::Regex, CLICKABLE_REGEX, LAYOUT_REGEX, TRANSFORM_REGEX},
     uses::use_svg,
 };
 use guppies::{
     glam::{Mat4, Vec4},
-    primitives::Rect,
-    winit::{
-        dpi::PhysicalSize,
-        event::{ElementState, WindowEvent},
-    },
+    winit::event::{ElementState, WindowEvent},
 };
 use mobile_entry_point::mobile_entry_point;
-use salvage::usvg::{self, Node, NodeExt, PathBbox};
 use std::vec;
 
 pub fn main() {
