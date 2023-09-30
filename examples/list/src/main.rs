@@ -7,6 +7,7 @@ struct ListItem {
     word: String,
     icon: String,
 }
+
 pub fn main() {
     let mut layout_machine = LayoutMachine::default();
 
@@ -18,6 +19,7 @@ pub fn main() {
     );
 
     let mut guppy = Guppy::new([GpuRedraw::default()]);
+
     guppy.register(move |event, gpu_redraws| {
         layout_machine.event_handler(event);
         gpu_redraws[0].update_texture([cast_slice(&layout_machine.transforms[..])].concat());

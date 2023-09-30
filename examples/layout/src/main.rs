@@ -1,12 +1,7 @@
-use concept::{responsive::layout_machine::LayoutMachine, scroll::ScrollState, uses::use_svg};
+use concept::{responsive::layout_machine::LayoutMachine, uses::use_svg};
 use guppies::bytemuck::cast_slice;
-use guppies::{
-    glam::Mat4,
-    winit::event::{ElementState, WindowEvent},
-    GpuRedraw, Guppy,
-};
+use guppies::{GpuRedraw, Guppy};
 use mobile_entry_point::mobile_entry_point;
-use std::vec;
 
 pub fn main() {
     let mut layout_machine = LayoutMachine::default();

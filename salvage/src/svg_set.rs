@@ -1,7 +1,7 @@
 use crate::geometry::Geometry;
 use guppies::{glam::Vec2, primitives::Rect};
 use roxmltree::{Document, NodeId};
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, rc::Rc, sync::Arc};
 use usvg::{fontdb::Source, Node, Options, Tree};
 use xmlwriter::XmlWriter;
 
@@ -34,7 +34,7 @@ fn find_text_node_path(node: roxmltree::Node, path: &mut Vec<roxmltree::NodeId>)
     }
     false
 }
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct SvgSet {
     pub geometries: Vec<Geometry>,
     pub raw_xml: String,
@@ -42,7 +42,7 @@ pub struct SvgSet {
     pub id_to_geometry_index: HashMap<String, usize>,
     pub current_text_map: HashMap<String, String>,
     pub bbox: Rect,
-    usvg_options: Options,
+    usvg_options: Rc<Options>,
 }
 
 impl SvgSet {
@@ -80,6 +80,7 @@ impl SvgSet {
         opt.font_family = "Roboto Medium".to_string();
         opt.keep_named_groups = true;
         let document = Document::parse(&xml).unwrap();
+        let opt = get_usvg_options();
         let tree = Tree::from_xmltree(&document, &opt.to_ref()).unwrap();
         let id_to_svg =
             document
@@ -117,7 +118,7 @@ impl SvgSet {
             id_to_svg,
             id_to_geometry_index,
             bbox,
-            usvg_options: opt,
+            usvg_options: Rc::new(opt),
             ..Default::default()
         }
     }
@@ -157,10 +158,19 @@ impl SvgSet {
             "<?xml version='1.0' encoding='UTF-8' standalone='no'?><svg xmlns='http://www.w3.org/2000/svg'>{}</svg>",
             &writer.end_document()
         );
-        dbg!(&xml);
         let tree = Tree::from_str(&xml, &self.usvg_options.to_ref()).unwrap();
         let geometry_to_update =
             &mut self.geometries[*self.id_to_geometry_index.get(id).unwrap() as usize];
         *geometry_to_update = tree.into();
     }
+}
+
+pub fn get_usvg_options() -> Options {
+    let font = include_bytes!("../fallback_font/Roboto-Medium.ttf");
+    let mut opt = Options::default();
+    opt.fontdb
+        .load_font_source(Source::Binary(Arc::new(font.as_ref())));
+    opt.font_family = "Roboto Medium".to_string();
+    opt.keep_named_groups = true;
+    opt
 }
