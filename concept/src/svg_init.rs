@@ -2,7 +2,7 @@ use guppies::glam::Vec2;
 pub use regex;
 use regex::RegexSet;
 use salvage::{
-    callback::{IndicesPriority, PassDown},
+    callback::PassDown,
     geometry::Geometry,
     usvg::{self, Node, NodeExt},
 };
@@ -42,7 +42,6 @@ pub fn get_default_init_callback() -> impl FnMut(Node, PassDown) -> (Option<Geom
     move |node, pass_down| {
         let PassDown {
             transform_id: parent_transform_id,
-            indices_priority: parent_priority,
         } = pass_down;
         let id = node.id();
         let default_matches = defaults.matches(&id);
@@ -52,26 +51,14 @@ pub fn get_default_init_callback() -> impl FnMut(Node, PassDown) -> (Option<Geom
         } else {
             parent_transform_id
         };
-        let indices_priority = if !default_matches.matched(dynamic_text_regex_pattern.index) {
-            IndicesPriority::Variable
-        } else {
-            IndicesPriority::Fixed
-        };
-        let indices_priority = parent_priority.max(indices_priority);
         let geometry = {
             if let usvg::NodeKind::Path(ref p) = *node.borrow() {
-                Some(Geometry::new(p, transform_id, indices_priority))
+                Some(Geometry::new(p, transform_id))
             } else {
                 None
             }
         };
-        (
-            geometry,
-            PassDown {
-                indices_priority,
-                transform_id,
-            },
-        )
+        (geometry, PassDown { transform_id })
     }
 }
 

@@ -98,7 +98,6 @@ impl SvgSet {
             &mut geometries,
             &mut callback,
         );
-        geometries.sort_by_key(|a| a.priority);
         let id_to_geometry_index: HashMap<String, usize> =
             geometries
                 .iter()
