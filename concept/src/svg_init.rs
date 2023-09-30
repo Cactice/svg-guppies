@@ -37,7 +37,7 @@ pub fn get_default_init_callback() -> impl FnMut(Node, PassDown) -> (Option<Geom
     let mut regex_patterns = RegexPatterns::default();
     let _clickable_regex_pattern = regex_patterns.add(CLICKABLE_REGEX);
     let transform_regex_pattern = regex_patterns.add(TRANSFORM_REGEX);
-    let dynamic_text_regex_pattern = regex_patterns.add(DYNAMIC_TEXT_REGEX);
+    let _dynamic_text_regex_pattern = regex_patterns.add(DYNAMIC_TEXT_REGEX);
     let defaults = RegexSet::new(regex_patterns.inner.iter().map(|r| &r.regex_pattern)).unwrap();
     move |node, pass_down| {
         let PassDown {
@@ -52,10 +52,9 @@ pub fn get_default_init_callback() -> impl FnMut(Node, PassDown) -> (Option<Geom
             parent_transform_id
         };
         let geometry = {
-            if let usvg::NodeKind::Path(ref p) = *node.borrow() {
-                Some(Geometry::new(p, transform_id))
-            } else {
-                None
+            match *node.borrow() {
+                usvg::NodeKind::Path(ref p) => Some(Geometry::new(p, transform_id)),
+                _ => None,
             }
         };
         (geometry, PassDown { transform_id })
