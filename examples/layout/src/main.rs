@@ -11,6 +11,7 @@ pub fn main() {
         |node, _pass_down| {
             layout_machine.add_node(node);
         },
+        None,
     );
 
     let mut guppy = Guppy::new([GpuRedraw::default()]);

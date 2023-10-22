@@ -84,6 +84,7 @@ pub fn main() {
                 }
             };
         },
+        None,
     );
     let mut life_game = LifeGame {
         position_to_coordinates,
@@ -99,6 +100,7 @@ pub fn main() {
         .map(|_| SpringMat4::default());
     let start_center = Mat4::from_translation((life_game.position_to_coordinates[0], 0.).into());
     let mut guppy = Guppy::new([GpuRedraw::default()]);
+
     guppy.register(move |event, gpu_redraw| {
         let clicked = scroll_state.event_handler(event);
         if let Event::RedrawRequested(_) = event {

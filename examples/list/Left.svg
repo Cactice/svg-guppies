@@ -18,7 +18,7 @@
             stroke="#17395C" stroke-width="3" />
         </g>
       </g>
-      <g id="ListItem #transform #layout {'x':{'Left':0.0},'y':{'Center':100.0}}">
+      <g id="ListItem #component #transform #layout {'x':{'Left':0.0},'y':{'Center':100.0}}">
         <rect width="281" height="74" transform="translate(0 74)" fill="#F9F8F4" />
         <g id="Rectangle_2">
           <mask id="path-6-inside-2_2711_661" fill="white">
