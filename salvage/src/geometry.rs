@@ -20,15 +20,12 @@ impl From<Tree> for Geometry {
                     None
                 }
             })
-            .fold(Geometry::default(), |mut acc, curr| {
-                acc.extend(&curr);
-                acc
-            });
+            .fold(Geometry::default(), |acc, curr| acc.extend(&curr));
         geometry
     }
 }
 impl Geometry {
-    pub fn extend(&mut self, other: &Self) {
+    pub fn extend(mut self, other: &Self) -> Self {
         let v_len = self.triangles.vertices.len() as u32;
         let other_indices_with_offset: Indices =
             other.triangles.indices.iter().map(|i| i + v_len).collect();
@@ -36,6 +33,7 @@ impl Geometry {
             .vertices
             .extend(other.triangles.vertices.iter());
         self.triangles.indices.extend(other_indices_with_offset);
+        self
     }
     pub fn new(p: &Path, transform_id: u32) -> Self {
         let triangles = prepare_triangles_from_path(p, transform_id);

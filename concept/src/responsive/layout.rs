@@ -2,6 +2,7 @@ use super::constraint::Constraint;
 use guppies::glam::Mat4;
 use guppies::primitives::Rect;
 use guppies::winit::dpi::PhysicalSize;
+use html_escape::decode_html_entities;
 use regex::Regex;
 use salvage::svg_set::SvgSet;
 use salvage::usvg::{self};
@@ -34,7 +35,8 @@ impl Layout {
         let id = node.id();
         let re = Regex::new(r"#layout (.+)").unwrap();
         let json = &re.captures(&id).unwrap()[1];
-        let json = json.replace("'", "\"");
+        let json = decode_html_entities(json).to_string();
+        dbg!(&json);
         let constraint = serde_json::from_str::<Constraint>(&json).unwrap();
         let bbox_mat4 = bbox_to_mat4(
             node.calculate_bbox()

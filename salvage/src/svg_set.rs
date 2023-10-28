@@ -60,13 +60,11 @@ impl SvgSet {
         }
     }
     pub fn get_combined_geometries(&self) -> Geometry {
-        self.geometries.iter().fold(
-            Geometry::default(),
-            |mut acc: Geometry, geometry: &Geometry| {
-                acc.extend(&geometry);
-                acc
-            },
-        )
+        self.geometries
+            .iter()
+            .fold(Geometry::default(), |acc: Geometry, geometry: &Geometry| {
+                acc.extend(&geometry)
+            })
     }
     pub fn new<P: Clone, C: FnMut(Node, P) -> (Option<Geometry>, P)>(
         xml: String,
