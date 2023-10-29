@@ -1,10 +1,11 @@
-use guppies::glam::Mat4;
+use super::common_constraint::CommonConstraint;
+use guppies::glam::{Mat4, Vec3, Vec4};
 use serde::{Deserialize, Serialize};
+
 pub fn get_normalize_scale(display: Mat4) -> Mat4 {
     // Y is flipped because the y axis is in different directions in GPU vs SVG
-    // doubling is necessary because GPU expectation left tip is -1 and right tip is at 1
-    // so the width is 2, as opposed to 1 which is the standard used prior to this conversion.
-    // TODO: Why last doubling is necessary only god knows.
+    // doubling is necessary because GPU range -1 ~ 1 while I used range 0 ~ 1
+    // Why last doubling is necessary only god knows.
     // I added it because it looked too small in comparison to figma's prototyping feature.
     Mat4::from_scale([2., 2., 1.].into())
         * Mat4::from_scale([2., -2., 1.].into())
@@ -35,59 +36,13 @@ impl XConstraint {
         svg: Mat4,
         bbox: Mat4,
     ) -> (Mat4, Mat4) {
-        let (bbox_scale, _, bbox_translation) = bbox.to_scale_rotation_translation();
-        let fill_x = Mat4::from_scale(
-            [
-                display.to_scale_rotation_translation().0.x
-                    / svg.to_scale_rotation_translation().0.x,
-                1.,
-                1.,
-            ]
-            .into(),
-        );
-        let left_align = Mat4::from_translation([bbox_translation.x, 0.0, 0.0].into()).inverse();
-        let right_align =
-            Mat4::from_translation([(bbox_translation.x + bbox_scale.x) as f32, 0.0, 0.0].into())
-                .inverse();
-        let center_x = Mat4::from_translation(
-            [(bbox_translation.x + bbox_scale.x / 2.) as f32, 0.0, 0.0].into(),
-        )
-        .inverse();
-
-        let pre_scale_translate_x;
-        let pre_scale_scale_x;
-        let post_scale_translate_x;
-        match self {
-            XConstraint::Left(left) => {
-                pre_scale_translate_x = left_align * Mat4::from_translation([left, 0., 0.].into());
-                pre_scale_scale_x = Mat4::IDENTITY;
-                post_scale_translate_x = Mat4::from_translation([-1.0, 0., 0.].into());
-            }
-            XConstraint::Right(right) => {
-                pre_scale_translate_x =
-                    right_align * Mat4::from_translation([right, 0., 0.].into());
-                pre_scale_scale_x = Mat4::IDENTITY;
-                post_scale_translate_x = Mat4::from_translation([1.0, 0., 0.].into());
-            }
-            XConstraint::Center(rightward_from_center) => {
-                pre_scale_translate_x =
-                    center_x * Mat4::from_translation([rightward_from_center, 0., 0.].into());
-                pre_scale_scale_x = Mat4::IDENTITY;
-                post_scale_translate_x = Mat4::IDENTITY;
-            }
-            XConstraint::LeftAndRight { left: _, right: _ } => {
-                todo!();
-            }
-            XConstraint::Scale => {
-                pre_scale_translate_x = center_x;
-                pre_scale_scale_x = fill_x;
-                post_scale_translate_x = Mat4::IDENTITY;
-            }
+        let accessor = |Vec3 { x, y, z }| x;
+        let composer = |x, other| Vec3 {
+            x,
+            y: other,
+            z: other,
         };
-        (
-            pre_scale_scale_x * pre_scale_translate_x,
-            post_scale_translate_x,
-        )
+        CommonConstraint::from(self).to_pre_post_transform(display, svg, bbox, accessor, composer)
     }
 }
 
@@ -116,60 +71,13 @@ impl YConstraint {
         svg: Mat4,
         bbox: Mat4,
     ) -> (Mat4, Mat4) {
-        let (bbox_scale, _, bbox_translation) = bbox.to_scale_rotation_translation();
-        let fill_y = Mat4::from_scale(
-            [
-                1.,
-                display.to_scale_rotation_translation().0.y
-                    / svg.to_scale_rotation_translation().0.y,
-                1.,
-            ]
-            .into(),
-        );
-        let top_align =
-            Mat4::from_translation([0.0, bbox_translation.y as f32, 0.0].into()).inverse();
-        let bottom_align =
-            Mat4::from_translation([0.0, (bbox_translation.y + bbox_scale.y) as f32, 0.0].into())
-                .inverse();
-        let center_y = Mat4::from_translation(
-            [0.0, (bbox_translation.y + bbox_scale.y / 2.) as f32, 0.0].into(),
-        )
-        .inverse();
-
-        let pre_scale_translate_y;
-        let pre_scale_scale_y;
-        let post_scale_translate_y;
-        match self {
-            YConstraint::Top(top) => {
-                pre_scale_translate_y = bottom_align * Mat4::from_translation([0., top, 0.].into());
-                pre_scale_scale_y = Mat4::IDENTITY;
-                post_scale_translate_y = Mat4::from_translation([-1.0, 0., 0.].into());
-            }
-            YConstraint::Bottom(bottom) => {
-                pre_scale_translate_y =
-                    top_align * Mat4::from_translation([0., -bottom, 0.].into());
-                pre_scale_scale_y = Mat4::IDENTITY;
-                post_scale_translate_y = Mat4::from_translation([1.0, 0., 0.].into());
-            }
-            YConstraint::Center(downward_from_center) => {
-                pre_scale_translate_y =
-                    center_y * Mat4::from_translation([0., downward_from_center, 0.].into());
-                pre_scale_scale_y = Mat4::IDENTITY;
-                post_scale_translate_y = Mat4::IDENTITY;
-            }
-            YConstraint::TopAndBottom { top: _, bottom: _ } => {
-                todo!();
-            }
-            YConstraint::Scale => {
-                pre_scale_translate_y = center_y;
-                pre_scale_scale_y = fill_y;
-                post_scale_translate_y = Mat4::IDENTITY;
-            }
+        let accessor = |Vec3 { x, y, z }| y;
+        let composer = |y, other| Vec3 {
+            x: other,
+            y,
+            z: other,
         };
-        (
-            pre_scale_scale_y * pre_scale_translate_y,
-            post_scale_translate_y,
-        )
+        CommonConstraint::from(self).to_pre_post_transform(display, svg, bbox, accessor, composer)
     }
 }
 
