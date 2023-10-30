@@ -26,13 +26,13 @@ impl From<XConstraint> for CommonConstraint {
 impl From<YConstraint> for CommonConstraint {
     fn from(y_constraint: YConstraint) -> Self {
         match y_constraint {
-            YConstraint::Top(left) => CommonConstraint::Start(left),
-            YConstraint::Bottom(right) => CommonConstraint::End(right),
+            YConstraint::Top(top) => CommonConstraint::End(top),
+            YConstraint::Bottom(bottom) => CommonConstraint::Start(bottom),
             YConstraint::TopAndBottom { top, bottom } => CommonConstraint::StartAndEnd {
-                start: top,
-                end: bottom,
+                start: bottom,
+                end: top,
             },
-            YConstraint::Center(x) => CommonConstraint::Center(x),
+            YConstraint::Center(y) => CommonConstraint::Center(y),
             YConstraint::Scale => CommonConstraint::Scale,
         }
     }
@@ -46,49 +46,49 @@ impl CommonConstraint {
         accessor: F,
         composer: G,
     ) -> (Mat4, Mat4) {
-        let (fill_x, left_align, right_align, center_x) =
-            prepare_anchor_points(bbox, display, svg, accessor, &composer);
+        let (fill, left_align, right_align, center) =
+            prepare_anchor_points(bbox, display, &accessor, &composer);
 
-        let pre_normalize_translate_x;
-        let post_normalize_translate_x;
+        let double = Mat4::from_scale([2., 2., 1.].into());
+
+        let pre_normalize_transform;
+        let post_normalize_transform;
         match self {
             CommonConstraint::Start(left) => {
-                pre_normalize_translate_x = left_align * Mat4::from_translation(composer(left, 0.));
-                post_normalize_translate_x = Mat4::from_translation(composer(-1.0, 0.));
+                pre_normalize_transform = left_align * Mat4::from_translation(composer(left, 0.));
+                post_normalize_transform = Mat4::from_translation(composer(-1.0, 0.));
             }
             CommonConstraint::End(right) => {
-                pre_normalize_translate_x =
-                    right_align * Mat4::from_translation(composer(right, 0.));
-                post_normalize_translate_x = Mat4::from_translation(composer(1.0, 0.));
+                pre_normalize_transform = right_align * Mat4::from_translation(composer(right, 0.));
+                post_normalize_transform = Mat4::from_translation(composer(1.0, 0.));
             }
             CommonConstraint::Center(rightward_from_center) => {
-                pre_normalize_translate_x =
-                    center_x * Mat4::from_translation(composer(rightward_from_center, 0.));
-                post_normalize_translate_x = Mat4::IDENTITY;
+                pre_normalize_transform =
+                    center * Mat4::from_translation(composer(rightward_from_center, 0.));
+                post_normalize_transform = Mat4::IDENTITY;
             }
             CommonConstraint::StartAndEnd { start, end } => {
                 todo!();
             }
             CommonConstraint::Scale => {
-                pre_normalize_translate_x = fill_x * center_x;
-                post_normalize_translate_x = Mat4::IDENTITY;
+                pre_normalize_transform = fill * center;
+                post_normalize_transform = Mat4::IDENTITY;
             }
         };
-        (pre_normalize_translate_x, post_normalize_translate_x)
+        (pre_normalize_transform, post_normalize_transform)
     }
 }
 
 fn prepare_anchor_points<F: Fn(Vec3) -> f32, G: Fn(f32, f32) -> Vec3>(
     bbox: Mat4,
     display: Mat4,
-    svg: Mat4,
-    accessor: F,
-    composer: G,
+    accessor: &F,
+    composer: &G,
 ) -> (Mat4, Mat4, Mat4, Mat4) {
     let (bbox_scale, _, bbox_translation) = bbox.to_scale_rotation_translation();
+
     let fill = Mat4::from_scale(composer(
-        accessor(display.to_scale_rotation_translation().0)
-            / accessor(svg.to_scale_rotation_translation().0),
+        (accessor(display.to_scale_rotation_translation().0 / 2.)) / accessor(bbox_scale),
         1.0,
     ));
 

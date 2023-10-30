@@ -1,45 +1,58 @@
 <svg width="281" height="222" viewBox="0 0 281 222" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g id="Left">
-<g id="#list">
-<g id="ListItem2 #transform #layout {&#34;x&#34;:{&#34;Left&#34;:0.0},&#34;y&#34;:{&#34;Top&#34;:0.0}}">
-<rect width="281" height="74" transform="translate(0 148)" fill="#F9F8F4"/>
-<g id="Rectangle">
-<mask id="path-1-inside-1_2711_661" fill="white">
-<path d="M0 148H281V222H0V148Z"/>
-</mask>
-<path d="M0 150H281V146H0V150ZM281 220H0V224H281V220Z" fill="#17395C" mask="url(#path-1-inside-1_2711_661)"/>
-</g>
-<text id="word #dynamicText" fill="#17395C" xml:space="preserve" style="white-space: pre" font-family="Alata" font-size="32" letter-spacing="1.25px"><tspan x="24" y="198.12">swap</tspan></text>
-<g id="Group 2">
-<path id="Vector 10" d="M206.5 179H264" stroke="#17395C" stroke-width="3"/>
-<path id="Vector 11" d="M207.5 179C236 179 236.5 179.5 237 191C237 201 255.333 201.833 264.5 201" stroke="#17395C" stroke-width="3"/>
-</g>
-</g>
-<g id="ListItem #transform #layout {&#34;x&#34;:{&#34;Left&#34;:0.0},&#34;y&#34;:{&#34;Center&#34;:30.0}}">
-<rect width="281" height="74" transform="translate(0 74)" fill="#F9F8F4"/>
-<g id="Rectangle_2">
-<mask id="path-6-inside-2_2711_661" fill="white">
-<path d="M0 74H281V148H0V74Z"/>
-</mask>
-<path d="M0 76H281V72H0V76ZM281 146H0V150H281V146Z" fill="#17395C" mask="url(#path-6-inside-2_2711_661)"/>
-</g>
-<text id="word #dynamicText_2" fill="#17395C" xml:space="preserve" style="white-space: pre" font-family="Alata" font-size="32" letter-spacing="1.25px"><tspan x="24" y="124.12">dup</tspan></text>
-<g id="Group 2_2">
-<path id="Vector 10_2" d="M206.5 105H264" stroke="#17395C" stroke-width="3"/>
-<path id="Vector 11_2" d="M207.5 105C236 105 236.5 105.5 237 117C237 127 255.333 127.833 264.5 127" stroke="#17395C" stroke-width="3"/>
-</g>
-</g>
-</g>
-<g id="MenuBar  #transform #layout {&#34;x&#34;:{&#34;Left&#34;:0.0},&#34;y&#34;:{&#34;Center&#34;:0.0}}">
-<rect width="281" height="53" transform="translate(0 21)" fill="#F9F8F4"/>
-<g id="Rectangle_3">
-<mask id="path-11-inside-3_2711_661" fill="white">
-<path d="M0 21H281V74H0V21Z"/>
-</mask>
-<path d="M0 23H281V19H0V23ZM281 72H0V76H281V72Z" fill="#17395C" mask="url(#path-11-inside-3_2711_661)"/>
-</g>
-<path id="Vector" d="M264.417 36H245.042C244.15 36 243.453 36.4472 242.988 37.1244L236 47.5L242.988 57.8628C243.453 58.54 244.15 59 245.042 59H264.417C265.837 59 267 57.85 267 56.4444V38.5556C267 37.15 265.837 36 264.417 36ZM264.417 56.4444H245.132L239.1 47.5L245.119 38.5556H264.417V56.4444ZM249.446 53.8889L254.083 49.3017L258.72 53.8889C259.996 53.7022 260.421 53.3233 260.542 52.0872L255.905 47.5L260.542 42.9128C260.191 41.8075 259.794 41.4315 258.72 41.1111L254.083 45.6983L249.446 41.1111C248.378 41.323 247.959 41.7009 247.625 42.9128L252.262 47.5L247.625 52.0872C247.906 53.2425 248.248 53.6355 249.446 53.8889Z" fill="#17395C"/>
-<text id="[ ]" fill="#17395C" xml:space="preserve" style="white-space: pre" font-family="Alata" font-size="16" letter-spacing="1.25px"><tspan x="8.44531" y="54.56">[ ]</tspan></text>
-</g>
-</g>
+  <g id="Left">
+    <g id="#list">
+      <g id="ListItem2 #transform #layout {&#34;x&#34;:{&#34;Left&#34;:0.0},&#34;y&#34;:{&#34;Top&#34;:150.0}}">
+        <rect width="281" height="74" transform="translate(0 148)" fill="#F9F8F4" />
+        <g id="Rectangle">
+          <mask id="path-1-inside-1_2711_661" fill="white">
+            <path d="M0 148H281V222H0V148Z" />
+          </mask>
+          <path d="M0 150H281V146H0V150ZM281 220H0V224H281V220Z" fill="#17395C" mask="url(#path-1-inside-1_2711_661)" />
+        </g>
+        <text id="word #dynamicText" fill="#17395C" xml:space="preserve" style="white-space: pre" font-family="Alata"
+          font-size="32" letter-spacing="1.25px">
+          <tspan x="24" y="198.12">swap</tspan>
+        </text>
+        <g id="Group 2">
+          <path id="Vector 10" d="M206.5 179H264" stroke="#17395C" stroke-width="3" />
+          <path id="Vector 11" d="M207.5 179C236 179 236.5 179.5 237 191C237 201 255.333 201.833 264.5 201"
+            stroke="#17395C" stroke-width="3" />
+        </g>
+      </g>
+      <g id="ListItem #transform #layout {&#34;x&#34;:{&#34;Left&#34;:0.0},&#34;y&#34;:{&#34;Top&#34;:30.0}}">
+        <rect width="281" height="74" transform="translate(0 74)" fill="#F9F8F4" />
+        <g id="Rectangle_2">
+          <mask id="path-6-inside-2_2711_661" fill="white">
+            <path d="M0 74H281V148H0V74Z" />
+          </mask>
+          <path d="M0 76H281V72H0V76ZM281 146H0V150H281V146Z" fill="#17395C" mask="url(#path-6-inside-2_2711_661)" />
+        </g>
+        <text id="word #dynamicText_2" fill="#17395C" xml:space="preserve" style="white-space: pre" font-family="Alata"
+          font-size="32" letter-spacing="1.25px">
+          <tspan x="24" y="124.12">dup</tspan>
+        </text>
+        <g id="Group 2_2">
+          <path id="Vector 10_2" d="M206.5 105H264" stroke="#17395C" stroke-width="3" />
+          <path id="Vector 11_2" d="M207.5 105C236 105 236.5 105.5 237 117C237 127 255.333 127.833 264.5 127"
+            stroke="#17395C" stroke-width="3" />
+        </g>
+      </g>
+    </g>
+    <g id="MenuBar  #transform #layout {&#34;x&#34;:&#34;Scale&#34;,&#34;y&#34;:{&#34;Center&#34;:0.0}}">
+      <rect width="281" height="53" transform="translate(0 21)" fill="#F9F8F4" />
+      <g id="Rectangle_3">
+        <mask id="path-11-inside-3_2711_661" fill="white">
+          <path d="M0 21H281V74H0V21Z" />
+        </mask>
+        <path d="M0 23H281V19H0V23ZM281 72H0V76H281V72Z" fill="#17395C" mask="url(#path-11-inside-3_2711_661)" />
+      </g>
+      <path id="Vector"
+        d="M264.417 36H245.042C244.15 36 243.453 36.4472 242.988 37.1244L236 47.5L242.988 57.8628C243.453 58.54 244.15 59 245.042 59H264.417C265.837 59 267 57.85 267 56.4444V38.5556C267 37.15 265.837 36 264.417 36ZM264.417 56.4444H245.132L239.1 47.5L245.119 38.5556H264.417V56.4444ZM249.446 53.8889L254.083 49.3017L258.72 53.8889C259.996 53.7022 260.421 53.3233 260.542 52.0872L255.905 47.5L260.542 42.9128C260.191 41.8075 259.794 41.4315 258.72 41.1111L254.083 45.6983L249.446 41.1111C248.378 41.323 247.959 41.7009 247.625 42.9128L252.262 47.5L247.625 52.0872C247.906 53.2425 248.248 53.6355 249.446 53.8889Z"
+        fill="#17395C" />
+      <text id="[ ]" fill="#17395C" xml:space="preserve" style="white-space: pre" font-family="Alata" font-size="16"
+        letter-spacing="1.25px">
+        <tspan x="8.44531" y="54.56">[ ]</tspan>
+      </text>
+    </g>
+  </g>
 </svg>

@@ -1,6 +1,6 @@
 use concept::{responsive::layout_machine::LayoutMachine, scroll::ScrollState, uses::use_svg};
 use guppies::bytemuck::cast_slice;
-use guppies::{glam::Mat4, primitives::Vertex, GpuRedraw, Guppy};
+use guppies::{GpuRedraw, Guppy};
 use mobile_entry_point::mobile_entry_point;
 
 struct ListItem {
@@ -32,7 +32,13 @@ pub fn main() {
     guppy.register(move |event, gpu_redraws| {
         layout_machine.event_handler(event);
         gpu_redraws[0].update_texture([cast_slice(&layout_machine.transforms[..])].concat());
-        gpu_redraws[0].update_triangles(svg_set.get_combined_geometries().triangles, 0);
+        gpu_redraws[0].update_triangles(
+            svg_set
+                .get_combined_geometries()
+                // .extend(&list.get_combined_geometries())
+                .triangles,
+            0,
+        );
     });
 
     guppy.start();
