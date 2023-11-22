@@ -17,11 +17,11 @@ Combined with svg-gui program which adds dynamic programmability to svg files, f
 
 ### Algorithmic Layout
 
-Layout requires no additional knowledge other than some basic math concepts.
+Layout requires no additional knowledge other than some basic math experiments.
 
-This is in contrast to methods like CSS where arbitrary concepts `flexbox` or `block` is crucial.
-CSS requires studying these concepts, rather than exposing the math behind it.
-If concepts like `flexbox` and `block` are convenient, it should be provided similar to `std` libraries, just as a convenience abstraction.
+This is in contrast to methods like CSS where arbitrary experiments `flexbox` or `block` is crucial.
+CSS requires studying these experiments, rather than exposing the math behind it.
+If experiments like `flexbox` and `block` are convenient, it should be provided similar to `std` libraries, just as a convenience abstraction.
 There'd be the benefit of allowing competitions among convenience abstractions, which would make inconvenient abstractions obsolete earlier than if it was provided as primary methods like CSS does.
 
 ### NICE TO HAVE: DDT (Design Driven Tests)
@@ -79,6 +79,7 @@ flowchart TB;
   1. - [ ] Resizable rounded rectangle
 
 - Array
+
   1. - [ ] Show array
   1. - [ ] Modify array
   1. - [ ] Reorder array

@@ -16,7 +16,7 @@ path = "src/main.rs"
 mobile-entry-point = "0.1.0"
 guppies = { path = "../../guppies" }
 salvage = { path = "../../salvage" }
-concept = { path = "../../concept" }
+experiment = { path = "../../experiment" }
 regex = "1"
 bytemuck = "1.13.1"
 fastrand = "2.0.0"

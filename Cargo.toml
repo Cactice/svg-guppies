@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
-  "concept",
+  "experiment",
   "guppies",
   "salvage",
   "run-wasm",

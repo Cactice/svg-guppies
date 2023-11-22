@@ -327,20 +327,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bf43edc576402991846b093a7ca18a3477e0ef9c588cde84964b5d3e43016642"
 
 [[package]]
-name = "concept"
-version = "0.1.0"
-dependencies = [
- "fastrand 1.8.0",
- "guppies",
- "html-escape",
- "natura",
- "regex",
- "salvage",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "console_error_panic_hook"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -477,6 +463,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b52c2ef4a78da0ba68fbe1fd920627411096d2ac478f7f4c9f3a54ba6705bade"
 dependencies = [
  "num-traits",
+]
+
+[[package]]
+name = "experiment"
+version = "0.1.0"
+dependencies = [
+ "fastrand 1.8.0",
+ "guppies",
+ "html-escape",
+ "natura",
+ "regex",
+ "salvage",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -848,7 +848,7 @@ name = "layout"
 version = "0.1.0"
 dependencies = [
  "android_logger",
- "concept",
+ "experiment",
  "guppies",
  "log",
  "mobile-entry-point",
@@ -889,8 +889,8 @@ version = "0.1.0"
 dependencies = [
  "android_logger",
  "bytemuck",
- "concept",
  "env_logger",
+ "experiment",
  "fastrand 2.0.0",
  "guppies",
  "log",
@@ -904,7 +904,7 @@ name = "list"
 version = "0.1.0"
 dependencies = [
  "android_logger",
- "concept",
+ "experiment",
  "guppies",
  "log",
  "mobile-entry-point",

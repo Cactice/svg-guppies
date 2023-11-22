@@ -16,7 +16,7 @@ path = "src/main.rs"
 mobile-entry-point = "0.1.1"
 guppies = { path = "../../guppies" }
 salvage = { path = "../../salvage" }
-concept = { path = "../../concept" }
+experiment = { path = "../../experiment" }
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.11.0"
