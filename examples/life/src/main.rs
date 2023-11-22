@@ -83,7 +83,6 @@ pub fn main() {
                     tip_center = center;
                 }
             };
-            (node.clone(), pass_down)
         },
         None,
     );

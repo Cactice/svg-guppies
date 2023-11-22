@@ -10,7 +10,6 @@ pub fn main() {
         include_str!("../MenuBar.svg").to_string(),
         |node, mut _pass_down| {
             layout_machine.add_node(&node, &mut _pass_down);
-            (node, _pass_down)
         },
         None,
     );

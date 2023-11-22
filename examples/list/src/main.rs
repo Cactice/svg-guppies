@@ -15,7 +15,6 @@ pub fn main() {
         include_str!("../Left.svg").to_string(),
         |node, mut pass_down| {
             layout_machine.add_node(&node, &mut pass_down);
-            (node, pass_down)
         },
         None,
     );
@@ -24,7 +23,6 @@ pub fn main() {
         include_str!("../Left.svg").to_string(),
         |node, mut pass_down| {
             layout_machine.add_node(&node, &mut pass_down);
-            (node, pass_down)
         },
         Some("ListItem".to_string()),
     );
