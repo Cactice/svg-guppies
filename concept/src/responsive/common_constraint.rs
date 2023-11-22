@@ -41,15 +41,12 @@ impl CommonConstraint {
     pub(crate) fn to_pre_post_transform<F: Fn(Vec3) -> f32, G: Fn(f32, f32) -> Vec3>(
         self,
         display: Mat4,
-        svg: Mat4,
         bbox: Mat4,
         accessor: F,
         composer: G,
     ) -> (Mat4, Mat4) {
         let (fill, left_align, right_align, center) =
             prepare_anchor_points(bbox, display, &accessor, &composer);
-
-        let double = Mat4::from_scale([2., 2., 1.].into());
 
         let pre_normalize_transform;
         let post_normalize_transform;

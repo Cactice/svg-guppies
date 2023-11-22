@@ -33,7 +33,6 @@ impl XConstraint {
     pub(crate) fn to_pre_post_transform(
         self,
         display: Mat4,
-        svg: Mat4,
         bbox: Mat4,
     ) -> (Mat4, Mat4) {
         let accessor = |Vec3 { x, y, z }| x;
@@ -42,7 +41,7 @@ impl XConstraint {
             y: other,
             z: other,
         };
-        CommonConstraint::from(self).to_pre_post_transform(display, svg, bbox, accessor, composer)
+        CommonConstraint::from(self).to_pre_post_transform(display, bbox, accessor, composer)
     }
 }
 
@@ -68,7 +67,6 @@ impl YConstraint {
     pub(crate) fn to_pre_post_transform(
         self,
         display: Mat4,
-        svg: Mat4,
         bbox: Mat4,
     ) -> (Mat4, Mat4) {
         let accessor = |Vec3 { x, y, z }| y;
@@ -77,7 +75,7 @@ impl YConstraint {
             y,
             z: other,
         };
-        CommonConstraint::from(self).to_pre_post_transform(display, svg, bbox, accessor, composer)
+        CommonConstraint::from(self).to_pre_post_transform(display, bbox, accessor, composer)
     }
 }
 
@@ -88,14 +86,14 @@ pub struct Constraint {
 }
 
 impl Constraint {
-    pub fn to_mat4(self, display: Mat4, svg: Mat4, bbox: Mat4) -> Mat4 {
+    pub fn to_mat4(self, display: Mat4, bbox: Mat4) -> Mat4 {
         let Constraint {
             x: constraint_x,
             y: constraint_y,
         } = self;
 
-        let (pre_x, post_x) = constraint_x.to_pre_post_transform(display, svg, bbox);
-        let (pre_y, post_y) = constraint_y.to_pre_post_transform(display, svg, bbox);
+        let (pre_x, post_x) = constraint_x.to_pre_post_transform(display, bbox);
+        let (pre_y, post_y) = constraint_y.to_pre_post_transform(display, bbox);
 
         let pre_xy = pre_x * pre_y;
         let post_xy = post_x * post_y;

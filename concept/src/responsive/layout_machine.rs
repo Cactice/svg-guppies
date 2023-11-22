@@ -4,25 +4,23 @@ use super::layout::bbox_to_mat4;
 use super::layout::size_to_mat4;
 use super::layout::Layout;
 use crate::scroll::ScrollState;
+use crate::svg_init::PassDown;
 use crate::svg_init::CLICKABLE_REGEX;
 use crate::svg_init::LAYOUT_REGEX;
 use core::fmt::Debug;
-use guppies::bytemuck::Pod;
-use guppies::bytemuck::Zeroable;
 use guppies::glam::Mat4;
 use guppies::glam::Vec4;
 use guppies::winit::dpi::PhysicalSize;
 use guppies::winit::event::ElementState;
 use guppies::winit::event::Event;
 use guppies::winit::event::WindowEvent;
-use guppies::GpuRedraw;
 use regex::Regex;
 use salvage::usvg::Node;
 use salvage::usvg::NodeExt;
 
 #[derive(Debug, Clone, Default)]
 pub struct LayoutMachine {
-    pub layouts: Vec<Layout>,
+    pub layouts: Vec<Vec<Layout>>,
     pub clickables: Vec<Clickable>,
     pub svg_mat4: Mat4,
     pub display_mat4: Mat4,
@@ -58,7 +56,11 @@ impl LayoutMachine {
     pub fn get_transforms(&self) -> Vec<Mat4> {
         self.layouts
             .iter()
-            .map(|layout| layout.to_mat4(self.display_mat4, self.svg_mat4))
+            .map(|parents| {
+                parents.iter().fold(Mat4::IDENTITY, |acc, mat| {
+                    mat.to_mat4(self.display_mat4) * acc
+                })
+            })
             .collect()
     }
     pub fn click_detection(&self, scroll_state: &ScrollState) -> Vec<String> {
@@ -67,10 +69,7 @@ impl LayoutMachine {
             .clickables
             .iter()
             .filter_map(|clickable| {
-                if clickable
-                    .bbox
-                    .click_detection(click, self.display_mat4, self.svg_mat4)
-                {
+                if clickable.bbox.click_detection(click, self.display_mat4) {
                     Some(clickable.id.clone())
                 } else {
                     None
@@ -79,13 +78,14 @@ impl LayoutMachine {
             .collect::<Vec<String>>();
         clicked_ids
     }
-    pub fn add_node(&mut self, node: Node) {
+    pub fn add_node(&mut self, node: &Node, pass_down: &mut PassDown) {
         let clickable_regex = Regex::new(CLICKABLE_REGEX).unwrap();
         let layout_regex = Regex::new(LAYOUT_REGEX).unwrap();
         let id = &node.id().to_string();
         if layout_regex.is_match(id) {
             let layout = Layout::new(&node);
-            self.layouts.push(layout);
+            pass_down.parent_layouts.push(layout);
+            self.layouts.push(pass_down.parent_layouts.clone());
             if clickable_regex.is_match(&id) {
                 let clickable = Clickable {
                     bbox: ClickableBbox::Layout(layout),

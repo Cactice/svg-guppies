@@ -5,9 +5,9 @@
       <g id="Group">
         <path id="Vector" d="M14 16H43.02" stroke="#17395C" stroke-width="4.14571" stroke-linecap="round"
           stroke-linejoin="round" />
-        <path id="Vector_2" d="M14 26.3643H43.02" stroke="#17395C" stroke-width="4.14571" stroke-linecap="round"
+        <path id="Vector_2 #transform #layout {&#34;x&#34;:{&#34;Left&#34;:15.0},&#34;y&#34;:{&#34;Top&#34;:20.0}}" d="M14 26.3643H43.02" stroke="#17395C" stroke-width="4.14571" stroke-linecap="round"
           stroke-linejoin="round" />
-        <path id="Vector_3" d="M14 36.7285H43.02" stroke="#17395C" stroke-width="4.14571" stroke-linecap="round"
+        <path id="Vector_3 #transform #layout {&#34;x&#34;:{&#34;Left&#34;:15.0},&#34;y&#34;:{&#34;Top&#34;:20.0}}" d="M14 36.7285H43.02" stroke="#17395C" stroke-width="4.14571" stroke-linecap="round"
           stroke-linejoin="round" />
       </g>
     </g>

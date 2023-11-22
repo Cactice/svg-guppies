@@ -13,16 +13,18 @@ pub fn main() {
 
     let svg_set = use_svg(
         include_str!("../Left.svg").to_string(),
-        |node, _pass_down| {
-            layout_machine.add_node(node);
+        |node, mut pass_down| {
+            layout_machine.add_node(&node, &mut pass_down);
+            (node, pass_down)
         },
         None,
     );
 
     let list = use_svg(
         include_str!("../Left.svg").to_string(),
-        |node, _pass_down| {
-            layout_machine.add_node(node);
+        |node, mut pass_down| {
+            layout_machine.add_node(&node, &mut pass_down);
+            (node, pass_down)
         },
         Some("ListItem".to_string()),
     );

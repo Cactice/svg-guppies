@@ -1,11 +1,11 @@
 use crate::geometry::Geometry;
 use guppies::{glam::Vec2, primitives::Rect};
 use roxmltree::{Document, NodeId};
-use std::{collections::HashMap, rc::Rc, sync::Arc};
-use usvg::{fontdb::Source, Node, Options, Tree};
+use std::{collections::HashMap, fmt::Debug, rc::Rc, sync::Arc};
+use usvg::{fontdb::Source, Node, NodeExt, Options, Tree};
 use xmlwriter::XmlWriter;
 
-fn recursive_svg<P: Clone, C: FnMut(Node, P) -> (Option<Geometry>, P)>(
+fn recursive_svg<P: Clone + Debug, C: FnMut(Node, P) -> (Option<Geometry>, P)>(
     node: usvg::Node,
     pass_down: P,
     geometries: &mut Vec<Geometry>,
@@ -66,7 +66,7 @@ impl SvgSet {
                 acc.extend(&geometry)
             })
     }
-    pub fn new<P: Clone, C: FnMut(Node, P) -> (Option<Geometry>, P)>(
+    pub fn new<P: Clone + Debug, C: FnMut(Node, P) -> (Option<Geometry>, P)>(
         xml: String,
         initial_pass_down: P,
         mut callback: C,

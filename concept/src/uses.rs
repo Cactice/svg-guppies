@@ -2,7 +2,7 @@ use salvage::{svg_set::SvgSet, usvg::Node};
 
 use crate::svg_init::{get_default_init_callback, PassDown};
 
-pub fn use_svg<C: FnMut(Node, PassDown)>(
+pub fn use_svg<C: FnMut(Node, PassDown) -> (Node, PassDown)>(
     xml: String,
     mut callback: C,
     component: Option<String>,
@@ -13,7 +13,7 @@ pub fn use_svg<C: FnMut(Node, PassDown)>(
     };
     let mut default_callback = get_default_init_callback(1, component);
     SvgSet::new(xml.to_string(), initial_pass_down, |node, passdown| {
-        callback(node.clone(), passdown);
+        let (node, passdown) = callback(node.clone(), passdown.clone());
         default_callback(node, passdown)
     })
 }

@@ -5,10 +5,13 @@ use salvage::{
     geometry::Geometry,
     usvg::{self, Node, NodeExt},
 };
-#[derive(PartialEq, PartialOrd, Eq, Ord, Clone, Copy, Debug)]
+
+use crate::responsive::layout::Layout;
+#[derive(Clone, Debug)]
 pub struct PassDown {
     pub transform_id: u32,
     pub is_include: bool,
+    pub parent_layouts: Vec<Layout>,
 }
 
 impl Default for PassDown {
@@ -16,6 +19,7 @@ impl Default for PassDown {
         Self {
             transform_id: 1,
             is_include: true,
+            parent_layouts: [].to_vec(),
         }
     }
 }
@@ -63,6 +67,7 @@ pub fn get_default_init_callback(
         let PassDown {
             transform_id: parent_transform_id,
             is_include: parent_is_include,
+            parent_layouts,
         } = pass_down;
         let id = node.id();
         let default_matches = defaults.matches(&id);
@@ -72,7 +77,6 @@ pub fn get_default_init_callback(
             true => true,
             false => include_matched,
         };
-        dbg!(&is_include);
         let transform_id = match default_matches.matched(transform_regex_pattern.index) {
             true => {
                 transform_count += 1;
@@ -93,6 +97,7 @@ pub fn get_default_init_callback(
             PassDown {
                 transform_id,
                 is_include,
+                parent_layouts,
             },
         )
     }
