@@ -206,10 +206,10 @@ pub fn render_loop<const COUNT: usize, Vert>(
                         last_frame_inst = Instant::now();
                         frame_count += 1;
                         if frame_count == 100 {
-                            println!(
-                                "Avg frame time {}ms",
-                                accum_time * 1000.0 / frame_count as f32
-                            );
+                            // println!(
+                            //     "Avg frame time {}ms",
+                            //     accum_time * 1000.0 / frame_count as f32
+                            // );
                             accum_time = 0.0;
                             frame_count = 0;
                         }

@@ -1,5 +1,5 @@
 use super::common_constraint::CommonConstraint;
-use guppies::glam::{Mat4, Vec3, Vec4};
+use guppies::glam::{Mat4, Vec3};
 use serde::{Deserialize, Serialize};
 
 pub fn get_normalize_scale(display: Mat4) -> Mat4 {
@@ -30,12 +30,8 @@ impl Default for XConstraint {
 }
 
 impl XConstraint {
-    pub(crate) fn to_pre_post_transform(
-        self,
-        display: Mat4,
-        bbox: Mat4,
-    ) -> (Mat4, Mat4) {
-        let accessor = |Vec3 { x, y, z }| x;
+    pub(crate) fn to_pre_post_transform(self, display: Mat4, bbox: Mat4) -> (Mat4, Mat4) {
+        let accessor = |Vec3 { x, .. }| x;
         let composer = |x, other| Vec3 {
             x,
             y: other,
@@ -64,12 +60,8 @@ impl Default for YConstraint {
 }
 
 impl YConstraint {
-    pub(crate) fn to_pre_post_transform(
-        self,
-        display: Mat4,
-        bbox: Mat4,
-    ) -> (Mat4, Mat4) {
-        let accessor = |Vec3 { x, y, z }| y;
+    pub(crate) fn to_pre_post_transform(self, display: Mat4, bbox: Mat4) -> (Mat4, Mat4) {
+        let accessor = |Vec3 { y, .. }| y;
         let composer = |y, other| Vec3 {
             x: other,
             y,

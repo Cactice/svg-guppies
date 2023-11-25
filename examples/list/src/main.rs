@@ -19,13 +19,13 @@ pub fn main() {
         None,
     );
 
-    let list = use_svg(
-        include_str!("../Left.svg").to_string(),
-        |node, mut pass_down| {
-            layout_machine.add_node(&node, &mut pass_down);
-        },
-        Some("ListItem".to_string()),
-    );
+    // let list = use_svg(
+    //     include_str!("../Left.svg").to_string(),
+    //     |node, mut pass_down| {
+    //         layout_machine.add_node(&node, &mut pass_down);
+    //     },
+    //     Some("ListItem".to_string()),
+    // );
 
     let mut guppy = Guppy::new([GpuRedraw::default()]);
 
