@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-winit = { version = "0.28.6", features = ["android-native-activity"] }
+winit = { version = "0.28.7", features = ["android-native-activity"] }
 wgpu = { version = "0.17.0", features = ["spirv"] }
 pollster = "0.3"
 bytemuck = { version = "1.14", features = ["derive"] }
