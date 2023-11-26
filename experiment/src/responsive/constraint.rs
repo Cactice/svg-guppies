@@ -7,9 +7,7 @@ pub fn get_normalize_scale(display: Mat4) -> Mat4 {
     // doubling is necessary because GPU range -1 ~ 1 while I used range 0 ~ 1
     // Why last doubling is necessary only god knows.
     // I added it because it looked too small in comparison to figma's prototyping feature.
-    Mat4::from_scale([2., 2., 1.].into())
-        * Mat4::from_scale([2., -2., 1.].into())
-        * display.inverse()
+    Mat4::from_scale([4., -4., 1.].into()) * display.inverse()
 }
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum XConstraint {
