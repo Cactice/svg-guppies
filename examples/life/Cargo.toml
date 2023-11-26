@@ -13,7 +13,7 @@ name = "life"
 path = "src/main.rs"
 
 [dependencies]
-mobile-entry-point = "0.1.0"
+mobile-entry-point = "0.1.1"
 guppies = { path = "../../guppies" }
 salvage = { path = "../../salvage" }
 experiment = { path = "../../experiment" }
