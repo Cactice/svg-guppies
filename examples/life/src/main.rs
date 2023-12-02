@@ -4,7 +4,7 @@ use experiment::svg_init::get_center;
 use experiment::uses::use_svg;
 use guppies::bytemuck::{cast_slice, Pod, Zeroable};
 use guppies::glam::{Mat4, Vec2};
-use guppies::winit::event::Event;
+use guppies::winit::event::{Event, WindowEvent};
 use guppies::{GpuRedraw, Guppy};
 use regex::Regex;
 use salvage::svg_set::SvgSet;
@@ -103,14 +103,21 @@ pub fn main() {
 
     guppy.register(move |event, gpu_redraw| {
         let clicked = scroll_state.event_handler(event);
-        if let Event::RedrawRequested(_) = event {
-            tip_animation.update(&mut texture.tip_transform, &mut player_animations);
-            player_animations
-                .iter_mut()
-                .enumerate()
-                .for_each(|(i, animation)| {
-                    animation.update(&mut texture.player_avatar_transforms[i], &mut svg_set);
-                });
+        match event {
+            Event::WindowEvent { window_id, event } => match event {
+                WindowEvent::RedrawRequested => {
+                    tip_animation.update(&mut texture.tip_transform, &mut player_animations);
+                    player_animations
+                        .iter_mut()
+                        .enumerate()
+                        .for_each(|(i, animation)| {
+                            animation
+                                .update(&mut texture.player_avatar_transforms[i], &mut svg_set);
+                        });
+                }
+                _ => {}
+            },
+            _ => (),
         }
         if clicked {
             if tip_animation.is_animating
