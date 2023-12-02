@@ -37,7 +37,7 @@ fn init_window(event_loop: &EventLoopWindowTarget<()>) -> winit::window::Window 
             .and_then(|body| {
                 body.remove_child(&body.last_element_child().unwrap())
                     .unwrap();
-                body.append_child(&web_sys::Element::from(window.canvas()))
+                body.append_child(&web_sys::Element::from(window.canvas().unwrap()))
                     .ok()
             })
             .expect("Couldn't append canvas to document body");
@@ -114,109 +114,113 @@ pub fn render_loop<const COUNT: usize, Vert>(
     let mut last_frame_inst = Instant::now();
     #[cfg(not(target_arch = "wasm32"))]
     let (mut frame_count, mut accum_time) = (0, 0.0);
-    event_loop.run(move |event, event_loop, control_flow| {
-        *control_flow = ControlFlow::Poll;
-        // FIXME: why do some OS not redraw automatically without explicit call
-        #[cfg(any(target_os = "ios", target_os = "android"))]
-        if let Some(window) = window.as_mut() {
-            window.request_redraw();
-        }
-        if let (Some(ref mut gpu_redraw), Some(redraws), Some(redraw_machine)) = (
-            gpu_redraw.as_mut(),
-            redraws.as_mut(),
-            redraw_machine.as_ref(),
-        ) {
-            render_loop_fn.iter_mut().for_each(|func| {
-                func(&event, gpu_redraw);
-            });
-            redraws
-                .iter_mut()
-                .zip(gpu_redraw.iter_mut())
-                .for_each(|(redraw, new_redraw)| {
-                    if let Some(shader) = new_redraw.shader.take() {
-                        redraw.update_shader(&shader, redraw_machine);
-                    }
-                });
-        }
-        match event {
-            #[cfg(target_os = "android")]
-            Event::Resumed => {
-                init_window(event_loop);
+    let _ = event_loop
+        .expect("event loop initialization failed")
+        .run(move |event, event_loop| {
+            // FIXME: why do some OS not redraw automatically without explicit call
+            #[cfg(any(target_os = "ios", target_os = "android"))]
+            if let Some(window) = window.as_mut() {
+                window.request_redraw();
             }
-            #[cfg(not(target_os = "android"))]
-            Event::NewEvents(start_cause) => match start_cause {
-                winit::event::StartCause::Init => {
-                    let new_window = init_window(event_loop);
-                    let new_redraw_machine = pollster::block_on(RedrawMachine::new(&new_window));
-                    redraws = Some(array::from_fn(|i| {
-                        Redraw::new(
-                            &new_redraw_machine,
-                            &Default::default(),
-                            &Default::default(),
-                            i,
-                        )
-                    }));
-                    redraw_machine = Some(new_redraw_machine);
-                    gpu_redraw = Some([(); COUNT].map(|_| GpuRedraw::default()));
-                    window = Some(new_window);
+            if let (Some(ref mut gpu_redraw), Some(redraws), Some(redraw_machine)) = (
+                gpu_redraw.as_mut(),
+                redraws.as_mut(),
+                redraw_machine.as_ref(),
+            ) {
+                render_loop_fn.iter_mut().for_each(|func| {
+                    func(&event, gpu_redraw);
+                });
+                redraws
+                    .iter_mut()
+                    .zip(gpu_redraw.iter_mut())
+                    .for_each(|(redraw, new_redraw)| {
+                        if let Some(shader) = new_redraw.shader.take() {
+                            redraw.update_shader(&shader, redraw_machine);
+                        }
+                    });
+            }
+            match event {
+                #[cfg(target_os = "android")]
+                Event::Resumed => {
+                    init_window(event_loop);
+                }
+                #[cfg(not(target_os = "android"))]
+                Event::NewEvents(start_cause) => match start_cause {
+                    winit::event::StartCause::Init => {
+                        let new_window = init_window(event_loop);
+                        let new_redraw_machine =
+                            pollster::block_on(RedrawMachine::new(&new_window));
+                        redraws = Some(array::from_fn(|i| {
+                            Redraw::new(
+                                &new_redraw_machine,
+                                &Default::default(),
+                                &Default::default(),
+                                i,
+                            )
+                        }));
+                        redraw_machine = Some(new_redraw_machine);
+                        gpu_redraw = Some([(); COUNT].map(|_| GpuRedraw::default()));
+                        window = Some(new_window);
 
-                    // Below is necessary when running on mobile...
-                    let size = window.as_ref().unwrap().inner_size();
-                    if let Some(gpu_redraw) = gpu_redraw.as_mut() {
-                        render_loop_fn.iter_mut().for_each(|func| {
-                            func(
-                                &Event::WindowEvent {
-                                    window_id: unsafe { WindowId::dummy() },
-                                    event: WindowEvent::Resized(size),
-                                },
-                                gpu_redraw,
-                            );
-                        });
+                        // Below is necessary when running on mobile...
+                        let size = window.as_ref().unwrap().inner_size();
+                        if let Some(gpu_redraw) = gpu_redraw.as_mut() {
+                            render_loop_fn.iter_mut().for_each(|func| {
+                                func(
+                                    &Event::WindowEvent {
+                                        window_id: unsafe { WindowId::dummy() },
+                                        event: WindowEvent::Resized(size),
+                                    },
+                                    gpu_redraw,
+                                );
+                            });
+                        }
                     }
-                }
-                _ => (),
-            },
-            Event::WindowEvent {
-                event: window_event,
-                ..
-            } => match window_event {
-                WindowEvent::CloseRequested => {
-                    *control_flow = ControlFlow::Exit;
-                }
-                WindowEvent::Resized(p) => match redraw_machine.as_mut() {
-                    Some(redraw_machine) => redraw_machine.resize(p),
+                    _ => (),
+                },
+                Event::WindowEvent {
+                    event: window_event,
+                    ..
+                } => match window_event {
+                    WindowEvent::Resized(p) => match redraw_machine.as_mut() {
+                        Some(redraw_machine) => redraw_machine.resize(p),
+                        _ => {}
+                    },
+                    WindowEvent::RedrawRequested => {
+                        if let (
+                            Some(window),
+                            Some(gpu_redraw),
+                            Some(redraws),
+                            Some(redraw_machine),
+                        ) = (
+                            window.as_mut(),
+                            gpu_redraw.as_mut(),
+                            redraws.as_mut(),
+                            redraw_machine.as_mut(),
+                        ) {
+                            let mut frame = redraw_machine.get_frame();
+                            redraw_machine.redraw(gpu_redraw, redraws, &mut frame);
+                            redraw_machine.submit(frame);
+                            window.request_redraw();
+                            #[cfg(not(target_arch = "wasm32"))]
+                            {
+                                accum_time += last_frame_inst.elapsed().as_secs_f32();
+                                last_frame_inst = Instant::now();
+                                frame_count += 1;
+                                if frame_count == 100 {
+                                    // println!(
+                                    //     "Avg frame time {}ms",
+                                    //     accum_time * 1000.0 / frame_count as f32
+                                    // );
+                                    accum_time = 0.0;
+                                    frame_count = 0;
+                                }
+                            }
+                        }
+                    }
                     _ => {}
                 },
                 _ => {}
-            },
-            Event::RedrawRequested(_) => {
-                if let (Some(window), Some(gpu_redraw), Some(redraws), Some(redraw_machine)) = (
-                    window.as_mut(),
-                    gpu_redraw.as_mut(),
-                    redraws.as_mut(),
-                    redraw_machine.as_mut(),
-                ) {
-                    let mut frame = redraw_machine.get_frame();
-                    redraw_machine.redraw(gpu_redraw, redraws, &mut frame);
-                    redraw_machine.submit(frame);
-                    window.request_redraw();
-                    #[cfg(not(target_arch = "wasm32"))]
-                    {
-                        accum_time += last_frame_inst.elapsed().as_secs_f32();
-                        last_frame_inst = Instant::now();
-                        frame_count += 1;
-                        if frame_count == 100 {
-                            // println!(
-                            //     "Avg frame time {}ms",
-                            //     accum_time * 1000.0 / frame_count as f32
-                            // );
-                            accum_time = 0.0;
-                            frame_count = 0;
-                        }
-                    }
-                }
             }
-            _ => {}
-        }
-    });
+        });
 }
