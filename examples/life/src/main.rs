@@ -104,7 +104,10 @@ pub fn main() {
     guppy.register(move |event, gpu_redraw| {
         let clicked = scroll_state.event_handler(event);
         match event {
-            Event::WindowEvent { window_id, event } => match event {
+            Event::WindowEvent {
+                window_id: _,
+                event,
+            } => match event {
                 WindowEvent::RedrawRequested => {
                     tip_animation.update(&mut texture.tip_transform, &mut player_animations);
                     player_animations

@@ -12,7 +12,12 @@ pub enum ClickableBbox {
 impl ClickableBbox {
     pub fn click_detection(&self, click: Vec4, display: Mat4) -> bool {
         let bbox = match self {
-            ClickableBbox::Layout(layout) => layout.to_mat4(display) * layout.bbox,
+            ClickableBbox::Layout(layout) => {
+                layout.to_mat4(
+                    display,
+                    Mat4::IDENTITY, /*FIXME: this is completely wrong, consider how to get parent bbox*/
+                ) * layout.bbox
+            }
             ClickableBbox::Bbox(bbox) => *bbox,
         };
         let click = Mat4::from_translation([-1., 1., 0.].into())

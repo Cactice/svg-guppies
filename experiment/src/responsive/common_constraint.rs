@@ -42,22 +42,30 @@ impl CommonConstraint {
         self,
         display: Mat4,
         bbox: Mat4,
+        parent_bbox: Mat4,
         accessor: F,
         composer: G,
     ) -> (Mat4, Mat4) {
-        let (fill, left_align, right_align, center) =
-            prepare_anchor_points(bbox, display, &accessor, &composer);
+        let fill = Mat4::from_scale(composer(
+            accessor(display.to_scale_rotation_translation().0 / 2.)
+                / accessor(bbox.to_scale_rotation_translation().0),
+            1.0,
+        ));
+
+        let (left_align, right_align, center) = prepare_anchor_points(bbox, &accessor, &composer);
+        // let (parent_fill, parent_left_align, right_align, center) =
+        // prepare_anchor_points(parent_bbox, display, &accessor, &composer);
 
         let pre_normalize_transform;
         let post_normalize_transform;
         match self {
             CommonConstraint::Start(left) => {
                 pre_normalize_transform = left_align * Mat4::from_translation(composer(left, 0.));
-                post_normalize_transform = Mat4::from_translation(composer(-1.0, 0.));
+                post_normalize_transform = Mat4::from_translation(composer(-0.5, 0.));
             }
             CommonConstraint::End(right) => {
                 pre_normalize_transform = right_align * Mat4::from_translation(composer(right, 0.));
-                post_normalize_transform = Mat4::from_translation(composer(1.0, 0.));
+                post_normalize_transform = Mat4::from_translation(composer(0.5, 0.));
             }
             CommonConstraint::Center(rightward_from_center) => {
                 pre_normalize_transform =
@@ -78,16 +86,10 @@ impl CommonConstraint {
 
 fn prepare_anchor_points<F: Fn(Vec3) -> f32, G: Fn(f32, f32) -> Vec3>(
     bbox: Mat4,
-    display: Mat4,
     accessor: &F,
     composer: &G,
-) -> (Mat4, Mat4, Mat4, Mat4) {
+) -> (Mat4, Mat4, Mat4) {
     let (bbox_scale, _, bbox_translation) = bbox.to_scale_rotation_translation();
-
-    let fill = Mat4::from_scale(composer(
-        (accessor(display.to_scale_rotation_translation().0 / 2.)) / accessor(bbox_scale),
-        1.0,
-    ));
 
     let start_align = Mat4::from_translation(composer(accessor(bbox_translation), 0.)).inverse();
     let end_align = Mat4::from_translation(composer(
@@ -100,5 +102,5 @@ fn prepare_anchor_points<F: Fn(Vec3) -> f32, G: Fn(f32, f32) -> Vec3>(
         0.,
     ))
     .inverse();
-    (fill, start_align, end_align, center)
+    (start_align, end_align, center)
 }

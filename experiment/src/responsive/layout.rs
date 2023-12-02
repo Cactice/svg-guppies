@@ -17,8 +17,8 @@ pub struct Layout {
 }
 
 impl Layout {
-    pub fn to_mat4(self, display: Mat4) -> Mat4 {
-        self.constraint.to_mat4(display, self.bbox)
+    pub fn to_mat4(self, display: Mat4, parent_bbox: Mat4) -> Mat4 {
+        self.constraint.to_mat4(display, self.bbox, parent_bbox)
     }
     pub fn new(node: &usvg::Node) -> Self {
         let id = node.id();

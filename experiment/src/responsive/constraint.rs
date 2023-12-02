@@ -7,7 +7,7 @@ pub fn get_normalize_scale(display: Mat4) -> Mat4 {
     // doubling is necessary because GPU range -1 ~ 1 while I used range 0 ~ 1
     // Why last doubling is necessary only god knows.
     // I added it because it looked too small in comparison to figma's prototyping feature.
-    Mat4::from_scale([4., -4., 1.].into()) * display.inverse()
+    Mat4::from_scale([2., -2., 1.].into()) * display.inverse()
 }
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum XConstraint {
@@ -28,14 +28,25 @@ impl Default for XConstraint {
 }
 
 impl XConstraint {
-    pub(crate) fn to_pre_post_transform(self, display: Mat4, bbox: Mat4) -> (Mat4, Mat4) {
+    pub(crate) fn to_pre_post_transform(
+        self,
+        display: Mat4,
+        bbox: Mat4,
+        parent_bbox: Mat4,
+    ) -> (Mat4, Mat4) {
         let accessor = |Vec3 { x, .. }| x;
         let composer = |x, other| Vec3 {
             x,
             y: other,
             z: other,
         };
-        CommonConstraint::from(self).to_pre_post_transform(display, bbox, accessor, composer)
+        CommonConstraint::from(self).to_pre_post_transform(
+            display,
+            bbox,
+            parent_bbox,
+            accessor,
+            composer,
+        )
     }
 }
 
@@ -58,14 +69,25 @@ impl Default for YConstraint {
 }
 
 impl YConstraint {
-    pub(crate) fn to_pre_post_transform(self, display: Mat4, bbox: Mat4) -> (Mat4, Mat4) {
+    pub(crate) fn to_pre_post_transform(
+        self,
+        display: Mat4,
+        bbox: Mat4,
+        parent_bbox: Mat4,
+    ) -> (Mat4, Mat4) {
         let accessor = |Vec3 { y, .. }| y;
         let composer = |y, other| Vec3 {
             x: other,
             y,
             z: other,
         };
-        CommonConstraint::from(self).to_pre_post_transform(display, bbox, accessor, composer)
+        CommonConstraint::from(self).to_pre_post_transform(
+            display,
+            bbox,
+            parent_bbox,
+            accessor,
+            composer,
+        )
     }
 }
 
@@ -76,14 +98,14 @@ pub struct Constraint {
 }
 
 impl Constraint {
-    pub fn to_mat4(self, display: Mat4, bbox: Mat4) -> Mat4 {
+    pub fn to_mat4(self, display: Mat4, bbox: Mat4, parent_bbox: Mat4) -> Mat4 {
         let Constraint {
             x: constraint_x,
             y: constraint_y,
         } = self;
 
-        let (pre_x, post_x) = constraint_x.to_pre_post_transform(display, bbox);
-        let (pre_y, post_y) = constraint_y.to_pre_post_transform(display, bbox);
+        let (pre_x, post_x) = constraint_x.to_pre_post_transform(display, bbox, parent_bbox);
+        let (pre_y, post_y) = constraint_y.to_pre_post_transform(display, bbox, parent_bbox);
 
         let pre_xy = pre_x * pre_y;
         let post_xy = post_x * post_y;
