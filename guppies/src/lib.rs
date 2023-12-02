@@ -182,6 +182,9 @@ pub fn render_loop<const COUNT: usize, Vert>(
                     event: window_event,
                     ..
                 } => match window_event {
+                    WindowEvent::CloseRequested => {
+                        event_loop.exit();
+                    }
                     WindowEvent::Resized(p) => match redraw_machine.as_mut() {
                         Some(redraw_machine) => redraw_machine.resize(p),
                         _ => {}
