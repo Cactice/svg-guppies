@@ -64,9 +64,14 @@ impl LayoutMachine {
                     .fold(
                         (self.display_mat4, Mat4::IDENTITY, Mat4::IDENTITY),
                         |(parent_pass_down, parent_result, parent_bbox), (i, layout)| {
-                            let layout_result = layout.to_mat4(parent_pass_down, parent_bbox);
+                            let layout_result = layout.to_mat4(self.display_mat4, parent_bbox);
+                            dbg!(parent_bbox.to_scale_rotation_translation());
                             let pass_down = self.display_mat4;
-                            (pass_down, layout_result, layout_result * layout.bbox)
+                            (
+                                pass_down,
+                                Mat4::from_scale([1., -1., 1.].into()) * layout_result,
+                                layout_result * layout.bbox,
+                            )
                         },
                     )
                     .1

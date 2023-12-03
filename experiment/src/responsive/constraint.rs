@@ -2,13 +2,10 @@ use super::common_constraint::CommonConstraint;
 use guppies::glam::{Mat4, Vec3};
 use serde::{Deserialize, Serialize};
 
-pub fn get_normalize_scale(display: Mat4) -> Mat4 {
-    // Y is flipped because the y axis is in different directions in GPU vs SVG
-    // doubling is necessary because GPU range -1 ~ 1 while I used range 0 ~ 1
-    // Why last doubling is necessary only god knows.
-    // I added it because it looked too small in comparison to figma's prototyping feature.
-    Mat4::from_scale([2., -2., 1.].into()) * display.inverse()
+pub fn get_normalize_scale(display: Mat4, parent_bbox: Mat4) -> Mat4 {
+    display.inverse()
 }
+
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum XConstraint {
     Left(f32),
@@ -110,7 +107,7 @@ impl Constraint {
         let pre_xy = pre_x * pre_y;
         let post_xy = post_x * post_y;
 
-        let normalize_scale = get_normalize_scale(display);
+        let normalize_scale = get_normalize_scale(display, parent_bbox);
 
         return post_xy * normalize_scale * pre_xy;
     }

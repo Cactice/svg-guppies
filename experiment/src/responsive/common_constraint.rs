@@ -47,14 +47,14 @@ impl CommonConstraint {
         composer: G,
     ) -> (Mat4, Mat4) {
         let fill = Mat4::from_scale(composer(
-            accessor(display.to_scale_rotation_translation().0 / 2.)
+            accessor(display.to_scale_rotation_translation().0)
                 / accessor(bbox.to_scale_rotation_translation().0),
             1.0,
         ));
 
         let (left_align, right_align, center) = prepare_anchor_points(bbox, &accessor, &composer);
-        // let (parent_fill, parent_left_align, right_align, center) =
-        // prepare_anchor_points(parent_bbox, display, &accessor, &composer);
+        let (parent_left_align, parent_right_align, parent_center) =
+            prepare_anchor_points(parent_bbox, &accessor, &composer);
 
         let pre_normalize_transform;
         let post_normalize_transform;
@@ -102,5 +102,6 @@ fn prepare_anchor_points<F: Fn(Vec3) -> f32, G: Fn(f32, f32) -> Vec3>(
         0.,
     ))
     .inverse();
+
     (start_align, end_align, center)
 }
