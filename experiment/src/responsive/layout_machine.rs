@@ -55,7 +55,6 @@ impl LayoutMachine {
         self.display_mat4 = size_to_mat4(*p);
     }
     pub fn get_transforms(&self) -> Vec<Mat4> {
-        let display = self.display_mat4.to_scale_rotation_translation();
         self.layouts
             .iter()
             .map(|parents| {
@@ -63,18 +62,7 @@ impl LayoutMachine {
                     .iter()
                     .enumerate()
                     .fold(
-                        (
-                            Mat4::IDENTITY,
-                            Mat4::from_scale_rotation_translation(
-                                display.0,
-                                display.1,
-                                Vec3 {
-                                    x: -display.0.x / 2.,
-                                    y: -display.0.y / 2.,
-                                    z: 0.,
-                                },
-                            ),
-                        ),
+                        (Mat4::IDENTITY, self.display_bbox_generator()),
                         |(_parent_result, parent_bbox), (i, layout)| {
                             dbg!(parent_bbox.to_scale_rotation_translation());
                             let layout_result = layout.to_mat4(self.display_mat4, parent_bbox);
@@ -88,6 +76,19 @@ impl LayoutMachine {
             })
             .collect()
     }
+    fn display_bbox_generator(&self) -> Mat4 {
+        let display = self.display_mat4.to_scale_rotation_translation();
+        Mat4::from_scale_rotation_translation(
+            display.0,
+            display.1,
+            Vec3 {
+                x: -display.0.x / 2.,
+                y: -display.0.y / 2.,
+                z: 0.,
+            },
+        )
+    }
+
     pub fn click_detection(&self, scroll_state: &ScrollState) -> Vec<String> {
         let click = Vec4::from((scroll_state.mouse_position, 1., 1.));
         let clicked_ids = self

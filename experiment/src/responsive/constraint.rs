@@ -30,20 +30,14 @@ impl XConstraint {
         display: Mat4,
         bbox: Mat4,
         parent_bbox: Mat4,
-    ) -> (Mat4, Mat4) {
+    ) -> Mat4 {
         let accessor = |Vec3 { x, .. }| x;
         let composer = |x, other| Vec3 {
             x,
             y: other,
             z: other,
         };
-        CommonConstraint::from(self).to_pre_post_transform(
-            display,
-            bbox,
-            parent_bbox,
-            accessor,
-            composer,
-        )
+        CommonConstraint::from(self).to_transform(display, bbox, parent_bbox, accessor, composer)
     }
 }
 
@@ -66,25 +60,14 @@ impl Default for YConstraint {
 }
 
 impl YConstraint {
-    pub(crate) fn to_pre_post_transform(
-        self,
-        display: Mat4,
-        bbox: Mat4,
-        parent_bbox: Mat4,
-    ) -> (Mat4, Mat4) {
+    pub(crate) fn to_transform(self, display: Mat4, bbox: Mat4, parent_bbox: Mat4) -> Mat4 {
         let accessor = |Vec3 { y, .. }| y;
         let composer = |y, other| Vec3 {
             x: other,
             y,
             z: other,
         };
-        CommonConstraint::from(self).to_pre_post_transform(
-            display,
-            bbox,
-            parent_bbox,
-            accessor,
-            composer,
-        )
+        CommonConstraint::from(self).to_transform(display, bbox, parent_bbox, accessor, composer)
     }
 }
 
@@ -101,12 +84,11 @@ impl Constraint {
             y: constraint_y,
         } = self;
 
-        let (pre_x, post_x) = constraint_x.to_pre_post_transform(display, bbox, parent_bbox);
-        let (pre_y, post_y) = constraint_y.to_pre_post_transform(display, bbox, parent_bbox);
+        let x = constraint_x.to_pre_post_transform(display, bbox, parent_bbox);
+        let y = constraint_y.to_transform(display, bbox, parent_bbox);
 
-        let pre_xy = pre_x * pre_y;
-        let post_xy = post_x * post_y;
+        let xy = x * y;
 
-        return display.inverse() * pre_xy;
+        return display.inverse() * xy;
     }
 }
