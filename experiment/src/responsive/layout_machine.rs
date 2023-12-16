@@ -52,7 +52,7 @@ impl LayoutMachine {
         }
     }
     pub fn resize(&mut self, p: &PhysicalSize<u32>) {
-        self.display_mat4 = size_to_mat4(*p);
+        self.display_mat4 = Mat4::from_scale([0.5, 0.5, 1.].into()) * size_to_mat4(*p);
     }
     pub fn get_transforms(&self) -> Vec<Mat4> {
         self.layouts

@@ -47,7 +47,7 @@ impl CommonConstraint {
         composer: G,
     ) -> Mat4 {
         let fill = Mat4::from_scale(composer(
-            accessor(display.to_scale_rotation_translation().0)
+            accessor(parent_bbox.to_scale_rotation_translation().0)
                 / accessor(bbox.to_scale_rotation_translation().0),
             1.0,
         ));
