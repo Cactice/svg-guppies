@@ -52,24 +52,30 @@ impl CommonConstraint {
             1.0,
         ));
 
-        let (left_align, right_align, center) = prepare_anchor_points(bbox, &accessor, &composer);
-        let (parent_left_align, parent_right_align, parent_center) =
-            prepare_anchor_points(parent_bbox, &accessor, &composer);
+        let (left_align, right_align, center) =
+            prepare_anchor_points(bbox, &accessor, &composer, parent_bbox);
+        let (s, r, t) = parent_bbox.to_scale_rotation_translation();
 
         let pre_normalize_transform;
         let post_normalize_transform;
         match self {
             CommonConstraint::Start(left) => {
-                pre_normalize_transform = left_align * Mat4::from_translation(composer(left, 0.));
-                post_normalize_transform = Mat4::from_translation(composer(-0.5, 0.));
+                pre_normalize_transform = Mat4::from_translation(composer(accessor(t), 0.))
+                    * left_align
+                    * Mat4::from_translation(composer(left, 0.));
+                post_normalize_transform = Mat4::IDENTITY;
             }
             CommonConstraint::End(right) => {
-                pre_normalize_transform = right_align * Mat4::from_translation(composer(right, 0.));
-                post_normalize_transform = Mat4::from_translation(composer(0.5, 0.));
+                pre_normalize_transform = Mat4::from_translation(composer(accessor(t + s), 0.))
+                    * right_align
+                    * Mat4::from_translation(composer(right, 0.));
+                post_normalize_transform = Mat4::IDENTITY;
             }
             CommonConstraint::Center(rightward_from_center) => {
                 pre_normalize_transform =
-                    center * Mat4::from_translation(composer(rightward_from_center, 0.));
+                    Mat4::from_translation(composer(accessor(t + s / 2.), 0.))
+                        * center
+                        * Mat4::from_translation(composer(rightward_from_center, 0.));
                 post_normalize_transform = Mat4::IDENTITY;
             }
             CommonConstraint::StartAndEnd { start, end } => {
@@ -88,6 +94,7 @@ fn prepare_anchor_points<F: Fn(Vec3) -> f32, G: Fn(f32, f32) -> Vec3>(
     bbox: Mat4,
     accessor: &F,
     composer: &G,
+    parent_bbox: Mat4,
 ) -> (Mat4, Mat4, Mat4) {
     let (bbox_scale, _, bbox_translation) = bbox.to_scale_rotation_translation();
 

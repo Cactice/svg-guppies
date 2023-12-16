@@ -107,8 +107,6 @@ impl Constraint {
         let pre_xy = pre_x * pre_y;
         let post_xy = post_x * post_y;
 
-        let normalize_scale = get_normalize_scale(display, parent_bbox);
-
-        return post_xy * normalize_scale * pre_xy;
+        return display.inverse() * pre_xy;
     }
 }

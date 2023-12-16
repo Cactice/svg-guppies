@@ -55,6 +55,7 @@ impl LayoutMachine {
         self.display_mat4 = size_to_mat4(*p);
     }
     pub fn get_transforms(&self) -> Vec<Mat4> {
+        let display = self.display_mat4.to_scale_rotation_translation();
         self.layouts
             .iter()
             .map(|parents| {
@@ -62,19 +63,28 @@ impl LayoutMachine {
                     .iter()
                     .enumerate()
                     .fold(
-                        (self.display_mat4, Mat4::IDENTITY, Mat4::IDENTITY),
-                        |(parent_pass_down, parent_result, parent_bbox), (i, layout)| {
-                            let layout_result = layout.to_mat4(self.display_mat4, parent_bbox);
+                        (
+                            Mat4::IDENTITY,
+                            Mat4::from_scale_rotation_translation(
+                                display.0,
+                                display.1,
+                                Vec3 {
+                                    x: -display.0.x / 2.,
+                                    y: -display.0.y / 2.,
+                                    z: 0.,
+                                },
+                            ),
+                        ),
+                        |(_parent_result, parent_bbox), (i, layout)| {
                             dbg!(parent_bbox.to_scale_rotation_translation());
-                            let pass_down = self.display_mat4;
+                            let layout_result = layout.to_mat4(self.display_mat4, parent_bbox);
                             (
-                                pass_down,
-                                Mat4::from_scale([1., -1., 1.].into()) * layout_result,
-                                layout_result * layout.bbox,
+                                Mat4::from_scale([2., -2., 1.].into()) * layout_result,
+                                self.display_mat4 * layout_result * layout.bbox,
                             )
                         },
                     )
-                    .1
+                    .0
             })
             .collect()
     }
