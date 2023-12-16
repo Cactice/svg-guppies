@@ -1,10 +1,10 @@
-use concept::scroll::ScrollState;
-use concept::spring::SpringMat4;
-use concept::svg_init::get_center;
-use concept::uses::use_svg;
+use experiment::scroll::ScrollState;
+use experiment::spring::SpringMat4;
+use experiment::svg_init::get_center;
+use experiment::uses::use_svg;
 use guppies::bytemuck::{cast_slice, Pod, Zeroable};
 use guppies::glam::{Mat4, Vec2};
-use guppies::winit::event::Event;
+use guppies::winit::event::{Event, WindowEvent};
 use guppies::{GpuRedraw, Guppy};
 use regex::Regex;
 use salvage::svg_set::SvgSet;
@@ -84,6 +84,7 @@ pub fn main() {
                 }
             };
         },
+        None,
     );
     let mut life_game = LifeGame {
         position_to_coordinates,
@@ -99,16 +100,27 @@ pub fn main() {
         .map(|_| SpringMat4::default());
     let start_center = Mat4::from_translation((life_game.position_to_coordinates[0], 0.).into());
     let mut guppy = Guppy::new([GpuRedraw::default()]);
+
     guppy.register(move |event, gpu_redraw| {
         let clicked = scroll_state.event_handler(event);
-        if let Event::RedrawRequested(_) = event {
-            tip_animation.update(&mut texture.tip_transform, &mut player_animations);
-            player_animations
-                .iter_mut()
-                .enumerate()
-                .for_each(|(i, animation)| {
-                    animation.update(&mut texture.player_avatar_transforms[i], &mut svg_set);
-                });
+        match event {
+            Event::WindowEvent {
+                window_id: _,
+                event,
+            } => match event {
+                WindowEvent::RedrawRequested => {
+                    tip_animation.update(&mut texture.tip_transform, &mut player_animations);
+                    player_animations
+                        .iter_mut()
+                        .enumerate()
+                        .for_each(|(i, animation)| {
+                            animation
+                                .update(&mut texture.player_avatar_transforms[i], &mut svg_set);
+                        });
+                }
+                _ => {}
+            },
+            _ => (),
         }
         if clicked {
             if tip_animation.is_animating

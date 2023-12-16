@@ -116,10 +116,11 @@ impl RedrawMachine {
                             resolve_target: Some(view),
                             ops: wgpu::Operations {
                                 load: load_color,
-                                store: true,
+                                store: wgpu::StoreOp::Store,
                             },
                         })],
                         depth_stencil_attachment: None,
+                        ..Default::default()
                     });
                     rpass.set_pipeline(render_pipeline);
                     rpass.set_bind_group(0, bind_group, &[]);

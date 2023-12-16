@@ -1,4 +1,3 @@
-pub mod callback;
 mod convert_path;
 mod fill;
 pub mod geometry;

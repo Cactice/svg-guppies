@@ -7,8 +7,7 @@ use guppies::{
 };
 use salvage::svg_set::SvgSet;
 const UNMOVED_RADIUS: f32 = 40.;
-pub fn get_scale(size: PhysicalSize<u32>, svg_scale: Vec2) -> Mat4 {
-    let ratio = f32::min(svg_scale.x, svg_scale.y) / f32::max(svg_scale.x, svg_scale.y);
+pub fn get_scale(size: PhysicalSize<u32>) -> Mat4 {
     Mat4::from_scale([4.0 / size.width as f32, -4.0 / size.height as f32, 1.0].into())
 }
 
@@ -24,7 +23,7 @@ impl ScrollState {
     pub fn new_from_svg_set(svg_set: &SvgSet) -> Self {
         // Below scale should get overridden by guppies' redraw event forced on init
         let svg_scale = svg_set.bbox.size;
-        let scale: Mat4 = get_scale(PhysicalSize::<u32>::new(100, 100), svg_scale);
+        let scale: Mat4 = get_scale(PhysicalSize::<u32>::new(100, 100));
         let translate = Mat4::from_translation([-1., 1.0, 0.0].into());
         Self {
             transform: translate * scale,
@@ -39,9 +38,7 @@ impl ScrollState {
                 WindowEvent::Resized(p) => {
                     let (_scale, rot, trans) =
                         scroll_state.transform.to_scale_rotation_translation();
-                    let scale = get_scale(*p, scroll_state.display_image_size)
-                        .to_scale_rotation_translation()
-                        .0;
+                    let scale = get_scale(*p).to_scale_rotation_translation().0;
                     scroll_state.transform =
                         Mat4::from_scale_rotation_translation(scale, rot, trans);
                 }

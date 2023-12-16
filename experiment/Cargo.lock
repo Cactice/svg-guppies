@@ -17,7 +17,7 @@ checksum = "144ec79496cbab6f84fa125dc67be9264aef22eb8a28da8454d9c33f15108da4"
 dependencies = ["proc-macro2", "quote", "syn"]
 
 [[package]]
-name = "svg-gui-concept"
+name = "svg-gui-experiment"
 version = "0.1.0"
 dependencies = ["enumflags2"]
 
