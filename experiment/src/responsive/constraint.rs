@@ -2,7 +2,7 @@ use super::common_constraint::CommonConstraint;
 use guppies::glam::{Mat4, Vec3};
 use serde::{Deserialize, Serialize};
 
-pub fn get_normalize_scale(display: Mat4, parent_bbox: Mat4) -> Mat4 {
+pub fn get_normalize_scale(display: Mat4) -> Mat4 {
     display.inverse()
 }
 
@@ -25,19 +25,14 @@ impl Default for XConstraint {
 }
 
 impl XConstraint {
-    pub(crate) fn to_pre_post_transform(
-        self,
-        display: Mat4,
-        bbox: Mat4,
-        parent_bbox: Mat4,
-    ) -> Mat4 {
+    pub(crate) fn to_transform(self, bbox: Mat4, parent_bbox: Mat4) -> Mat4 {
         let accessor = |Vec3 { x, .. }| x;
         let composer = |x, other| Vec3 {
             x,
             y: other,
             z: other,
         };
-        CommonConstraint::from(self).to_transform(display, bbox, parent_bbox, accessor, composer)
+        CommonConstraint::from(self).to_transform(bbox, parent_bbox, accessor, composer)
     }
 }
 
@@ -60,14 +55,14 @@ impl Default for YConstraint {
 }
 
 impl YConstraint {
-    pub(crate) fn to_transform(self, display: Mat4, bbox: Mat4, parent_bbox: Mat4) -> Mat4 {
+    pub(crate) fn to_transform(self, bbox: Mat4, parent_bbox: Mat4) -> Mat4 {
         let accessor = |Vec3 { y, .. }| y;
         let composer = |y, other| Vec3 {
             x: other,
             y,
             z: other,
         };
-        CommonConstraint::from(self).to_transform(display, bbox, parent_bbox, accessor, composer)
+        CommonConstraint::from(self).to_transform(bbox, parent_bbox, accessor, composer)
     }
 }
 
@@ -84,11 +79,9 @@ impl Constraint {
             y: constraint_y,
         } = self;
 
-        let x = constraint_x.to_pre_post_transform(display, bbox, parent_bbox);
-        let y = constraint_y.to_transform(display, bbox, parent_bbox);
+        let x = constraint_x.to_transform(bbox, parent_bbox);
+        let y = constraint_y.to_transform(bbox, parent_bbox);
 
-        let xy = x * y;
-
-        return display.inverse() * xy;
+        return display.inverse() * x * y;
     }
 }

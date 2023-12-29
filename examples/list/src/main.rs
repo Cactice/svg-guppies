@@ -1,12 +1,7 @@
-use experiment::{responsive::layout_machine::LayoutMachine, scroll::ScrollState, uses::use_svg};
+use experiment::{responsive::layout_machine::LayoutMachine, uses::use_svg};
 use guppies::bytemuck::cast_slice;
 use guppies::{GpuRedraw, Guppy};
 use mobile_entry_point::mobile_entry_point;
-
-struct ListItem {
-    word: String,
-    icon: String,
-}
 
 pub fn main() {
     let mut layout_machine = LayoutMachine::default();
@@ -19,13 +14,13 @@ pub fn main() {
         None,
     );
 
-    // let list = use_svg(
-    //     include_str!("../Left.svg").to_string(),
-    //     |node, mut pass_down| {
-    //         layout_machine.add_node(&node, &mut pass_down);
-    //     },
-    //     Some("ListItem".to_string()),
-    // );
+    let list = use_svg(
+        include_str!("../Left.svg").to_string(),
+        |node, mut pass_down| {
+            layout_machine.add_node(&node, &mut pass_down);
+        },
+        Some("ListItem".to_string()),
+    );
 
     let mut guppy = Guppy::new([GpuRedraw::default()]);
 
@@ -35,7 +30,7 @@ pub fn main() {
         gpu_redraws[0].update_triangles(
             svg_set
                 .get_combined_geometries()
-                // .extend(&list.get_combined_geometries())
+                .extend(&list.get_combined_geometries())
                 .triangles,
             0,
         );

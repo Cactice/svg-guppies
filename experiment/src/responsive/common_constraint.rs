@@ -26,8 +26,8 @@ impl From<XConstraint> for CommonConstraint {
 impl From<YConstraint> for CommonConstraint {
     fn from(y_constraint: YConstraint) -> Self {
         match y_constraint {
-            YConstraint::Top(top) => CommonConstraint::End(top),
-            YConstraint::Bottom(bottom) => CommonConstraint::Start(bottom),
+            YConstraint::Top(top) => CommonConstraint::Start(top),
+            YConstraint::Bottom(bottom) => CommonConstraint::End(bottom),
             YConstraint::TopAndBottom { top, bottom } => CommonConstraint::StartAndEnd {
                 start: bottom,
                 end: top,
@@ -40,7 +40,6 @@ impl From<YConstraint> for CommonConstraint {
 impl CommonConstraint {
     pub(crate) fn to_transform<F: Fn(Vec3) -> f32, G: Fn(f32, f32) -> Vec3>(
         self,
-        display: Mat4,
         bbox: Mat4,
         parent_bbox: Mat4,
         accessor: F,

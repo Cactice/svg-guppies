@@ -1,5 +1,6 @@
 use super::clickable::Clickable;
 use super::clickable::ClickableBbox;
+use super::constraint::Constraint;
 use super::layout::bbox_to_mat4;
 use super::layout::size_to_mat4;
 use super::layout::Layout;
@@ -18,6 +19,12 @@ use guppies::winit::event::WindowEvent;
 use regex::Regex;
 use salvage::usvg::Node;
 use salvage::usvg::NodeExt;
+use serde::Deserialize;
+use serde::Serialize;
+use std::collections::HashMap;
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ConstraintMap(HashMap<String, Constraint>);
 
 #[derive(Debug, Clone, Default)]
 pub struct LayoutMachine {
@@ -60,11 +67,9 @@ impl LayoutMachine {
             .map(|parents| {
                 parents
                     .iter()
-                    .enumerate()
                     .fold(
-                        (Mat4::IDENTITY, self.display_bbox_generator()),
-                        |(_parent_result, parent_bbox), (i, layout)| {
-                            dbg!(parent_bbox.to_scale_rotation_translation());
+                        (Mat4::IDENTITY, self.get_display_bbox()),
+                        |(_parent_result, parent_bbox), layout| {
                             let layout_result = layout.to_mat4(self.display_mat4, parent_bbox);
                             (
                                 Mat4::from_scale([2., -2., 1.].into()) * layout_result,
@@ -76,14 +81,14 @@ impl LayoutMachine {
             })
             .collect()
     }
-    fn display_bbox_generator(&self) -> Mat4 {
-        let display = self.display_mat4.to_scale_rotation_translation();
+    fn get_display_bbox(&self) -> Mat4 {
+        let (scale, rot, _trans) = self.display_mat4.to_scale_rotation_translation();
         Mat4::from_scale_rotation_translation(
-            display.0,
-            display.1,
+            scale,
+            rot,
             Vec3 {
-                x: -display.0.x / 2.,
-                y: -display.0.y / 2.,
+                x: -scale.x / 2.,
+                y: -scale.y / 2.,
                 z: 0.,
             },
         )
