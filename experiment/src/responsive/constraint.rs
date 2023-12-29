@@ -71,6 +71,14 @@ pub struct Constraint {
     pub x: XConstraint,
     pub y: YConstraint,
 }
+impl Default for Constraint {
+    fn default() -> Self {
+        Self {
+            x: XConstraint::Scale,
+            y: YConstraint::Scale,
+        }
+    }
+}
 
 impl Constraint {
     pub fn to_mat4(self, display: Mat4, bbox: Mat4, parent_bbox: Mat4) -> Mat4 {

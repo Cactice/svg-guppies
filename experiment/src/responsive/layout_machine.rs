@@ -24,7 +24,7 @@ use serde::Serialize;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct ConstraintMap(HashMap<String, Constraint>);
+pub struct ConstraintMap(pub HashMap<String, Constraint>);
 
 #[derive(Debug, Clone, Default)]
 pub struct LayoutMachine {
@@ -34,6 +34,7 @@ pub struct LayoutMachine {
     pub display_mat4: Mat4,
     pub scroll_state: ScrollState,
     pub transforms: Vec<Mat4>,
+    pub constraint_map: ConstraintMap,
 }
 
 impl LayoutMachine {
@@ -114,7 +115,7 @@ impl LayoutMachine {
         let layout_regex = Regex::new(LAYOUT_REGEX).unwrap();
         let id = &node.id().to_string();
         if layout_regex.is_match(id) {
-            let layout = Layout::new(&node);
+            let layout = Layout::new(&node, &self.constraint_map);
             pass_down.parent_layouts.push(layout);
             self.layouts.push(pass_down.parent_layouts.clone());
             if clickable_regex.is_match(&id) {
