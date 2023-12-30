@@ -54,26 +54,24 @@ impl CommonConstraint {
             1.0,
         ));
 
-        let (left, right, center) = prepare_anchor_points(bbox, &accessor, &composer);
-        let (left_align, right_align, center_align) =
-            (left.inverse(), right.inverse(), center.inverse());
-        let (parent_edge_left, parent_edge_right, parent_center) =
+        let (start, end, center) = prepare_anchor_points(bbox, &accessor, &composer);
+        let (start_align, end_align, center_align) =
+            (start.inverse(), end.inverse(), center.inverse());
+        let (parent_edge_start, parent_edge_end, parent_center) =
             prepare_anchor_points(parent_bbox, &accessor, &composer);
 
         match self {
-            CommonConstraint::Start(left) => {
-                compose_translation(left) * parent_edge_left * left_align
+            CommonConstraint::Start(start) => {
+                compose_translation(start) * parent_edge_start * start_align
             }
-            CommonConstraint::End(right) => {
-                compose_translation(right) * parent_edge_right * right_align
-            }
-            CommonConstraint::Center(rightward_from_center) => {
-                compose_translation(rightward_from_center) * parent_center * center_align
+            CommonConstraint::End(end) => compose_translation(end) * parent_edge_end * end_align,
+            CommonConstraint::Center(towards_end_from_center) => {
+                compose_translation(towards_end_from_center) * parent_center * center_align
             }
             CommonConstraint::StartAndEnd { start, end } => {
                 let fill_partial =
                     compose_scale((access_scale(parent_bbox) - (start - end)) / access_scale(bbox));
-                compose_translation(start) * parent_edge_left * fill_partial * left_align
+                compose_translation(start) * parent_edge_start * fill_partial * start_align
             }
             CommonConstraint::Scale => parent_center * fill * center_align,
         }
