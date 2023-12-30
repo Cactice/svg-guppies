@@ -36,10 +36,14 @@ pub fn iterate_stroke(
     let _ = stroke_tess.tessellate(
         convert_path(path),
         &stroke_opts,
-        &mut BuffersBuilder::new(geometry, |v: StrokeVertex| Vertex {
-            position: [v.position().x, v.position().y, 0.],
-            color: color.to_array(),
-            transform_id: id,
+        &mut BuffersBuilder::new(geometry, |v: StrokeVertex| {
+            let position = v.position();
+            let (x, y) = path.transform.apply(position.x as f64, position.y as f64);
+            Vertex {
+                position: [x as f32, y as f32, 0.],
+                color: color.to_array(),
+                transform_id: id,
+            }
         }),
     );
 }
