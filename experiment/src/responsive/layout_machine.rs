@@ -1,5 +1,6 @@
 use super::clickable::Clickable;
 use super::clickable::ClickableBbox;
+use super::constraint::Constraint;
 use super::layout::bbox_to_mat4;
 use super::layout::size_to_mat4;
 use super::layout::Layout;
@@ -18,6 +19,12 @@ use guppies::winit::event::WindowEvent;
 use regex::Regex;
 use salvage::usvg::Node;
 use salvage::usvg::NodeExt;
+use serde::Deserialize;
+use serde::Serialize;
+use std::collections::HashMap;
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ConstraintMap(pub HashMap<String, Constraint>);
 
 #[derive(Debug, Clone, Default)]
 pub struct LayoutMachine {
@@ -27,6 +34,7 @@ pub struct LayoutMachine {
     pub display_mat4: Mat4,
     pub scroll_state: ScrollState,
     pub transforms: Vec<Mat4>,
+    pub constraint_map: ConstraintMap,
 }
 
 impl LayoutMachine {
@@ -58,32 +66,31 @@ impl LayoutMachine {
         self.layouts
             .iter()
             .map(|parents| {
-                parents
-                    .iter()
-                    .enumerate()
-                    .fold(
-                        (Mat4::IDENTITY, self.display_bbox_generator()),
-                        |(_parent_result, parent_bbox), (i, layout)| {
-                            dbg!(parent_bbox.to_scale_rotation_translation());
-                            let layout_result = layout.to_mat4(self.display_mat4, parent_bbox);
-                            (
-                                Mat4::from_scale([2., -2., 1.].into()) * layout_result,
-                                self.display_mat4 * layout_result * layout.bbox,
-                            )
-                        },
-                    )
-                    .0
+                Mat4::from_scale([2., -2., 1.].into())
+                    * parents
+                        .iter()
+                        .fold(
+                            (Mat4::IDENTITY, self.get_display_bbox()),
+                            |(_parent_result, parent_bbox), layout| {
+                                let layout_result = layout.to_mat4(self.display_mat4, parent_bbox);
+                                (
+                                    layout_result,
+                                    self.display_mat4 * layout_result * layout.bbox,
+                                )
+                            },
+                        )
+                        .0
             })
             .collect()
     }
-    fn display_bbox_generator(&self) -> Mat4 {
-        let display = self.display_mat4.to_scale_rotation_translation();
+    fn get_display_bbox(&self) -> Mat4 {
+        let (scale, rot, _trans) = self.display_mat4.to_scale_rotation_translation();
         Mat4::from_scale_rotation_translation(
-            display.0,
-            display.1,
+            scale,
+            rot,
             Vec3 {
-                x: -display.0.x / 2.,
-                y: -display.0.y / 2.,
+                x: -scale.x / 2.,
+                y: -scale.y / 2.,
                 z: 0.,
             },
         )
@@ -109,7 +116,7 @@ impl LayoutMachine {
         let layout_regex = Regex::new(LAYOUT_REGEX).unwrap();
         let id = &node.id().to_string();
         if layout_regex.is_match(id) {
-            let layout = Layout::new(&node);
+            let layout = Layout::new(&node, &self.constraint_map);
             pass_down.parent_layouts.push(layout);
             self.layouts.push(pass_down.parent_layouts.clone());
             if clickable_regex.is_match(&id) {

@@ -26,11 +26,11 @@ impl From<XConstraint> for CommonConstraint {
 impl From<YConstraint> for CommonConstraint {
     fn from(y_constraint: YConstraint) -> Self {
         match y_constraint {
-            YConstraint::Top(top) => CommonConstraint::End(top),
-            YConstraint::Bottom(bottom) => CommonConstraint::Start(bottom),
+            YConstraint::Top(top) => CommonConstraint::Start(top),
+            YConstraint::Bottom(bottom) => CommonConstraint::End(bottom),
             YConstraint::TopAndBottom { top, bottom } => CommonConstraint::StartAndEnd {
-                start: bottom,
-                end: top,
+                start: top,
+                end: bottom,
             },
             YConstraint::Center(y) => CommonConstraint::Center(y),
             YConstraint::Scale => CommonConstraint::Scale,
@@ -40,41 +40,42 @@ impl From<YConstraint> for CommonConstraint {
 impl CommonConstraint {
     pub(crate) fn to_transform<F: Fn(Vec3) -> f32, G: Fn(f32, f32) -> Vec3>(
         self,
-        display: Mat4,
         bbox: Mat4,
         parent_bbox: Mat4,
         accessor: F,
         composer: G,
     ) -> Mat4 {
+        let compose_translation = |number| Mat4::from_translation(composer(number, 0.));
+        let compose_scale = |number| Mat4::from_scale(composer(number, 1.));
+        let access_scale = |mat4: Mat4| accessor(mat4.to_scale_rotation_translation().0);
+
         let fill = Mat4::from_scale(composer(
-            accessor(parent_bbox.to_scale_rotation_translation().0)
-                / accessor(bbox.to_scale_rotation_translation().0),
+            access_scale(parent_bbox) / access_scale(bbox),
             1.0,
         ));
 
-        let (left_align, right_align, center) = prepare_anchor_points(bbox, &accessor, &composer);
-        let (left_align, right_align, center) = (
-            left_align.inverse(),
-            right_align.inverse(),
-            center.inverse(),
-        );
+        let (left, right, center) = prepare_anchor_points(bbox, &accessor, &composer);
+        let (left_align, right_align, center_align) =
+            (left.inverse(), right.inverse(), center.inverse());
         let (parent_edge_left, parent_edge_right, parent_center) =
             prepare_anchor_points(parent_bbox, &accessor, &composer);
 
         match self {
             CommonConstraint::Start(left) => {
-                parent_edge_left * left_align * Mat4::from_translation(composer(left, 0.))
+                compose_translation(left) * parent_edge_left * left_align
             }
             CommonConstraint::End(right) => {
-                parent_edge_right * right_align * Mat4::from_translation(composer(right, 0.))
+                compose_translation(right) * parent_edge_right * right_align
             }
             CommonConstraint::Center(rightward_from_center) => {
-                parent_center * center * Mat4::from_translation(composer(rightward_from_center, 0.))
+                compose_translation(rightward_from_center) * parent_center * center_align
             }
             CommonConstraint::StartAndEnd { start, end } => {
-                todo!();
+                let fill_partial =
+                    compose_scale((access_scale(parent_bbox) - (start - end)) / access_scale(bbox));
+                compose_translation(start) * parent_edge_left * fill_partial * left_align
             }
-            CommonConstraint::Scale => fill * center,
+            CommonConstraint::Scale => parent_center * fill * center_align,
         }
     }
 }
@@ -84,17 +85,12 @@ fn prepare_anchor_points<F: Fn(Vec3) -> f32, G: Fn(f32, f32) -> Vec3>(
     accessor: &F,
     composer: &G,
 ) -> (Mat4, Mat4, Mat4) {
+    let compose_translation = |number| Mat4::from_translation(composer(number, 0.));
     let (bbox_scale, _, bbox_translation) = bbox.to_scale_rotation_translation();
 
-    let start_align = Mat4::from_translation(composer(accessor(bbox_translation), 0.));
-    let end_align = Mat4::from_translation(composer(
-        accessor(bbox_translation) + accessor(bbox_scale),
-        0.,
-    ));
-    let center = Mat4::from_translation(composer(
-        accessor(bbox_translation) + accessor(bbox_scale) / 2.,
-        0.,
-    ));
+    let start = compose_translation(accessor(bbox_translation));
+    let end = compose_translation(accessor(bbox_translation) + accessor(bbox_scale));
+    let center = compose_translation(accessor(bbox_translation) + accessor(bbox_scale) / 2.);
 
-    (start_align, end_align, center)
+    (start, end, center)
 }

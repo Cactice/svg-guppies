@@ -22,7 +22,7 @@ impl ClickableBbox {
         };
         let click = Mat4::from_translation([-1., 1., 0.].into())
             * Mat4::from_scale([0.5, 0.5, 1.].into())
-            * get_normalize_scale(display, Mat4::IDENTITY)
+            * get_normalize_scale(display)
             * click;
         let click = bbox.inverse() * click;
         if click.x.abs() < 1. && click.y.abs() < 1. {

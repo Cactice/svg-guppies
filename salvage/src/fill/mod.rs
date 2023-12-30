@@ -19,14 +19,14 @@ pub fn iterate_fill(
         .tessellate(
             convert_path(path),
             &FillOptions::tolerance(0.01),
-            &mut BuffersBuilder::new(geometry, |v: FillVertex| Vertex {
-                position: [
-                    v.position().x + path.transform.e as f32,
-                    v.position().y + path.transform.f as f32,
-                    0.,
-                ],
-                color: color.to_array(),
-                transform_id: id,
+            &mut BuffersBuilder::new(geometry, |v: FillVertex| {
+                let position = v.position();
+                let (x, y) = path.transform.apply(position.x as f64, position.y as f64);
+                Vertex {
+                    position: [x as f32, y as f32, 0.],
+                    color: color.to_array(),
+                    transform_id: id,
+                }
             }),
         )
         .expect("Error during tesselation!");

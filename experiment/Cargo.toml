@@ -11,7 +11,6 @@ natura = { git = "https://github.com/ziyasal/natura" }
 regex = "1"
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-html-escape = "0.2.13"
 
 [dev-dependencies]
 fastrand = "1.8.0"

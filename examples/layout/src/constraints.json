@@ -1,0 +1,24 @@
+{
+  "Menu #transform #clickable #layout": {
+    "x": { "Left": 14 },
+    "y": { "Center": 0.7432861328125 }
+  },
+  "MenuBar #transform #layout": { "x": "Scale", "y": { "Top": 118 } },
+  "Group": { "x": { "Right": 0 }, "y": { "Center": 0 } },
+  "Vector": { "x": { "Right": -24.5 }, "y": { "Center": -3.5 } },
+  "Undo #transform #clickable #layout": {
+    "x": { "Right": -17.5 },
+    "y": { "Center": -2.1209716796875 }
+  },
+  "Grab #transform #clickable #layout": {
+    "x": { "Center": 0 },
+    "y": { "Center": 1.3790283203125 }
+  },
+  "Ellipse 4": { "x": { "Center": -15 }, "y": { "Center": -7.5 } },
+  "Ellipse 5": { "x": { "Center": 0 }, "y": { "Center": -7.5 } },
+  "Ellipse 6": { "x": { "Center": 15 }, "y": { "Center": -7.5 } },
+  "Ellipse 7": { "x": { "Center": 15 }, "y": { "Center": 7.5 } },
+  "Ellipse 8": { "x": { "Center": 0 }, "y": { "Center": 7.5 } },
+  "Ellipse 9": { "x": { "Center": -15 }, "y": { "Center": 7.5 } },
+  "Rectangle": { "x": "Scale", "y": "Scale" }
+}
