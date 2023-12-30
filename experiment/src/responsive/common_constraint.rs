@@ -79,7 +79,7 @@ impl CommonConstraint {
                 ));
                 compose_translation(start) * parent_edge_left * fill_partial * left_align
             }
-            CommonConstraint::Scale => fill * center,
+            CommonConstraint::Scale => parent_center * fill * center,
         }
     }
 }

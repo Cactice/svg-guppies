@@ -18,13 +18,13 @@ pub fn main() {
         None,
     );
 
-    // let list = use_svg(
-    //     include_str!("../V2.svg").to_string(),
-    //     |node, mut pass_down| {
-    //         layout_machine.add_node(&node, &mut pass_down);
-    //     },
-    //     Some("ListItem".to_string()),
-    // );
+    let list = use_svg(
+        include_str!("../V2.svg").to_string(),
+        |node, mut pass_down| {
+            layout_machine.add_node(&node, &mut pass_down);
+        },
+        Some("ListItem".to_string()),
+    );
 
     let mut guppy = Guppy::new([GpuRedraw::default()]);
 
@@ -34,7 +34,7 @@ pub fn main() {
         gpu_redraws[0].update_triangles(
             svg_set
                 .get_combined_geometries()
-                // .extend(&list.get_combined_geometries())
+                .extend(&list.get_combined_geometries())
                 .triangles,
             0,
         );
