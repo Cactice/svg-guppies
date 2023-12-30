@@ -2,7 +2,6 @@ use super::constraint::Constraint;
 use super::layout_machine::ConstraintMap;
 use guppies::glam::Mat4;
 use guppies::winit::dpi::PhysicalSize;
-use html_escape::decode_html_entities;
 use regex::Regex;
 use salvage::usvg::{self};
 use salvage::usvg::{NodeExt, PathBbox};
@@ -23,15 +22,8 @@ impl Layout {
     }
     pub fn new(node: &usvg::Node, constraint_map: &ConstraintMap) -> Self {
         let id = node.id();
-        let re = Regex::new(r"#layout (.+)").unwrap();
-        // let json = &re.captures(&id).unwrap()[1];
-        // let json = decode_html_entities(json).to_string();
-        // let constraint = serde_json::from_str::<Constraint>(&json).unwrap();
 
-        dbg!(&id);
         let constraint = constraint_map.0.get(&id.to_string()).unwrap().clone();
-
-        // let constraint = serde_json::from_str::<Constraint>(&json).unwrap();
 
         let bbox_mat4 = bbox_to_mat4(
             node.calculate_bbox()

@@ -66,19 +66,20 @@ impl LayoutMachine {
         self.layouts
             .iter()
             .map(|parents| {
-                parents
-                    .iter()
-                    .fold(
-                        (Mat4::IDENTITY, self.get_display_bbox()),
-                        |(_parent_result, parent_bbox), layout| {
-                            let layout_result = layout.to_mat4(self.display_mat4, parent_bbox);
-                            (
-                                Mat4::from_scale([2., -2., 1.].into()) * layout_result,
-                                self.display_mat4 * layout_result * layout.bbox,
-                            )
-                        },
-                    )
-                    .0
+                Mat4::from_scale([2., -2., 1.].into())
+                    * parents
+                        .iter()
+                        .fold(
+                            (Mat4::IDENTITY, self.get_display_bbox()),
+                            |(_parent_result, parent_bbox), layout| {
+                                let layout_result = layout.to_mat4(self.display_mat4, parent_bbox);
+                                (
+                                    layout_result,
+                                    self.display_mat4 * layout_result * layout.bbox,
+                                )
+                            },
+                        )
+                        .0
             })
             .collect()
     }

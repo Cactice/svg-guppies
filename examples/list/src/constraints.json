@@ -1,39 +1,53 @@
 {
-  "VerticalMenuBar #transform": {
+  "VerticalMenuBar #transform #layout": {
     "x": { "Right": -248 },
     "y": { "TopAndBottom": { "top": 158, "bottom": 0.09423828125 } }
   },
-  "Ellipse 4": { "x": { "Center": 0 }, "y": { "Center": 0 } },
-  "Ellipse 5": { "x": { "Center": 15 }, "y": { "Center": 0 } },
-  "Ellipse 6": { "x": { "Center": 30 }, "y": { "Center": 0 } },
-  "Ellipse 7": { "x": { "Center": 30 }, "y": { "Center": 15 } },
-  "Ellipse 8": { "x": { "Center": 15 }, "y": { "Center": 15 } },
-  "Ellipse 9": { "x": { "Center": 0 }, "y": { "Center": 15 } },
+  "Grab #transform #layout": {
+    "x": { "Center": 1 },
+    "y": { "Center": 0.547119140625 }
+  },
+  "Ellipse 4": { "x": { "Center": -15 }, "y": { "Center": -7.5 } },
+  "Ellipse 5": { "x": { "Center": 0 }, "y": { "Center": -7.5 } },
+  "Ellipse 6": { "x": { "Center": 15 }, "y": { "Center": -7.5 } },
+  "Ellipse 7": { "x": { "Center": 15 }, "y": { "Center": 7.5 } },
+  "Ellipse 8": { "x": { "Center": 0 }, "y": { "Center": 7.5 } },
+  "Ellipse 9": { "x": { "Center": -15 }, "y": { "Center": 7.5 } },
   "Rectangle": { "x": "Scale", "y": "Scale" },
   "MenuBar #transform #layout": { "x": "Scale", "y": { "Top": 118 } },
-  "Vector": { "x": { "Right": -24.5 }, "y": { "Center": 0 } },
-  "ListItem2 #transform #layout {\"x\":{\"Left\":0.0},\"y\":{\"Top\":100.0}}": {
-    "x": { "LeftAndRight": { "left": 0, "right": 0 } },
-    "y": { "Top": 72.8955078125 }
+  "Menu #transform #clickable #layout": {
+    "x": { "Left": 14 },
+    "y": { "Center": 0.7432861328125 }
   },
+  "Group": { "x": { "Right": 0 }, "y": { "Center": 0 } },
+  "Vector": { "x": { "Right": -24.5 }, "y": { "Center": -3.5 } },
+  "Undo #transform #clickable #layout": {
+    "x": { "Right": -17.5 },
+    "y": { "Center": -2.1209716796875 }
+  },
+  "Grab #transform #clickable #layout": {
+    "x": { "Center": -0.5 },
+    "y": { "Center": 1.3790283203125 }
+  },
+  "Left #transform #layout": {
+    "x": { "LeftAndRight": { "left": 0, "right": -300 } },
+    "y": { "Top": 171 }
+  },
+  "#list": { "x": { "Right": 0 }, "y": "Scale" },
+  "ListItem2": { "x": { "Right": 0 }, "y": "Scale" },
   "word #dynamicText": { "x": "Scale", "y": "Scale" },
+  "Group 2": { "x": { "Right": -16.5 }, "y": "Scale" },
   "Vector 10": { "x": { "Right": -0.5 }, "y": "Scale" },
   "Vector 11": { "x": { "Right": 0 }, "y": "Scale" },
-  "ListItem #transform #layout {\"x\":{\"Left\":0.0},\"y\":{\"Center\":30.0}}": {
-    "x": { "LeftAndRight": { "left": 0, "right": 0 } },
-    "y": { "Top": 0 }
-  },
-  "MenuBar  #transform #layout {\"x\":\"Scale\",\"y\":{\"Center\":0.0}}": {
+  "ListItem": { "x": { "Right": 0 }, "y": "Scale" },
+  "MenuBar": {
     "x": { "LeftAndRight": { "left": 0, "right": 0 } },
     "y": { "Top": 0 }
   },
   "Rectangle ": { "x": "Scale", "y": "Scale" },
-  "Vector #transform  #layout {\"x\":{\"Right\":-50.0},\"y\":{\"Center\":0.0}}": {
+  "Vector #transform  #layout": {
     "x": { "Right": -13 },
-    "y": { "Center": 14 }
+    "y": { "Center": -0.6044921875 }
   },
-  "[ ]  #transform  #layout {\"x\":{\"Left\":0.0},\"y\":{\"Top\":100.0}}": {
-    "x": { "Left": 6 },
-    "y": "Scale"
-  }
+  "[ ]  #transform  #layout": { "x": { "Left": 6 }, "y": "Scale" }
 }

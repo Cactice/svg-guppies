@@ -45,9 +45,11 @@ impl CommonConstraint {
         accessor: F,
         composer: G,
     ) -> Mat4 {
+        let compose_translation = |number| Mat4::from_translation(composer(number, 0.));
+        let access_scale = |mat4: Mat4| accessor(mat4.to_scale_rotation_translation().0);
+
         let fill = Mat4::from_scale(composer(
-            accessor(parent_bbox.to_scale_rotation_translation().0)
-                / accessor(bbox.to_scale_rotation_translation().0),
+            access_scale(parent_bbox) / access_scale(bbox),
             1.0,
         ));
 
@@ -62,16 +64,23 @@ impl CommonConstraint {
 
         match self {
             CommonConstraint::Start(left) => {
-                parent_edge_left * left_align * Mat4::from_translation(composer(left, 0.))
+                parent_edge_left * left_align * compose_translation(left)
             }
             CommonConstraint::End(right) => {
-                parent_edge_right * right_align * Mat4::from_translation(composer(right, 0.))
+                parent_edge_right * right_align * compose_translation(right)
             }
             CommonConstraint::Center(rightward_from_center) => {
-                parent_center * center * Mat4::from_translation(composer(rightward_from_center, 0.))
+                parent_center * center * compose_translation(rightward_from_center)
             }
             CommonConstraint::StartAndEnd { start, end } => {
-                todo!();
+                let offset = compose_translation(start + end);
+
+                dbg!(access_scale(parent_bbox), (start - end));
+                let fill_partial = Mat4::from_scale(composer(
+                    (access_scale(parent_bbox) - (start - end)) / access_scale(bbox),
+                    1.0,
+                ));
+                fill_partial
             }
             CommonConstraint::Scale => fill * center,
         }

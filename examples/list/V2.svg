@@ -1,0 +1,141 @@
+<svg width="918" height="736" viewBox="0 0 918 736" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g id="V2" filter="url(#filter0_d_3195_858)">
+    <g clip-path="url(#clip0_3195_858)">
+      <rect x="4" width="910" height="728" fill="#F9F8F4" />
+      <g id="VerticalMenuBar #transform #layout">
+        <rect x="614" y="728.094" width="570.094" height="52" transform="rotate(-90 614 728.094)" fill="#F9F8F4" />
+        <g id="Grab #transform #layout">
+          <circle id="Ellipse 4" cx="633.5" cy="458.594" r="4.5" transform="rotate(-90 633.5 458.594)" fill="#17395C" />
+          <circle id="Ellipse 5" cx="633.5" cy="443.594" r="4.5" transform="rotate(-90 633.5 443.594)" fill="#17395C" />
+          <circle id="Ellipse 6" cx="633.5" cy="428.594" r="4.5" transform="rotate(-90 633.5 428.594)" fill="#17395C" />
+          <circle id="Ellipse 7" cx="648.5" cy="428.594" r="4.5" transform="rotate(-90 648.5 428.594)" fill="#17395C" />
+          <circle id="Ellipse 8" cx="648.5" cy="443.594" r="4.5" transform="rotate(-90 648.5 443.594)" fill="#17395C" />
+          <circle id="Ellipse 9" cx="648.5" cy="458.594" r="4.5" transform="rotate(-90 648.5 458.594)" fill="#17395C" />
+        </g>
+        <g id="Rectangle">
+          <mask id="path-10-inside-1_3195_858" fill="white">
+            <path d="M614 728.094V158H666V728.094H614Z" />
+          </mask>
+          <path d="M618 728.094V158H610V728.094H618ZM662 158V728.094H670V158H662Z" fill="#17395C"
+            mask="url(#path-10-inside-1_3195_858)" />
+        </g>
+      </g>
+      <g id="MenuBar #transform #layout">
+        <rect width="910" height="53.242" transform="translate(4 118)" fill="#F9F8F4" />
+        <g id="Menu #transform #clickable #layout">
+          <g id="Group">
+            <path id="Vector" d="M18 135H47.02" stroke="#17395C" stroke-width="4.14571" stroke-linecap="round"
+              stroke-linejoin="round" />
+            <path id="Vector_2" d="M18 145.364H47.02" stroke="#17395C" stroke-width="4.14571" stroke-linecap="round"
+              stroke-linejoin="round" />
+            <path id="Vector_3" d="M18 155.729H47.02" stroke="#17395C" stroke-width="4.14571" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </g>
+        </g>
+        <g id="Undo #transform #clickable #layout">
+          <g id="Group_2">
+            <path id="Vector_4"
+              d="M866.75 139H889.5C893.366 139 896.5 142.134 896.5 146C896.5 149.866 893.366 153 889.5 153H880.75"
+              stroke="#17395C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+            <path id="Vector_5" d="M872 132L865 139L872 146" stroke="#17395C" stroke-width="4" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </g>
+        </g>
+        <g id="Grab #transform #clickable #layout">
+          <circle id="Ellipse 4_2" cx="443.5" cy="138.5" r="4.5" fill="#17395C" />
+          <circle id="Ellipse 5_2" cx="458.5" cy="138.5" r="4.5" fill="#17395C" />
+          <circle id="Ellipse 6_2" cx="473.5" cy="138.5" r="4.5" fill="#17395C" />
+          <circle id="Ellipse 7_2" cx="473.5" cy="153.5" r="4.5" fill="#17395C" />
+          <circle id="Ellipse 8_2" cx="458.5" cy="153.5" r="4.5" fill="#17395C" />
+          <circle id="Ellipse 9_2" cx="443.5" cy="153.5" r="4.5" fill="#17395C" />
+        </g>
+        <g id="Rectangle_2">
+          <mask id="path-23-inside-2_3195_858" fill="white">
+            <path d="M4 118H914V171.242H4V118Z" />
+          </mask>
+          <path d="M4 122H914V114H4V122ZM914 167.242H4V175.242H914V167.242Z" fill="#17395C"
+            mask="url(#path-23-inside-2_3195_858)" />
+        </g>
+      </g>
+      <g id="Left #transform #layout">
+        <g id="#component">
+          <g id="ListItem2">
+            <rect width="610" height="72.8955" transform="translate(4 296.104)" fill="#F9F8F4" />
+            <g id="Rectangle_3">
+              <mask id="path-25-inside-3_3195_858" fill="white">
+                <path d="M4 296.104H614V369H4V296.104Z" />
+              </mask>
+              <path d="M4 298.104H614V294.104H4V298.104ZM614 367H4V371H614V367Z" fill="#17395C"
+                mask="url(#path-25-inside-3_3195_858)" />
+            </g>
+            <text id="word #dynamicText" fill="#17395C" xml:space="preserve" style="white-space: pre"
+              font-family="Alata" font-size="32" letter-spacing="1.25px">
+              <tspan x="56.0996" y="345.672">swap</tspan>
+            </text>
+            <g id="Group 2">
+              <path id="Vector 10" d="M539.5 326.642H597" stroke="#17395C" stroke-width="3" />
+              <path id="Vector 11"
+                d="M540.5 326.642C569 326.642 569.5 327.134 570 338.463C570 348.313 588.333 349.134 597.5 348.313"
+                stroke="#17395C" stroke-width="3" />
+            </g>
+          </g>
+          <g id="ListItem">
+            <rect width="610" height="72.8955" transform="translate(4 223.209)" fill="#F9F8F4" />
+            <g id="Rectangle_4">
+              <mask id="path-30-inside-4_3195_858" fill="white">
+                <path d="M4 223.209H614V296.105H4V223.209Z" />
+              </mask>
+              <path d="M4 225.209H614V221.209H4V225.209ZM614 294.105H4V298.105H614V294.105Z" fill="#17395C"
+                mask="url(#path-30-inside-4_3195_858)" />
+            </g>
+            <text id="word #dynamicText_2" fill="#17395C" xml:space="preserve" style="white-space: pre"
+              font-family="Alata" font-size="32" letter-spacing="1.25px">
+              <tspan x="56.0996" y="272.777">dup</tspan>
+            </text>
+            <g id="Group 2_2">
+              <path id="Vector 10_2" d="M539.5 253.746H597" stroke="#17395C" stroke-width="3" />
+              <path id="Vector 11_2"
+                d="M540.5 253.746C569 253.746 569.5 254.239 570 265.567C570 275.418 588.333 276.239 597.5 275.418"
+                stroke="#17395C" stroke-width="3" />
+            </g>
+          </g>
+        </g>
+        <g id="MenuBar">
+          <rect width="610" height="52.209" transform="translate(4 171)" fill="#F9F8F4" />
+          <g id="Rectangle ">
+            <mask id="path-35-inside-5_3195_858" fill="white">
+              <path d="M4 171H614V223.209H4V171Z" />
+            </mask>
+            <path d="M4 173H614V169H4V173ZM614 221.209H4V225.209H614V221.209Z" fill="#17395C"
+              mask="url(#path-35-inside-5_3195_858)" />
+          </g>
+          <path id="Vector #transform  #layout"
+            d="M598.417 185H579.042C578.15 185 577.453 185.447 576.988 186.124L570 196.5L576.988 206.863C577.453 207.54 578.15 208 579.042 208H598.417C599.837 208 601 206.85 601 205.444V187.556C601 186.15 599.837 185 598.417 185ZM598.417 205.444H579.132L573.1 196.5L579.119 187.556H598.417V205.444ZM583.446 202.889L588.083 198.302L592.72 202.889C593.996 202.702 594.421 202.323 594.542 201.087L589.905 196.5L594.542 191.913C594.191 190.808 593.794 190.432 592.72 190.111L588.083 194.698L583.446 190.111C582.378 190.323 581.959 190.701 581.625 191.913L586.262 196.5L581.625 201.087C581.906 202.242 582.248 202.635 583.446 202.889Z"
+            fill="#17395C" />
+          <text id="[ ]  #transform  #layout" fill="#17395C" xml:space="preserve" style="white-space: pre"
+            font-family="Alata" font-size="16" letter-spacing="1.25px">
+            <tspan x="12.4453" y="204.157">[ ]</tspan>
+          </text>
+        </g>
+      </g>
+    </g>
+    <rect x="4.5" y="0.5" width="909" height="727" stroke="black" />
+  </g>
+  <defs>
+    <filter id="filter0_d_3195_858" x="0" y="0" width="918" height="736" filterUnits="userSpaceOnUse"
+      color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix" />
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+        result="hardAlpha" />
+      <feOffset dy="4" />
+      <feGaussianBlur stdDeviation="2" />
+      <feComposite in2="hardAlpha" operator="out" />
+      <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_3195_858" />
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_3195_858" result="shape" />
+    </filter>
+    <clipPath id="clip0_3195_858">
+      <rect x="4" width="910" height="728" fill="white" />
+    </clipPath>
+  </defs>
+</svg>

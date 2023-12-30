@@ -11,7 +11,7 @@ pub fn main() {
     layout_machine.constraint_map = serde_json::from_str::<ConstraintMap>(json).unwrap();
 
     let svg_set = use_svg(
-        include_str!("../Left.svg").to_string(),
+        include_str!("../V2.svg").to_string(),
         |node, mut pass_down| {
             layout_machine.add_node(&node, &mut pass_down);
         },
@@ -19,7 +19,7 @@ pub fn main() {
     );
 
     // let list = use_svg(
-    //     include_str!("../Left.svg").to_string(),
+    //     include_str!("../V2.svg").to_string(),
     //     |node, mut pass_down| {
     //         layout_machine.add_node(&node, &mut pass_down);
     //     },
@@ -32,9 +32,10 @@ pub fn main() {
         layout_machine.event_handler(event);
         gpu_redraws[0].update_texture([cast_slice(&layout_machine.transforms[..])].concat());
         gpu_redraws[0].update_triangles(
-            svg_set.get_combined_geometries().triangles,
-            // .extend(&list.get_combined_geometries())
-            // .triangles,
+            svg_set
+                .get_combined_geometries()
+                // .extend(&list.get_combined_geometries())
+                .triangles,
             0,
         );
     });

@@ -8,7 +8,7 @@ use mobile_entry_point::mobile_entry_point;
 pub fn main() {
     let mut layout_machine = LayoutMachine::default();
     let json = include_str!("constraints.json");
-    // layout_machine.constraint_map = serde_json::from_str::<ConstraintMap>(json).unwrap();
+    layout_machine.constraint_map = serde_json::from_str::<ConstraintMap>(json).unwrap();
 
     let svg_set = use_svg(
         include_str!("../MenuBar.svg").to_string(),

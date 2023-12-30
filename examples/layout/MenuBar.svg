@@ -1,7 +1,7 @@
 <svg width="613" height="52" viewBox="0 0 613 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <g id="MenuBar #transform #layout {&#34;x&#34;:&#34;Scale&#34;,&#34;y&#34;:{&#34;Center&#34;:100.0}}">
+  <g id="MenuBar #transform #layout">
     <rect width="613" height="52" fill="#F9F8F4" />
-    <g id="Menu #transform #clickable #layout {&#34;x&#34;:{&#34;Left&#34;:15.0},&#34;y&#34;:{&#34;Center&#34;:0.0}}">
+    <g id="Menu #transform #clickable #layout">
       <g id="Group">
         <path id="Vector" d="M14 16H43.02" stroke="#17395C" stroke-width="4.14571" stroke-linecap="round"
           stroke-linejoin="round" />
@@ -11,7 +11,7 @@
           stroke-linejoin="round" />
       </g>
     </g>
-    <g id="Undo #transform #clickable #layout {&#34;x&#34;:{&#34;Right&#34;:-15.0},&#34;y&#34;:{&#34;Center&#34;:0.0}}">
+    <g id="Undo #transform #clickable #layout">
       <g id="Group_2">
         <path id="Vector_4"
           d="M565.75 20H588.5C592.366 20 595.5 23.1341 595.5 27C595.5 30.866 592.366 34 588.5 34H579.75"
@@ -20,7 +20,7 @@
           stroke-linejoin="round" />
       </g>
     </g>
-    <g id="Grab #transform #clickable #layout {&#34;x&#34;:{&#34;Center&#34;:0.0},&#34;y&#34;:{&#34;Center&#34;:0.0}}">
+    <g id="Grab #transform #clickable #layout">
       <circle id="Ellipse 4" cx="291.5" cy="19.5" r="4.5" fill="#17395C" />
       <circle id="Ellipse 5" cx="306.5" cy="19.5" r="4.5" fill="#17395C" />
       <circle id="Ellipse 6" cx="321.5" cy="19.5" r="4.5" fill="#17395C" />

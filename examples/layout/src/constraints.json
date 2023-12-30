@@ -1,39 +1,24 @@
 {
-  "VerticalMenuBar #transform": {
-    "x": { "Right": -248 },
-    "y": { "TopAndBottom": { "top": 158, "bottom": 0.09423828125 } }
+  "Menu #transform #clickable #layout": {
+    "x": { "Left": 14 },
+    "y": { "Center": 0.7432861328125 }
   },
-  "Ellipse 4": { "x": { "Center": 0 }, "y": { "Center": 0 } },
-  "Ellipse 5": { "x": { "Center": 15 }, "y": { "Center": 0 } },
-  "Ellipse 6": { "x": { "Center": 30 }, "y": { "Center": 0 } },
-  "Ellipse 7": { "x": { "Center": 30 }, "y": { "Center": 15 } },
-  "Ellipse 8": { "x": { "Center": 15 }, "y": { "Center": 15 } },
-  "Ellipse 9": { "x": { "Center": 0 }, "y": { "Center": 15 } },
-  "Rectangle": { "x": "Scale", "y": "Scale" },
   "MenuBar #transform #layout": { "x": "Scale", "y": { "Top": 118 } },
-  "Vector": { "x": { "Right": -24.5 }, "y": { "Center": 0 } },
-  "ListItem2 #transform #layout {\"x\":{\"Left\":0.0},\"y\":{\"Top\":100.0}}": {
-    "x": { "LeftAndRight": { "left": 0, "right": 0 } },
-    "y": { "Top": 72.8955078125 }
+  "Group": { "x": { "Right": 0 }, "y": { "Center": 0 } },
+  "Vector": { "x": { "Right": -24.5 }, "y": { "Center": -3.5 } },
+  "Undo #transform #clickable #layout": {
+    "x": { "Right": -17.5 },
+    "y": { "Center": -2.1209716796875 }
   },
-  "word #dynamicText": { "x": "Scale", "y": "Scale" },
-  "Vector 10": { "x": { "Right": -0.5 }, "y": "Scale" },
-  "Vector 11": { "x": { "Right": 0 }, "y": "Scale" },
-  "ListItem #transform #layout {\"x\":{\"Left\":0.0},\"y\":{\"Center\":30.0}}": {
-    "x": { "LeftAndRight": { "left": 0, "right": 0 } },
-    "y": { "Top": 0 }
+  "Grab #transform #clickable #layout": {
+    "x": { "Center": 0 },
+    "y": { "Center": 1.3790283203125 }
   },
-  "MenuBar  #transform #layout {\"x\":\"Scale\",\"y\":{\"Center\":0.0}}": {
-    "x": { "LeftAndRight": { "left": 0, "right": 0 } },
-    "y": { "Top": 0 }
-  },
-  "Rectangle ": { "x": "Scale", "y": "Scale" },
-  "Vector #transform  #layout {\"x\":{\"Right\":-50.0},\"y\":{\"Center\":0.0}}": {
-    "x": { "Right": -13 },
-    "y": { "Center": 14 }
-  },
-  "[ ]  #transform  #layout {\"x\":{\"Left\":0.0},\"y\":{\"Top\":100.0}}": {
-    "x": { "Left": 6 },
-    "y": "Scale"
-  }
+  "Ellipse 4": { "x": { "Center": -15 }, "y": { "Center": -7.5 } },
+  "Ellipse 5": { "x": { "Center": 0 }, "y": { "Center": -7.5 } },
+  "Ellipse 6": { "x": { "Center": 15 }, "y": { "Center": -7.5 } },
+  "Ellipse 7": { "x": { "Center": 15 }, "y": { "Center": 7.5 } },
+  "Ellipse 8": { "x": { "Center": 0 }, "y": { "Center": 7.5 } },
+  "Ellipse 9": { "x": { "Center": -15 }, "y": { "Center": 7.5 } },
+  "Rectangle": { "x": "Scale", "y": "Scale" }
 }
