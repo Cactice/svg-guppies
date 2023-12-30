@@ -29,8 +29,8 @@ impl From<YConstraint> for CommonConstraint {
             YConstraint::Top(top) => CommonConstraint::Start(top),
             YConstraint::Bottom(bottom) => CommonConstraint::End(bottom),
             YConstraint::TopAndBottom { top, bottom } => CommonConstraint::StartAndEnd {
-                start: bottom,
-                end: top,
+                start: top,
+                end: bottom,
             },
             YConstraint::Center(y) => CommonConstraint::Center(y),
             YConstraint::Scale => CommonConstraint::Scale,
@@ -73,14 +73,11 @@ impl CommonConstraint {
                 parent_center * center * compose_translation(rightward_from_center)
             }
             CommonConstraint::StartAndEnd { start, end } => {
-                let offset = compose_translation(start + end);
-
-                dbg!(access_scale(parent_bbox), (start - end));
                 let fill_partial = Mat4::from_scale(composer(
                     (access_scale(parent_bbox) - (start - end)) / access_scale(bbox),
                     1.0,
                 ));
-                fill_partial
+                compose_translation(start) * parent_edge_left * fill_partial * left_align
             }
             CommonConstraint::Scale => fill * center,
         }
