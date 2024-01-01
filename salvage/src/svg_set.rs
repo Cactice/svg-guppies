@@ -1,8 +1,8 @@
 use crate::geometry::Geometry;
 use guppies::{glam::Vec2, primitives::Rect};
 use roxmltree::{Document, NodeId};
-use std::{collections::HashMap, fmt::Debug, rc::Rc, sync::Arc};
-use usvg::{fontdb::Source, Node, NodeExt, Options, Tree};
+use std::{collections::HashMap, fmt::Debug, sync::Arc};
+use usvg::{fontdb::Source, Node, Options, Tree};
 use xmlwriter::XmlWriter;
 
 fn recursive_svg<P: Clone + Debug, C: FnMut(Node, P) -> (Option<Geometry>, P)>(
@@ -42,7 +42,7 @@ pub struct SvgSet {
     pub id_to_geometry_index: HashMap<String, usize>,
     pub current_text_map: HashMap<String, String>,
     pub bbox: Rect,
-    usvg_options: Rc<Options>,
+    usvg_options: Arc<Options>,
 }
 
 impl SvgSet {
@@ -115,7 +115,7 @@ impl SvgSet {
             id_to_svg,
             id_to_geometry_index,
             bbox,
-            usvg_options: Rc::new(opt),
+            usvg_options: Arc::new(opt),
             ..Default::default()
         }
     }
