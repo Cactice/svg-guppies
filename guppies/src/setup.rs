@@ -303,7 +303,7 @@ fn get_uniform_buffer(
 }
 
 impl Redraw {
-    pub fn update_shader(&mut self, spirv_shader: &Vec<u8>, redraw_machine: &RedrawMachine) {
+    pub fn update_shader(&mut self, spirv_shader: &Vec<u32>, redraw_machine: &RedrawMachine) {
         let RedrawMachine {
             device,
             surface_format,
@@ -315,7 +315,7 @@ impl Redraw {
         });
         let custom_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: None,
-            source: make_spirv(&spirv_shader),
+            source: wgpu::ShaderSource::SpirV(Cow::Borrowed(spirv_shader)),
         });
 
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {

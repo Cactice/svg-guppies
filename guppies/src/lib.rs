@@ -49,11 +49,11 @@ fn init_window(event_loop: &EventLoopWindowTarget<()>) -> winit::window::Window 
 pub struct GpuRedraw<T: Pod + Zeroable + Debug + Clone + Default = Vertex> {
     texture: Vec<u8>,
     triangles: Triangles<T>,
-    shader: Option<Vec<u8>>,
+    shader: Option<Vec<u32>>,
 }
 
 impl GpuRedraw {
-    pub fn update_spirv_shader(&mut self, shader: Vec<u8>) {
+    pub fn update_spirv_shader(&mut self, shader: Vec<u32>) {
         self.shader = Some(shader);
     }
     pub fn update_texture(&mut self, textures: Vec<u8>) {
