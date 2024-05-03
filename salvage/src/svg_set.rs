@@ -77,7 +77,7 @@ impl SvgSet {
             .load_font_source(Source::Binary(Arc::new(font.as_ref())));
         opt.font_family = "Roboto Medium".to_string();
         opt.keep_named_groups = true;
-        let document = Document::parse(&xml).unwrap();
+        let document = roxmltree::Document::parse(&xml).unwrap();
         let opt = get_usvg_options();
         let tree = Tree::from_xmltree(&document, &opt.to_ref()).unwrap();
         let id_to_svg =

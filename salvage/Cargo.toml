@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-usvg = { git = "https://github.com/Cactice/resvg" }
+usvg = "0.41"
 guppies = { path = "../guppies" }
 lyon = "1.0.0"
-roxmltree = "0.14.1"
+roxmltree = "0.19.0"
 xmlwriter = "0.1.0"
