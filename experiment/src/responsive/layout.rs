@@ -2,7 +2,6 @@ use super::constraint::Constraint;
 use super::layout_machine::ConstraintMap;
 use guppies::glam::Mat4;
 use guppies::winit::dpi::PhysicalSize;
-use regex::Regex;
 use salvage::usvg::{self};
 use salvage::usvg::{NodeExt, PathBbox};
 

@@ -5,11 +5,12 @@ use crate::{
 use bytemuck::{Pod, Zeroable};
 use core::fmt::Debug;
 use glam::Mat4;
-use std::borrow::Cow;
+use std::{borrow::Cow, sync::Arc};
 use wgpu::{
     util::{make_spirv, DeviceExt},
-    BindGroup, Buffer, CommandEncoder, Device, Extent3d, PipelineLayout, RenderPipeline, Surface,
-    SurfaceConfiguration, SurfaceTexture, Texture, TextureFormat, TextureView,
+    BindGroup, Buffer, CommandEncoder, Device, Extent3d, PipelineCompilationOptions,
+    PipelineLayout, RenderPipeline, Surface, SurfaceConfiguration, SurfaceTexture, Texture,
+    TextureFormat, TextureView,
 };
 use winit::{dpi::PhysicalSize, window::Window};
 
@@ -31,10 +32,10 @@ pub struct Redraw {
     pub pipeline_layout: PipelineLayout,
 }
 
-pub struct RedrawMachine {
+pub struct RedrawMachine<'a> {
     pub queue: wgpu::Queue,
     pub device: Device,
-    pub surface: Surface,
+    pub surface: Surface<'a>,
     pub surface_format: TextureFormat,
     pub config: SurfaceConfiguration,
 }
@@ -43,7 +44,7 @@ pub struct Reframe {
     pub frame: SurfaceTexture,
     pub encoder: CommandEncoder,
 }
-impl RedrawMachine {
+impl<'a> RedrawMachine<'a> {
     pub fn redraw<Vert: Pod + Zeroable + Debug + Clone + Default>(
         &self,
         gpu_redraws: &mut [GpuRedraw<Vert>],
@@ -171,14 +172,12 @@ impl RedrawMachine {
         self.config.height = size.height;
         self.surface.configure(&self.device, &self.config);
     }
-    pub async fn new(window: &Window) -> Self {
+    pub async fn new(window: Arc<Window>) -> Self {
         let size = window.inner_size();
-        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::default());
-        let surface = unsafe {
-            instance
-                .create_surface(&window)
-                .expect("Surface creation failed")
-        };
+        let instance = wgpu::Instance::default();
+        let surface = instance
+            .create_surface(window)
+            .expect("Surface creation failed");
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 power_preference: wgpu::PowerPreference::default(),
@@ -195,9 +194,9 @@ impl RedrawMachine {
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: Some("SVG-GUI DeviceDescriptor"),
-                    features: wgpu::Features::empty(),
+                    required_features: wgpu::Features::empty(),
                     // Make sure we use the texture resolution limits from the adapter, so we can support images the size of the surface.
-                    limits: wgpu::Limits::downlevel_webgl2_defaults()
+                    required_limits: wgpu::Limits::downlevel_webgl2_defaults()
                         .using_resolution(adapter.limits()),
                 },
                 None,
@@ -206,6 +205,7 @@ impl RedrawMachine {
             .expect("Failed to create device");
 
         let config = wgpu::SurfaceConfiguration {
+            desired_maximum_frame_latency: 2,
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
             width: size.width,
@@ -322,6 +322,7 @@ impl Redraw {
             label: None,
             layout: Some(&self.pipeline_layout),
             vertex: wgpu::VertexState {
+                compilation_options:Default::default(),
                 module: &default_shader,
                 entry_point: "vs_main",
                 buffers: &[wgpu::VertexBufferLayout {
@@ -331,6 +332,7 @@ impl Redraw {
                 }],
             },
             fragment: Some(wgpu::FragmentState {
+                compilation_options:Default::default(),
                 module: &custom_shader,
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
@@ -386,6 +388,7 @@ impl Redraw {
         label: None,
         layout: Some(&pipeline_layout),
         vertex: wgpu::VertexState {
+            compilation_options:Default::default(),
             module: &shader,
             entry_point: "vs_main",
             buffers: &[wgpu::VertexBufferLayout {
@@ -395,6 +398,7 @@ impl Redraw {
             }],
         },
         fragment: Some(wgpu::FragmentState {
+            compilation_options:Default::default(),
             module: &shader,
             entry_point: "fs_main",
             targets: &[Some(wgpu::ColorTargetState {

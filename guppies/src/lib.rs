@@ -8,6 +8,7 @@ use primitives::{Triangles, Vertex};
 use setup::{Redraw, RedrawMachine};
 use std::array;
 use std::fmt::Debug;
+use std::sync::Arc;
 use std::time::Instant;
 pub use wgpu;
 pub use winit;
@@ -106,7 +107,7 @@ pub fn render_loop<const COUNT: usize, Vert>(
     let event_loop = EventLoop::new();
 
     // Type definition is required for android build
-    let mut window: Option<Window> = None;
+    let mut window: Option<Arc<Window>> = None;
     let mut gpu_redraw: Option<[GpuRedraw<Vert>; COUNT]> = None;
     let mut redraws: Option<[Redraw; COUNT]> = None;
     let mut redraw_machine: Option<RedrawMachine> = None;
@@ -147,9 +148,9 @@ pub fn render_loop<const COUNT: usize, Vert>(
                 #[cfg(not(target_os = "android"))]
                 Event::NewEvents(start_cause) => match start_cause {
                     winit::event::StartCause::Init => {
-                        let new_window = init_window(event_loop);
+                        let new_window = Arc::new(init_window(event_loop));
                         let new_redraw_machine =
-                            pollster::block_on(RedrawMachine::new(&new_window));
+                            pollster::block_on(RedrawMachine::new(new_window.clone()));
                         redraws = Some(array::from_fn(|i| {
                             Redraw::new(
                                 &new_redraw_machine,
@@ -163,18 +164,18 @@ pub fn render_loop<const COUNT: usize, Vert>(
                         window = Some(new_window);
 
                         // Below is necessary when running on mobile...
-                        let size = window.as_ref().unwrap().inner_size();
-                        if let Some(gpu_redraw) = gpu_redraw.as_mut() {
-                            render_loop_fn.iter_mut().for_each(|func| {
-                                func(
-                                    &Event::WindowEvent {
-                                        window_id: unsafe { WindowId::dummy() },
-                                        event: WindowEvent::Resized(size),
-                                    },
-                                    gpu_redraw,
-                                );
-                            });
-                        }
+                        // if let Some(gpu_redraw) = gpu_redraw.as_mut() {
+                        //     render_loop_fn.iter_mut().for_each(|func| {
+                        //         let size = window.as_ref().unwrap().inner_size();
+                        //         func(
+                        //             &Event::WindowEvent {
+                        //                 window_id: unsafe { WindowId::dummy() },
+                        //                 event: WindowEvent::Resized(size),
+                        //             },
+                        //             gpu_redraw,
+                        //         );
+                        //     });
+                        // }
                     }
                     _ => (),
                 },
