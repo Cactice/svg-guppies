@@ -164,18 +164,18 @@ pub fn render_loop<const COUNT: usize, Vert>(
                         window = Some(new_window);
 
                         // Below is necessary when running on mobile...
-                        // if let Some(gpu_redraw) = gpu_redraw.as_mut() {
-                        //     render_loop_fn.iter_mut().for_each(|func| {
-                        //         let size = window.as_ref().unwrap().inner_size();
-                        //         func(
-                        //             &Event::WindowEvent {
-                        //                 window_id: unsafe { WindowId::dummy() },
-                        //                 event: WindowEvent::Resized(size),
-                        //             },
-                        //             gpu_redraw,
-                        //         );
-                        //     });
-                        // }
+                        if let Some(gpu_redraw) = gpu_redraw.as_mut() {
+                            render_loop_fn.iter_mut().for_each(|func| {
+                                let size = window.as_ref().unwrap().inner_size();
+                                func(
+                                    &Event::WindowEvent {
+                                        window_id: unsafe { WindowId::dummy() },
+                                        event: WindowEvent::Resized(size),
+                                    },
+                                    gpu_redraw,
+                                );
+                            });
+                        }
                     }
                     _ => (),
                 },
