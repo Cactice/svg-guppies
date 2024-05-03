@@ -64,7 +64,7 @@ pub fn main() {
     let stops = Regex::new(r"^(\d+)\.((?:\+|-)\d+):").unwrap();
     let mut svg_set = use_svg(
         include_str!("../life.svg").to_string(),
-        |node, pass_down| {
+        |node, _pass_down| {
             let id = node.id();
             for captures in stops.captures_iter(&id) {
                 let stop: usize = captures[1].parse().unwrap();

@@ -147,10 +147,11 @@ impl ScrollState {
                     delta: MouseScrollDelta::PixelDelta(p),
                     ..
                 } => {
+                    let delta_y = (1. / (p.y as f32)) * 0.5;
                     if p.y != 0. {
-                        scroll_state.transform = Mat4::from_scale(
-                            [1. + (1. / (p.y as f32)), 1. + (1. / (p.y as f32)), 1_f32].into(),
-                        ) * scroll_state.transform;
+                        scroll_state.transform =
+                            Mat4::from_scale([1. + delta_y, 1. + delta_y, 1_f32].into())
+                                * scroll_state.transform;
                     }
                 }
                 _ => (),
