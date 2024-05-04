@@ -28,12 +28,13 @@ pub struct ConstraintMap(pub HashMap<String, Constraint>);
 
 #[derive(Debug, Clone, Default)]
 pub struct LayoutMachine {
-    pub layouts: Vec<Vec<Layout>>,
+    pub layouts: Vec<(String, Vec<Layout>)>,
     pub clickables: Vec<Clickable>,
     pub svg_mat4: Mat4,
     pub display_mat4: Mat4,
     pub scroll_state: ScrollState,
     pub transforms: Vec<Mat4>,
+    pub id_to_transform_index: HashMap<String, usize>,
     pub constraint_map: ConstraintMap,
 }
 
@@ -62,26 +63,38 @@ impl LayoutMachine {
     pub fn resize(&mut self, p: &PhysicalSize<u32>) {
         self.display_mat4 = Mat4::from_scale([0.5, 0.5, 1.].into()) * size_to_mat4(*p);
     }
+    pub fn resize_to_box(&mut self, mat4: Mat4) {
+        self.display_mat4 = Mat4::from_scale([0.5, 0.5, 1.].into()) * mat4;
+    }
+    pub fn get_transform_for(&self, element_name: String) -> Option<Mat4> {
+        self.layouts
+            .iter()
+            .filter(|e| e.0 == element_name)
+            .map(|e| self.calculate_layout(&e.1))
+            .next()
+    }
     pub fn get_transforms(&self) -> Vec<Mat4> {
         self.layouts
             .iter()
-            .map(|parents| {
-                Mat4::from_scale([2., -2., 1.].into())
-                    * parents
-                        .iter()
-                        .fold(
-                            (Mat4::IDENTITY, self.get_display_bbox()),
-                            |(_parent_result, parent_bbox), layout| {
-                                let layout_result = layout.to_mat4(self.display_mat4, parent_bbox);
-                                (
-                                    layout_result,
-                                    self.display_mat4 * layout_result * layout.bbox,
-                                )
-                            },
-                        )
-                        .0
-            })
+            .map(|parents| self.calculate_layout(&parents.1))
             .collect()
+    }
+
+    fn calculate_layout(&self, parents: &Vec<Layout>) -> Mat4 {
+        Mat4::from_scale([2., -2., 1.].into())
+            * parents
+                .iter()
+                .fold(
+                    (Mat4::IDENTITY, self.get_display_bbox()),
+                    |(_parent_result, parent_bbox), layout| {
+                        let layout_result = layout.to_mat4(self.display_mat4, parent_bbox);
+                        (
+                            layout_result,
+                            self.display_mat4 * layout_result * layout.bbox,
+                        )
+                    },
+                )
+                .0
     }
     fn get_display_bbox(&self) -> Mat4 {
         let (scale, rot, _trans) = self.display_mat4.to_scale_rotation_translation();
@@ -118,7 +131,8 @@ impl LayoutMachine {
         if layout_regex.is_match(id) {
             let layout = Layout::new(&node, &self.constraint_map);
             pass_down.parent_layouts.push(layout);
-            self.layouts.push(pass_down.parent_layouts.clone());
+            self.layouts
+                .push((node.id().to_owned(), pass_down.parent_layouts.clone()));
             if clickable_regex.is_match(&id) {
                 let clickable = Clickable {
                     bbox: ClickableBbox::Layout(layout),
