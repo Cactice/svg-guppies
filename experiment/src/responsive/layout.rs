@@ -22,7 +22,11 @@ impl Layout {
     pub fn new(node: &usvg::Node, constraint_map: &ConstraintMap) -> Self {
         let id = node.id();
 
-        let constraint = constraint_map.0.get(&id.to_string()).unwrap().clone();
+        let constraint = constraint_map
+            .0
+            .get(&id.to_string())
+            .expect(&(id.to_string() + "not in constraints.json"))
+            .clone();
 
         let bbox_mat4 = bbox_to_mat4(
             node.calculate_bbox()

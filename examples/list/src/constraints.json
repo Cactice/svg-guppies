@@ -5,7 +5,7 @@
     },
     "y": {
       "TopAndBottom": {
-        "top": 158,
+        "top": 158.00006103515625,
         "bottom": 0.09423828125
       }
     }
@@ -15,7 +15,7 @@
       "Center": 1
     },
     "y": {
-      "Center": 0.047119140625
+      "Center": 0.047088623046875
     }
   },
   "Ellipse 4": {
@@ -81,7 +81,7 @@
       "Left": 14
     },
     "y": {
-      "Center": 0.7432861328125
+      "Center": 0.7432937622070312
     }
   },
   "Group": {
@@ -94,18 +94,18 @@
   },
   "Vector": {
     "x": {
-      "Right": -24.5
+      "Right": -24.499998092651367
     },
     "y": {
-      "Center": -3.5
+      "Center": -3.500019073486328
     }
   },
   "Undo #transform #clickable #layout": {
     "x": {
-      "Right": -17.5
+      "Right": -17.500001907348633
     },
     "y": {
-      "Center": -2.1209716796875
+      "Center": -2.120960235595703
     }
   },
   "Grab #transform #clickable #layout": {
@@ -113,7 +113,7 @@
       "Center": -0.5
     },
     "y": {
-      "Center": 1.3790283203125
+      "Center": 1.3790206909179688
     }
   },
   "Left #transform #layout": {
@@ -127,45 +127,48 @@
       "Top": 171
     }
   },
-  "#component": {
+  "ListItem #transform #layout": {
     "x": {
-      "Right": 0
+      "LeftAndRight": {
+        "left": 0,
+        "right": 0
+      }
     },
-    "y": "Scale"
+    "y": {
+      "Top": 52.208984375
+    }
   },
-  "ListItem2": {
+  "word #dynamicText #transform #layout": {
     "x": {
-      "Right": 0
+      "Left": 27.07470703125
     },
-    "y": "Scale"
+    "y": {
+      "Center": -0.44776153564453125
+    }
   },
-  "word #dynamicText": {
-    "x": "Scale",
-    "y": "Scale"
-  },
-  "Group 2": {
+  "Icon Group  #transform #layout": {
     "x": {
       "Right": -16.5
     },
-    "y": "Scale"
+    "y": {
+      "Center": 4.674380302429199
+    }
   },
   "Vector 10": {
     "x": {
       "Right": -0.5
     },
-    "y": "Scale"
+    "y": {
+      "Center": -11.12214183807373
+    }
   },
   "Vector 11": {
     "x": {
       "Right": 0
     },
-    "y": "Scale"
-  },
-  "ListItem": {
-    "x": {
-      "Right": 0
-    },
-    "y": "Scale"
+    "y": {
+      "Center": 0
+    }
   },
   "MenuBar2 #transform #layout": {
     "x": {
@@ -187,7 +190,7 @@
       "Right": -13
     },
     "y": {
-      "Center": -0.6044921875
+      "Center": -0.6044769287109375
     }
   },
   "[ ]  #transform  #layout": {
@@ -195,7 +198,7 @@
       "Left": 6
     },
     "y": {
-      "Center": 0.4925537109375
+      "Center": 0.4925556182861328
     }
   }
 }
