@@ -45,7 +45,7 @@
       </g>
       <g id="VerticalMenuBar #transform #layout">
         <rect x="402" y="609.094" width="451.094" height="52" transform="rotate(-90 402 609.094)" fill="#F9F8F4" />
-        <g id="VerticalGrab #transform #layout">
+        <g id="VerticalGrab #transform #layout #clickable">
           <circle id="Ellipse 4" cx="421.5" cy="398.594" r="4.5" transform="rotate(-90 421.5 398.594)" fill="#17395C" />
           <circle id="Ellipse 5" cx="421.5" cy="383.594" r="4.5" transform="rotate(-90 421.5 383.594)" fill="#17395C" />
           <circle id="Ellipse 6" cx="421.5" cy="368.594" r="4.5" transform="rotate(-90 421.5 368.594)" fill="#17395C" />

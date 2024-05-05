@@ -77,13 +77,14 @@ pub fn get_default_init_callback(
             true => true,
             false => include_matched,
         };
-        let transform_id = match default_matches.matched(transform_regex_pattern.index) {
-            true => {
-                transform_count += 1;
-                transform_count
-            }
-            false => parent_transform_id,
-        };
+        let transform_id =
+            match default_matches.matched(transform_regex_pattern.index) && is_include {
+                true => {
+                    transform_count += 1;
+                    transform_count
+                }
+                false => parent_transform_id,
+            };
         let geometry = match is_include {
             true => match *node.borrow() {
                 usvg::NodeKind::Path(ref p) => Some(Geometry::new(p, transform_id)),

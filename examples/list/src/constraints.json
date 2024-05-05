@@ -10,7 +10,7 @@
       }
     }
   },
-  "VerticalGrab #transform #layout": {
+  "VerticalGrab #transform #layout #clickable": {
     "x": {
       "Center": 1
     },

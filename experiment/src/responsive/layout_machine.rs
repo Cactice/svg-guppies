@@ -55,7 +55,8 @@ impl LayoutMachine {
                     state: ElementState::Pressed,
                     ..
                 } => {
-                    self.click_detection(&self.scroll_state);
+                    let clicked = self.click_detection();
+                    dbg!(&clicked);
                 }
                 _ => {}
             }
@@ -67,12 +68,10 @@ impl LayoutMachine {
     pub fn resize_to_box(&mut self, mat4: Mat4) {
         self.display_mat4 = Mat4::from_scale([0.5, 0.5, 1.].into()) * mat4;
     }
-    pub fn get_transform_for(&self, element_name: String) -> Option<Mat4> {
-        self.layouts
-            .iter()
-            .filter(|e| *e == &element_name)
-            .map(|e| self.calculate_layout(e))
-            .next()
+    pub fn get_bbox_for(&self, element_name: String) -> Option<Mat4> {
+        self.id_to_layout
+            .get(&element_name)
+            .map(|e| self.calculate_layout(&element_name) * e.bbox)
     }
     pub fn get_transforms(&self) -> Vec<Mat4> {
         self.layouts
@@ -80,7 +79,6 @@ impl LayoutMachine {
             .map(|id| self.calculate_layout(id))
             .collect()
     }
-
     fn calculate_layout(&self, id: &String) -> Mat4 {
         let mut next_parent_name = Some(id);
         let mut parent_layouts = [].to_vec();
@@ -121,13 +119,13 @@ impl LayoutMachine {
         )
     }
 
-    pub fn click_detection(&self, scroll_state: &ScrollState) -> Vec<String> {
-        let click = Vec4::from((scroll_state.mouse_position, 1., 1.));
+    pub fn click_detection(&self) -> Vec<String> {
+        let click = Vec4::from((self.scroll_state.mouse_position, 1., 1.));
         let clicked_ids = self
             .clickables
             .iter()
             .filter_map(|clickable| {
-                if clickable.bbox.click_detection(click, self.display_mat4) {
+                if clickable.bbox.click_detection(click, &self) {
                     Some(clickable.id.clone())
                 } else {
                     None
@@ -137,13 +135,16 @@ impl LayoutMachine {
         clicked_ids
     }
     pub fn add_node(&mut self, node: &Node, pass_down: &mut PassDown) {
+        if !pass_down.is_include {
+            return;
+        }
         let clickable_regex = Regex::new(CLICKABLE_REGEX).unwrap();
         let layout_regex = Regex::new(LAYOUT_REGEX).unwrap();
         let id = &node.id().to_string();
         if layout_regex.is_match(id) {
             let mut layout = Layout::new(&node, &self.constraint_map);
             layout.parent = pass_down.parent.clone();
-            let this_id = (!node.id().is_empty()).then(|| node.id().to_string());
+            let this_id = (!id.is_empty()).then(|| id);
             match this_id {
                 Some(this_id) => {
                     self.layouts.push(this_id.clone());
@@ -154,7 +155,7 @@ impl LayoutMachine {
             };
             if clickable_regex.is_match(&id) {
                 let clickable = Clickable {
-                    bbox: ClickableBbox::Layout(layout),
+                    bbox: ClickableBbox::Layout(id.to_string()),
                     id: id.to_string(),
                 };
                 self.clickables.push(clickable)

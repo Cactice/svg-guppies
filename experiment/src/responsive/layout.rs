@@ -14,11 +14,12 @@ pub struct Layout {
     pub constraint: Constraint,
     pub bbox: Mat4,
     pub parent: Option<String>,
+    pub adjust: Mat4,
 }
 
 impl Layout {
     pub fn to_mat4(&self, display: Mat4, parent_bbox: Mat4) -> Mat4 {
-        self.constraint.to_mat4(display, self.bbox, parent_bbox)
+        self.adjust * self.constraint.to_mat4(display, self.bbox, parent_bbox)
     }
     pub fn new(node: &usvg::Node, constraint_map: &ConstraintMap) -> Self {
         let id = node.id();
@@ -37,6 +38,7 @@ impl Layout {
             constraint,
             bbox: bbox_mat4,
             parent: None,
+            adjust: Mat4::IDENTITY,
         };
     }
 }
