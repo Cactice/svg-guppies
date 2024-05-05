@@ -32,9 +32,8 @@ pub fn main() {
         layout_machine.event_handler(event);
         gpu_redraws[0].update_texture([cast_slice(&layout_machine.transforms[..])].concat());
         gpu_redraws[0].update_triangles(
-            svg_set
-                .get_combined_geometries()
-                .extend(&list.get_combined_geometries())
+            list.get_combined_geometries()
+                .extend(&svg_set.get_combined_geometries())
                 .triangles,
             0,
         );

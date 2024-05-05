@@ -1,27 +1,68 @@
-<svg width="626" height="617" viewBox="0 0 626 617" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="706" height="617" viewBox="0 0 706 617" fill="none" xmlns="http://www.w3.org/2000/svg">
   <g id="V2" filter="url(#filter0_d_3195_858)">
     <g clip-path="url(#clip0_3195_858)">
-      <rect x="4" width="618" height="609" fill="#F9F8F4" />
-      <g id="VerticalMenuBar #transform #layout">
-        <rect x="322" y="609.094" width="451.094" height="52" transform="rotate(-90 322 609.094)" fill="#F9F8F4" />
-        <g id="VerticalGrab #transform #layout">
-          <circle id="Ellipse 4" cx="341.5" cy="398.594" r="4.5" transform="rotate(-90 341.5 398.594)" fill="#17395C" />
-          <circle id="Ellipse 5" cx="341.5" cy="383.594" r="4.5" transform="rotate(-90 341.5 383.594)" fill="#17395C" />
-          <circle id="Ellipse 6" cx="341.5" cy="368.594" r="4.5" transform="rotate(-90 341.5 368.594)" fill="#17395C" />
-          <circle id="Ellipse 7" cx="356.5" cy="368.594" r="4.5" transform="rotate(-90 356.5 368.594)" fill="#17395C" />
-          <circle id="Ellipse 8" cx="356.5" cy="383.594" r="4.5" transform="rotate(-90 356.5 383.594)" fill="#17395C" />
-          <circle id="Ellipse 9" cx="356.5" cy="398.594" r="4.5" transform="rotate(-90 356.5 398.594)" fill="#17395C" />
+      <rect x="4" width="698" height="609" fill="#F9F8F4" />
+      <g id="Left #transform #layout">
+        <g id="ComponentBox #transform #layout">
+          <g id="ListItem #transform #layout">
+            <rect width="398" height="72.8955" transform="translate(4 223.209)" fill="#F9F8F4" />
+            <g id="Rectangle">
+              <mask id="path-3-inside-1_3195_858" fill="white">
+                <path d="M4 223.209H402V296.105H4V223.209Z" />
+              </mask>
+              <path d="M4 225.209H402V221.209H4V225.209ZM402 294.105H4V298.105H402V294.105Z" fill="#17395C"
+                mask="url(#path-3-inside-1_3195_858)" />
+            </g>
+            <text id="word #dynamicText #transform #layout" fill="#17395C" xml:space="preserve" style="white-space: pre"
+              font-family="Alata" font-size="32" letter-spacing="1.25px">
+              <tspan x="31.0747" y="272.329">dup</tspan>
+            </text>
+            <g id="Icon Group  #transform #layout">
+              <path id="Vector 10" d="M327.5 253.209H385" stroke="#17395C" stroke-width="3" />
+              <path id="Vector 11"
+                d="M328.5 253.209C357 253.209 357.5 253.709 358 265.209C358 275.209 376.333 276.042 385.5 275.209"
+                stroke="#17395C" stroke-width="3" />
+            </g>
+          </g>
         </g>
-        <g id="Rectangle">
-          <mask id="path-10-inside-1_3195_858" fill="white">
-            <path d="M322 609.094L322 158H374L374 609.094H322Z" />
+        <g id="MenuBar2 #transform #layout">
+          <rect width="398" height="52.209" transform="translate(4 171)" fill="#F9F8F4" />
+          <g id="Rectangle ">
+            <mask id="path-8-inside-2_3195_858" fill="white">
+              <path d="M4 171H402V223.209H4V171Z" />
+            </mask>
+            <path d="M4 173H402V169H4V173ZM402 221.209H4V225.209H402V221.209Z" fill="#17395C"
+              mask="url(#path-8-inside-2_3195_858)" />
+          </g>
+          <path id="Vector #transform  #layout"
+            d="M386.417 185H367.042C366.15 185 365.453 185.447 364.988 186.124L358 196.5L364.988 206.863C365.453 207.54 366.15 208 367.042 208H386.417C387.837 208 389 206.85 389 205.444V187.556C389 186.15 387.837 185 386.417 185ZM386.417 205.444H367.132L361.1 196.5L367.119 187.556H386.417V205.444ZM371.446 202.889L376.083 198.302L380.72 202.889C381.996 202.702 382.421 202.323 382.542 201.087L377.905 196.5L382.542 191.913C382.191 190.808 381.794 190.432 380.72 190.111L376.083 194.698L371.446 190.111C370.378 190.323 369.959 190.701 369.625 191.913L374.262 196.5L369.625 201.087C369.906 202.242 370.248 202.635 371.446 202.889Z"
+            fill="#17395C" />
+          <text id="[ ]  #transform  #layout" fill="#17395C" xml:space="preserve" style="white-space: pre"
+            font-family="Alata" font-size="16" letter-spacing="1.25px">
+            <tspan x="12.4453" y="204.157">[ ]</tspan>
+          </text>
+        </g>
+      </g>
+      <g id="VerticalMenuBar #transform #layout">
+        <rect x="402" y="609.094" width="451.094" height="52" transform="rotate(-90 402 609.094)" fill="#F9F8F4" />
+        <g id="VerticalGrab #transform #layout">
+          <circle id="Ellipse 4" cx="421.5" cy="398.594" r="4.5" transform="rotate(-90 421.5 398.594)" fill="#17395C" />
+          <circle id="Ellipse 5" cx="421.5" cy="383.594" r="4.5" transform="rotate(-90 421.5 383.594)" fill="#17395C" />
+          <circle id="Ellipse 6" cx="421.5" cy="368.594" r="4.5" transform="rotate(-90 421.5 368.594)" fill="#17395C" />
+          <circle id="Ellipse 7" cx="436.5" cy="368.594" r="4.5" transform="rotate(-90 436.5 368.594)" fill="#17395C" />
+          <circle id="Ellipse 8" cx="436.5" cy="383.594" r="4.5" transform="rotate(-90 436.5 383.594)" fill="#17395C" />
+          <circle id="Ellipse 9" cx="436.5" cy="398.594" r="4.5" transform="rotate(-90 436.5 398.594)" fill="#17395C" />
+        </g>
+        <g id="Rectangle_2">
+          <mask id="path-19-inside-3_3195_858" fill="white">
+            <path d="M402 609.094L402 158H454L454 609.094H402Z" />
           </mask>
-          <path d="M326 609.094L326 158H318L318 609.094H326ZM370 158L370 609.094H378L378 158H370Z" fill="#17395C"
-            mask="url(#path-10-inside-1_3195_858)" />
+          <path d="M406 609.094L406 158H398L398 609.094H406ZM450 158L450 609.094H458L458 158H450Z" fill="#17395C"
+            mask="url(#path-19-inside-3_3195_858)" />
         </g>
       </g>
       <g id="MenuBar #transform #layout">
-        <rect width="618" height="53.242" transform="translate(4 118)" fill="#F9F8F4" />
+        <rect width="698" height="53.242" transform="translate(4 118)" fill="#F9F8F4" />
         <g id="Menu #transform #clickable #layout">
           <g id="Group">
             <path id="Vector" d="M18 135H47.02" stroke="#17395C" stroke-width="4.14571" stroke-linecap="round"
@@ -35,72 +76,33 @@
         <g id="Undo #transform #clickable #layout">
           <g id="Group_2">
             <path id="Vector_4"
-              d="M574.75 139H597.5C601.366 139 604.5 142.134 604.5 146C604.5 149.866 601.366 153 597.5 153H588.75"
+              d="M654.75 139H677.5C681.366 139 684.5 142.134 684.5 146C684.5 149.866 681.366 153 677.5 153H668.75"
               stroke="#17395C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
-            <path id="Vector_5" d="M580 132L573 139L580 146" stroke="#17395C" stroke-width="4" stroke-linecap="round"
+            <path id="Vector_5" d="M660 132L653 139L660 146" stroke="#17395C" stroke-width="4" stroke-linecap="round"
               stroke-linejoin="round" />
           </g>
         </g>
         <g id="Grab #transform #clickable #layout">
-          <circle id="Ellipse 4_2" cx="297.5" cy="138.5" r="4.5" fill="#17395C" />
-          <circle id="Ellipse 5_2" cx="312.5" cy="138.5" r="4.5" fill="#17395C" />
-          <circle id="Ellipse 6_2" cx="327.5" cy="138.5" r="4.5" fill="#17395C" />
-          <circle id="Ellipse 7_2" cx="327.5" cy="153.5" r="4.5" fill="#17395C" />
-          <circle id="Ellipse 8_2" cx="312.5" cy="153.5" r="4.5" fill="#17395C" />
-          <circle id="Ellipse 9_2" cx="297.5" cy="153.5" r="4.5" fill="#17395C" />
+          <circle id="Ellipse 4_2" cx="337.5" cy="138.5" r="4.5" fill="#17395C" />
+          <circle id="Ellipse 5_2" cx="352.5" cy="138.5" r="4.5" fill="#17395C" />
+          <circle id="Ellipse 6_2" cx="367.5" cy="138.5" r="4.5" fill="#17395C" />
+          <circle id="Ellipse 7_2" cx="367.5" cy="153.5" r="4.5" fill="#17395C" />
+          <circle id="Ellipse 8_2" cx="352.5" cy="153.5" r="4.5" fill="#17395C" />
+          <circle id="Ellipse 9_2" cx="337.5" cy="153.5" r="4.5" fill="#17395C" />
         </g>
-        <g id="Rectangle_2">
-          <mask id="path-23-inside-2_3195_858" fill="white">
-            <path d="M4 118H622V171.242H4V118Z" />
+        <g id="Rectangle_3">
+          <mask id="path-32-inside-4_3195_858" fill="white">
+            <path d="M4 118H702V171.242H4V118Z" />
           </mask>
-          <path d="M4 122H622V114H4V122ZM622 167.242H4V175.242H622V167.242Z" fill="#17395C"
-            mask="url(#path-23-inside-2_3195_858)" />
-        </g>
-      </g>
-      <g id="Left #transform #layout">
-        <g id="ListItem #transform #layout">
-          <rect width="318" height="72.8955" transform="translate(4 223.209)" fill="#F9F8F4" />
-          <g id="Rectangle_3">
-            <mask id="path-25-inside-3_3195_858" fill="white">
-              <path d="M4 223.209H322V296.105H4V223.209Z" />
-            </mask>
-            <path d="M4 225.209H322V221.209H4V225.209ZM322 294.105H4V298.105H322V294.105Z" fill="#17395C"
-              mask="url(#path-25-inside-3_3195_858)" />
-          </g>
-          <text id="word #dynamicText #transform #layout" fill="#17395C" xml:space="preserve" style="white-space: pre"
-            font-family="Alata" font-size="32" letter-spacing="1.25px">
-            <tspan x="31.1602" y="272.777">dup</tspan>
-          </text>
-          <g id="Icon Group  #transform #layout">
-            <path id="Vector 10" d="M247.5 253.746H305" stroke="#17395C" stroke-width="3" />
-            <path id="Vector 11"
-              d="M248.5 253.746C277 253.746 277.5 254.239 278 265.567C278 275.418 296.333 276.239 305.5 275.418"
-              stroke="#17395C" stroke-width="3" />
-          </g>
-        </g>
-        <g id="MenuBar2 #transform #layout">
-          <rect width="318" height="52.209" transform="translate(4 171)" fill="#F9F8F4" />
-          <g id="Rectangle ">
-            <mask id="path-30-inside-4_3195_858" fill="white">
-              <path d="M4 171H322V223.209H4V171Z" />
-            </mask>
-            <path d="M4 173H322V169H4V173ZM322 221.209H4V225.209H322V221.209Z" fill="#17395C"
-              mask="url(#path-30-inside-4_3195_858)" />
-          </g>
-          <path id="Vector #transform  #layout"
-            d="M306.417 185H287.042C286.15 185 285.453 185.447 284.988 186.124L278 196.5L284.988 206.863C285.453 207.54 286.15 208 287.042 208H306.417C307.837 208 309 206.85 309 205.444V187.556C309 186.15 307.837 185 306.417 185ZM306.417 205.444H287.132L281.1 196.5L287.119 187.556H306.417V205.444ZM291.446 202.889L296.083 198.302L300.72 202.889C301.996 202.702 302.421 202.323 302.542 201.087L297.905 196.5L302.542 191.913C302.191 190.808 301.794 190.432 300.72 190.111L296.083 194.698L291.446 190.111C290.378 190.323 289.959 190.701 289.625 191.913L294.262 196.5L289.625 201.087C289.906 202.242 290.248 202.635 291.446 202.889Z"
-            fill="#17395C" />
-          <text id="[ ]  #transform  #layout" fill="#17395C" xml:space="preserve" style="white-space: pre"
-            font-family="Alata" font-size="16" letter-spacing="1.25px">
-            <tspan x="12.4453" y="204.157">[ ]</tspan>
-          </text>
+          <path d="M4 122H702V114H4V122ZM702 167.242H4V175.242H702V167.242Z" fill="#17395C"
+            mask="url(#path-32-inside-4_3195_858)" />
         </g>
       </g>
     </g>
-    <rect x="4.5" y="0.5" width="617" height="608" stroke="black" />
+    <rect x="4.5" y="0.5" width="697" height="608" stroke="black" />
   </g>
   <defs>
-    <filter id="filter0_d_3195_858" x="0" y="0" width="626" height="617" filterUnits="userSpaceOnUse"
+    <filter id="filter0_d_3195_858" x="0" y="0" width="706" height="617" filterUnits="userSpaceOnUse"
       color-interpolation-filters="sRGB">
       <feFlood flood-opacity="0" result="BackgroundImageFix" />
       <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
@@ -113,7 +115,7 @@
       <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_3195_858" result="shape" />
     </filter>
     <clipPath id="clip0_3195_858">
-      <rect x="4" width="618" height="609" fill="white" />
+      <rect x="4" width="698" height="609" fill="white" />
     </clipPath>
   </defs>
 </svg>

@@ -127,7 +127,7 @@
       "Top": 171
     }
   },
-  "ListItem #transform #layout": {
+  "ComponentBox #transform #layout": {
     "x": {
       "LeftAndRight": {
         "left": 0,
@@ -136,6 +136,17 @@
     },
     "y": {
       "Top": 52.208984375
+    }
+  },
+  "ListItem #transform #layout": {
+    "x": {
+      "LeftAndRight": {
+        "left": 0,
+        "right": 0
+      }
+    },
+    "y": {
+      "Top": 0
     }
   },
   "word #dynamicText #transform #layout": {
