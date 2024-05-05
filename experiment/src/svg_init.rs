@@ -11,7 +11,7 @@ use crate::responsive::layout::Layout;
 pub struct PassDown {
     pub transform_id: u32,
     pub is_include: bool,
-    pub parent_layouts: Vec<Layout>,
+    pub parent: Option<String>,
 }
 
 impl Default for PassDown {
@@ -19,7 +19,7 @@ impl Default for PassDown {
         Self {
             transform_id: 1,
             is_include: true,
-            parent_layouts: [].to_vec(),
+            parent: None,
         }
     }
 }
@@ -67,7 +67,7 @@ pub fn get_default_init_callback(
         let PassDown {
             transform_id: parent_transform_id,
             is_include: parent_is_include,
-            parent_layouts,
+            parent,
         } = pass_down;
         let id = node.id();
         let default_matches = defaults.matches(&id);
@@ -97,7 +97,7 @@ pub fn get_default_init_callback(
             PassDown {
                 transform_id,
                 is_include,
-                parent_layouts,
+                parent,
             },
         )
     }

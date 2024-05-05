@@ -28,7 +28,8 @@ pub struct ConstraintMap(pub HashMap<String, Constraint>);
 
 #[derive(Debug, Clone, Default)]
 pub struct LayoutMachine {
-    pub layouts: Vec<(String, Vec<Layout>)>,
+    pub id_to_layout: HashMap<String, Layout>,
+    pub layouts: Vec<String>,
     pub clickables: Vec<Clickable>,
     pub svg_mat4: Mat4,
     pub display_mat4: Mat4,
@@ -69,21 +70,32 @@ impl LayoutMachine {
     pub fn get_transform_for(&self, element_name: String) -> Option<Mat4> {
         self.layouts
             .iter()
-            .filter(|e| e.0 == element_name)
-            .map(|e| self.calculate_layout(&e.1))
+            .filter(|e| *e == &element_name)
+            .map(|e| self.calculate_layout(e))
             .next()
     }
     pub fn get_transforms(&self) -> Vec<Mat4> {
         self.layouts
             .iter()
-            .map(|parents| self.calculate_layout(&parents.1))
+            .map(|id| self.calculate_layout(id))
             .collect()
     }
 
-    fn calculate_layout(&self, parents: &Vec<Layout>) -> Mat4 {
+    fn calculate_layout(&self, id: &String) -> Mat4 {
+        let mut next_parent_name = Some(id);
+        let mut parent_layouts = [].to_vec();
+        while let Some(current_parent) = next_parent_name {
+            let next_parent = self
+                .id_to_layout
+                .get(current_parent)
+                .expect(&format!("Key Should exist: {current_parent}"));
+            next_parent_name = next_parent.parent.as_ref();
+            parent_layouts.push(next_parent)
+        }
         Mat4::from_scale([2., -2., 1.].into())
-            * parents
+            * parent_layouts
                 .iter()
+                .rev()
                 .fold(
                     (Mat4::IDENTITY, self.get_display_bbox()),
                     |(_parent_result, parent_bbox), layout| {
@@ -129,10 +141,17 @@ impl LayoutMachine {
         let layout_regex = Regex::new(LAYOUT_REGEX).unwrap();
         let id = &node.id().to_string();
         if layout_regex.is_match(id) {
-            let layout = Layout::new(&node, &self.constraint_map);
-            pass_down.parent_layouts.push(layout);
-            self.layouts
-                .push((node.id().to_owned(), pass_down.parent_layouts.clone()));
+            let mut layout = Layout::new(&node, &self.constraint_map);
+            layout.parent = pass_down.parent.clone();
+            let this_id = (!node.id().is_empty()).then(|| node.id().to_string());
+            match this_id {
+                Some(this_id) => {
+                    self.layouts.push(this_id.clone());
+                    self.id_to_layout.insert(this_id.clone(), layout.clone());
+                    pass_down.parent = Some(this_id.clone());
+                }
+                None => {}
+            };
             if clickable_regex.is_match(&id) {
                 let clickable = Clickable {
                     bbox: ClickableBbox::Layout(layout),

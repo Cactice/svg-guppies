@@ -9,14 +9,15 @@ pub(crate) fn size_to_mat4(size: PhysicalSize<u32>) -> Mat4 {
     Mat4::from_scale([size.width as f32, size.height as f32, 1.].into())
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Layout {
     pub constraint: Constraint,
     pub bbox: Mat4,
+    pub parent: Option<String>,
 }
 
 impl Layout {
-    pub fn to_mat4(self, display: Mat4, parent_bbox: Mat4) -> Mat4 {
+    pub fn to_mat4(&self, display: Mat4, parent_bbox: Mat4) -> Mat4 {
         self.constraint.to_mat4(display, self.bbox, parent_bbox)
     }
     pub fn new(node: &usvg::Node, constraint_map: &ConstraintMap) -> Self {
@@ -35,6 +36,7 @@ impl Layout {
         return Layout {
             constraint,
             bbox: bbox_mat4,
+            parent: None,
         };
     }
 }
