@@ -76,7 +76,6 @@ pub fn get_default_init_callback(
             true => true,
             false => include_matched,
         };
-        dbg!(&id, component_matched, include_matched, is_include);
         if !is_include {
             return (
                 None,
