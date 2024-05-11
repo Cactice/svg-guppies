@@ -3,7 +3,7 @@
     <g clip-path="url(#clip0_3195_858)">
       <rect x="4" width="698" height="609" fill="#F9F8F4" />
       <g id="Left #transform #layout">
-        <g id="ComponentBox #transform #layout">
+        <g id="ComponentBox #transform #layout #component">
           <g id="ListItem #transform #layout">
             <rect width="398" height="72.8955" transform="translate(4 223.209)" fill="#F9F8F4" />
             <g id="Rectangle">

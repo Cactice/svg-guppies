@@ -1,4 +1,4 @@
-use experiment::responsive::layout_machine::ConstraintMap;
+use experiment::responsive::layout_machine::{self, ConstraintMap};
 use experiment::serde_json;
 use experiment::{responsive::layout_machine::LayoutMachine, uses::use_svg};
 use guppies::bytemuck::cast_slice;
@@ -10,20 +10,23 @@ pub fn main() {
     let json = include_str!("constraints.json");
     layout_machine.constraint_map = serde_json::from_str::<ConstraintMap>(json).unwrap();
 
+    let mut transform_id = 0;
     let svg_set = use_svg(
         include_str!("../V2.svg").to_string(),
         |node, mut pass_down| {
             layout_machine.add_node(&node, &mut pass_down);
+            transform_id = transform_id.max(pass_down.transform_id);
         },
         None,
+        None,
     );
-
     let list = use_svg(
         include_str!("../V2.svg").to_string(),
         |node, mut pass_down| {
             layout_machine.add_node(&node, &mut pass_down);
         },
-        Some("ListItem".to_string()),
+        Some("ComponentBox #transform #layout #component".to_string()),
+        Some(transform_id),
     );
 
     let mut guppy = Guppy::new([GpuRedraw::default()]);

@@ -6,7 +6,6 @@ use salvage::{
     usvg::{self, Node, NodeExt},
 };
 
-use crate::responsive::layout::Layout;
 #[derive(Clone, Debug)]
 pub struct PassDown {
     pub transform_id: u32,
@@ -77,6 +76,17 @@ pub fn get_default_init_callback(
             true => true,
             false => include_matched,
         };
+        dbg!(&id, component_matched, include_matched, is_include);
+        if !is_include {
+            return (
+                None,
+                PassDown {
+                    transform_id: parent_transform_id,
+                    is_include,
+                    parent,
+                },
+            );
+        }
         let transform_id =
             match default_matches.matched(transform_regex_pattern.index) && is_include {
                 true => {

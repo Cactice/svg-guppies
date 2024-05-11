@@ -127,7 +127,7 @@
       "Top": 171
     }
   },
-  "ComponentBox #transform #layout": {
+  "ComponentBox #transform #layout #component": {
     "x": {
       "LeftAndRight": {
         "left": 0,

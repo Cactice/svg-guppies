@@ -141,33 +141,33 @@ impl LayoutMachine {
         let clickable_regex = Regex::new(CLICKABLE_REGEX).unwrap();
         let layout_regex = Regex::new(LAYOUT_REGEX).unwrap();
         let id = &node.id().to_string();
-        if layout_regex.is_match(id) {
-            let mut layout = Layout::new(&node, &self.constraint_map);
-            layout.parent = pass_down.parent.clone();
-            let this_id = (!id.is_empty()).then(|| id);
-            match this_id {
-                Some(this_id) => {
+        match layout_regex.is_match(id) {
+            true => {
+                let mut layout = Layout::new(&node, &self.constraint_map);
+                layout.parent = pass_down.parent.clone();
+                let this_id = (!id.is_empty()).then(|| id);
+                if let Some(this_id) = this_id {
                     self.layouts.push(this_id.clone());
                     self.id_to_layout.insert(this_id.clone(), layout.clone());
                     pass_down.parent = Some(this_id.clone());
+                };
+                if clickable_regex.is_match(&id) {
+                    let clickable = Clickable {
+                        bbox: ClickableBbox::Layout(id.to_string()),
+                        id: id.to_string(),
+                    };
+                    self.clickables.push(clickable)
                 }
-                None => {}
-            };
-            if clickable_regex.is_match(&id) {
-                let clickable = Clickable {
-                    bbox: ClickableBbox::Layout(id.to_string()),
-                    id: id.to_string(),
-                };
-                self.clickables.push(clickable)
             }
-        } else {
-            if clickable_regex.is_match(&id) {
-                let bbox_mat4 = bbox_to_mat4(node.calculate_bbox().unwrap());
-                let clickable = Clickable {
-                    bbox: ClickableBbox::Bbox(bbox_mat4),
-                    id: id.to_string(),
-                };
-                self.clickables.push(clickable)
+            false => {
+                if clickable_regex.is_match(&id) {
+                    let bbox_mat4 = bbox_to_mat4(node.calculate_bbox().unwrap());
+                    let clickable = Clickable {
+                        bbox: ClickableBbox::Bbox(bbox_mat4),
+                        id: id.to_string(),
+                    };
+                    self.clickables.push(clickable)
+                }
             }
         }
     }
