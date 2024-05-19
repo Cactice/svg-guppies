@@ -127,7 +127,7 @@
       "Top": 171
     }
   },
-  "ComponentBox #transform #layout #component": {
+  "ComponentBox #transform #layout": {
     "x": {
       "LeftAndRight": {
         "left": 0,
@@ -138,7 +138,7 @@
       "Top": 52.208984375
     }
   },
-  "ListItem #transform #layout": {
+  "ListItem #transform #layout #component": {
     "x": {
       "LeftAndRight": {
         "left": 0,
