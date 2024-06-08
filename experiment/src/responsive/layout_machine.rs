@@ -134,13 +134,16 @@ impl LayoutMachine {
             .collect::<Vec<String>>();
         clicked_ids
     }
-    pub fn add_node(&mut self, node: &Node, pass_down: &mut PassDown) {
+    pub fn add_node(&mut self, node: &Node, pass_down: &mut PassDown, id_suffix: Option<&str>) {
         if !pass_down.is_include {
             return;
         }
         let clickable_regex = Regex::new(CLICKABLE_REGEX).unwrap();
         let layout_regex = Regex::new(LAYOUT_REGEX).unwrap();
-        let id = &node.id().to_string();
+        let id = &(node.id().to_string()
+            + &id_suffix
+                .map(|x| " ".to_owned() + x)
+                .unwrap_or("".to_owned()));
         match layout_regex.is_match(id) {
             true => {
                 let mut layout = Layout::new(&node, &self.constraint_map);

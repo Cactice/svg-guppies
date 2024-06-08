@@ -3,7 +3,6 @@ use experiment::responsive::layout_machine::ConstraintMap;
 use experiment::serde_json;
 use experiment::{responsive::layout_machine::LayoutMachine, uses::use_svg};
 use guppies::bytemuck::cast_slice;
-use guppies::glam::Mat4;
 use guppies::{GpuRedraw, Guppy};
 use mobile_entry_point::mobile_entry_point;
 
@@ -16,38 +15,21 @@ pub fn main() {
     let svg_set = use_svg(
         include_str!("../V2.svg").to_string(),
         |node, mut pass_down| {
-            layout_machine.add_node(&node, &mut pass_down);
+            layout_machine.add_node(&node, &mut pass_down, None);
             transform_id = transform_id.max(pass_down.transform_id);
         },
         None,
         None,
     );
-    let var_name = transform_id.clone();
     let container_name = "ComponentBox #transform #layout".to_owned();
-    let mut x = layout_machine
-        .id_to_layout
-        .get(&container_name)
-        .cloned()
-        .unwrap();
-    x.constraint.y = match x.constraint.y {
-        YConstraint::Top(x) => YConstraint::Top(x + 30.0),
-        y => y,
-    };
-    let list = use_svg(
-        include_str!("../V2.svg").to_string(),
-        |node, mut pass_down| {
-            layout_machine.add_node(&node, &mut pass_down);
-            transform_id = transform_id.max(pass_down.transform_id);
-        },
-        Some((
-            "ListItem #transform #layout #component".to_string(),
-            Some(container_name.clone()),
-        )),
-        Some(var_name),
+
+    let list = duplicate(
+        &mut layout_machine,
+        container_name.clone(),
+        &mut transform_id,
+        1,
     );
-    layout_machine
-        .id_to_layout
-        .insert(container_name.clone(), x);
+    let list_2 = duplicate(&mut layout_machine, container_name, &mut transform_id, 2);
 
     let mut guppy = Guppy::new([GpuRedraw::default()]);
 
@@ -61,6 +43,7 @@ pub fn main() {
         );
         gpu_redraws[0].update_triangles(
             list.get_combined_geometries()
+                .extend(&list_2.get_combined_geometries())
                 .extend(&svg_set.get_combined_geometries())
                 .triangles,
             0,
@@ -68,6 +51,42 @@ pub fn main() {
     });
 
     guppy.start();
+}
+
+fn duplicate(
+    layout_machine: &mut LayoutMachine,
+    container_name: String,
+    transform_id: &mut u32,
+    index: u32,
+) -> salvage::svg_set::SvgSet {
+    let var_name = transform_id.clone();
+    let mut layout = layout_machine
+        .id_to_layout
+        .get(&container_name)
+        .cloned()
+        .unwrap();
+    let container_name_2 = container_name + " " + &index.to_string();
+    layout.constraint.y = match layout.constraint.y {
+        YConstraint::Top(y) => YConstraint::Top(y + 80.0 * index as f32),
+        y => y,
+    };
+    let list = use_svg(
+        include_str!("../V2.svg").to_string(),
+        |node, mut pass_down| {
+            layout_machine.add_node(&node, &mut pass_down, Some(&index.to_string()));
+            *transform_id = (*transform_id).max(pass_down.transform_id);
+        },
+        Some((
+            "ListItem #transform #layout #component".to_string(),
+            Some(container_name_2.clone()),
+        )),
+        Some(var_name),
+    );
+
+    layout_machine
+        .id_to_layout
+        .insert(container_name_2.clone(), layout);
+    list
 }
 
 #[mobile_entry_point]
