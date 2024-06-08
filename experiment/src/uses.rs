@@ -1,4 +1,4 @@
-use salvage::{geometry::Geometry, svg_set::SvgSet, usvg::Node};
+use salvage::{svg_set::SvgSet, usvg::Node};
 
 use crate::svg_init::{get_default_init_callback, PassDown};
 

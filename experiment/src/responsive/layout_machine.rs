@@ -172,6 +172,6 @@ impl LayoutMachine {
                     self.clickables.push(clickable)
                 }
             }
-        }
+        };
     }
 }

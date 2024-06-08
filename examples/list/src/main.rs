@@ -11,25 +11,18 @@ pub fn main() {
     let json = include_str!("constraints.json");
     layout_machine.constraint_map = serde_json::from_str::<ConstraintMap>(json).unwrap();
 
-    let mut transform_id = 0;
     let svg_set = use_svg(
         include_str!("../V2.svg").to_string(),
         |node, mut pass_down| {
             layout_machine.add_node(&node, &mut pass_down, None);
-            transform_id = transform_id.max(pass_down.transform_id);
         },
         None,
         None,
     );
     let container_name = "ComponentBox #transform #layout".to_owned();
 
-    let list = duplicate(
-        &mut layout_machine,
-        container_name.clone(),
-        &mut transform_id,
-        1,
-    );
-    let list_2 = duplicate(&mut layout_machine, container_name, &mut transform_id, 2);
+    let list = duplicate(&mut layout_machine, container_name.clone(), 1);
+    let list_2 = duplicate(&mut layout_machine, container_name, 2);
 
     let mut guppy = Guppy::new([GpuRedraw::default()]);
 
@@ -56,10 +49,8 @@ pub fn main() {
 fn duplicate(
     layout_machine: &mut LayoutMachine,
     container_name: String,
-    transform_id: &mut u32,
     index: u32,
 ) -> salvage::svg_set::SvgSet {
-    let var_name = transform_id.clone();
     let mut layout = layout_machine
         .id_to_layout
         .get(&container_name)
@@ -70,17 +61,17 @@ fn duplicate(
         YConstraint::Top(y) => YConstraint::Top(y + 80.0 * index as f32),
         y => y,
     };
+    let try_into = (layout_machine.layouts.len() + 1).try_into().unwrap();
     let list = use_svg(
         include_str!("../V2.svg").to_string(),
         |node, mut pass_down| {
             layout_machine.add_node(&node, &mut pass_down, Some(&index.to_string()));
-            *transform_id = (*transform_id).max(pass_down.transform_id);
         },
         Some((
             "ListItem #transform #layout #component".to_string(),
             Some(container_name_2.clone()),
         )),
-        Some(var_name),
+        Some(try_into),
     );
 
     layout_machine
