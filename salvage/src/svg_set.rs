@@ -24,11 +24,11 @@ fn find_text_node_path(node: roxmltree::Node, path: &mut Vec<roxmltree::NodeId>)
     if node.is_text() {
         return true;
     }
+    if node.is_element() {
+        path.push(node.id());
+    }
     for child in node.children() {
         if find_text_node_path(child, path) {
-            if node.is_element() {
-                path.push(node.id());
-            }
             return true;
         }
     }
@@ -146,6 +146,14 @@ impl SvgSet {
         // TODO: this only works with one line of text
         find_text_node_path(node, &mut parent_ids);
 
+        let mut current_node = node.clone();
+        while let Some(parent) = current_node.parent() {
+            parent_ids.push(parent.id());
+            current_node = parent
+        }
+        parent_ids.pop();
+        parent_ids.pop();
+
         while let Some(parent_id) = parent_ids.pop() {
             let parent = document.get_node(parent_id).unwrap();
             self.copy_element(&parent, &mut writer);
@@ -158,7 +166,13 @@ impl SvgSet {
         let tree = Tree::from_str(&xml, &self.usvg_options.to_ref()).unwrap();
         let geometry_to_update =
             &mut self.geometries[*self.id_to_geometry_index.get(id).unwrap() as usize];
-        *geometry_to_update = tree.into();
+        let transform_id = geometry_to_update
+            .triangles
+            .vertices
+            .get(0)
+            .map_or(1, |v| v.transform_id);
+        self.geometries[*self.id_to_geometry_index.get(id).unwrap() as usize] =
+            Geometry::from_tree(tree, transform_id);
     }
 }
 

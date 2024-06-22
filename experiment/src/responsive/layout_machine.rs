@@ -19,12 +19,9 @@ use guppies::winit::event::WindowEvent;
 use regex::Regex;
 use salvage::usvg::Node;
 use salvage::usvg::NodeExt;
-use serde::Deserialize;
-use serde::Serialize;
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct ConstraintMap(pub HashMap<String, Constraint>);
+pub type ConstraintMap = HashMap<String, Constraint>;
 
 #[derive(Debug, Clone, Default)]
 pub struct LayoutMachine {
@@ -64,9 +61,6 @@ impl LayoutMachine {
     }
     pub fn resize(&mut self, p: &PhysicalSize<u32>) {
         self.display_mat4 = Mat4::from_scale([0.5, 0.5, 1.].into()) * size_to_mat4(*p);
-    }
-    pub fn resize_to_box(&mut self, mat4: Mat4) {
-        self.display_mat4 = Mat4::from_scale([0.5, 0.5, 1.].into()) * mat4;
     }
     pub fn get_bbox_for(&self, element_name: String) -> Option<Mat4> {
         self.id_to_layout
@@ -140,34 +134,40 @@ impl LayoutMachine {
         }
         let clickable_regex = Regex::new(CLICKABLE_REGEX).unwrap();
         let layout_regex = Regex::new(LAYOUT_REGEX).unwrap();
-        let id = &(node.id().to_string()
-            + &id_suffix
-                .map(|x| " ".to_owned() + x)
-                .unwrap_or("".to_owned()));
-        match layout_regex.is_match(id) {
+        let id = node.id().to_string();
+        let id_with_suffix =
+            id.clone() + &id_suffix.map_or("".to_string(), |suffix| " ".to_owned() + suffix);
+        match layout_regex.is_match(&id_with_suffix) {
             true => {
-                let mut layout = Layout::new(&node, &self.constraint_map);
+                let constraint = self
+                    .constraint_map
+                    .get(&id)
+                    .expect(&(id + "not in constraints.json"))
+                    .clone();
+                let mut layout = Layout::new(&node, constraint);
+
                 layout.parent = pass_down.parent.clone();
-                let this_id = (!id.is_empty()).then(|| id);
-                if let Some(this_id) = this_id {
-                    self.layouts.push(this_id.clone());
-                    self.id_to_layout.insert(this_id.clone(), layout.clone());
-                    pass_down.parent = Some(this_id.clone());
+                let some_id_with_suffix = (!id_with_suffix.is_empty()).then(|| &id_with_suffix);
+                if let Some(id_with_suffix) = some_id_with_suffix {
+                    self.layouts.push(id_with_suffix.clone());
+                    self.id_to_layout
+                        .insert(id_with_suffix.clone(), layout.clone());
+                    pass_down.parent = Some(id_with_suffix.clone());
                 };
-                if clickable_regex.is_match(&id) {
+                if clickable_regex.is_match(&id_with_suffix) {
                     let clickable = Clickable {
-                        bbox: ClickableBbox::Layout(id.to_string()),
-                        id: id.to_string(),
+                        bbox: ClickableBbox::Layout(id_with_suffix.to_string()),
+                        id: id_with_suffix.to_string(),
                     };
                     self.clickables.push(clickable)
                 }
             }
             false => {
-                if clickable_regex.is_match(&id) {
+                if clickable_regex.is_match(&id_with_suffix) {
                     let bbox_mat4 = bbox_to_mat4(node.calculate_bbox().unwrap());
                     let clickable = Clickable {
                         bbox: ClickableBbox::Bbox(bbox_mat4),
-                        id: id.to_string(),
+                        id: id_with_suffix,
                     };
                     self.clickables.push(clickable)
                 }

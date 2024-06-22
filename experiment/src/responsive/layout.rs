@@ -20,15 +20,10 @@ impl Layout {
     pub fn to_mat4(&self, display: Mat4, parent_bbox: Mat4) -> Mat4 {
         self.constraint.to_mat4(display, self.bbox, parent_bbox)
     }
-    pub fn new(node: &usvg::Node, constraint_map: &ConstraintMap) -> Self {
-        let id = node.id();
-
-        let constraint = constraint_map
-            .0
-            .get(&id.to_string())
-            .expect(&(id.to_string() + "not in constraints.json"))
-            .clone();
-
+    pub fn new(node: &usvg::Node, constraint: Constraint) -> Self {
+        if node.id().contains("dynamic") {
+            dbg!(node.id(), node.calculate_bbox());
+        }
         let bbox_mat4 = bbox_to_mat4(
             node.calculate_bbox()
                 .expect("Elements with #transform should be able to calculate bbox"),

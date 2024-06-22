@@ -21,8 +21,10 @@ pub fn main() {
     );
     let container_name = "ComponentBox #transform #layout".to_owned();
 
-    let list = duplicate(&mut layout_machine, container_name.clone(), 1);
-    let list_2 = duplicate(&mut layout_machine, container_name, 2);
+    let mut list = duplicate(&mut layout_machine, container_name.clone(), 1);
+    let mut list_2 = duplicate(&mut layout_machine, container_name, 3);
+    list_2.update_text("word #dynamicText #transform #layout", "abbbb");
+    list.update_text("word #dynamicText #transform #layout", "abbbb");
 
     let mut guppy = Guppy::new([GpuRedraw::default()]);
 
@@ -61,6 +63,7 @@ fn duplicate(
         YConstraint::Top(y) => YConstraint::Top(y + 80.0 * index as f32),
         y => y,
     };
+    dbg!(&container_name_2, &layout);
     let try_into = (layout_machine.layouts.len() + 1).try_into().unwrap();
     let list = use_svg(
         include_str!("../V2.svg").to_string(),
