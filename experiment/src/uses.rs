@@ -5,15 +5,14 @@ use crate::svg_init::{get_default_init_callback, PassDown};
 pub fn use_svg<C: FnMut(&Node, &mut PassDown)>(
     xml: String,
     mut callback: C,
-    component_and_destination: Option<(String, Option<String>)>,
+    component_and_destination: Option<(String, String)>,
     transform_count: Option<u32>,
 ) -> SvgSet {
     let initial_pass_down = PassDown {
         is_include: component_and_destination.is_none(),
         parent: component_and_destination
             .clone()
-            .map(|component_and_destination| component_and_destination.1)
-            .flatten(),
+            .map(|component_and_destination| component_and_destination.1),
         ..Default::default()
     };
     let transform_count = transform_count.unwrap_or(1);

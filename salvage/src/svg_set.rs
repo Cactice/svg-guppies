@@ -21,11 +21,14 @@ fn recursive_svg<P: Clone + Debug, C: FnMut(Node, P) -> (Option<Geometry>, P)>(
 }
 
 fn find_text_node_path(node: roxmltree::Node, path: &mut Vec<roxmltree::NodeId>) -> bool {
-    if node.is_text() {
-        return true;
-    }
     if node.is_element() {
-        path.push(node.id());
+        path.insert(0, node.id());
+    }
+    if let Some(text) = node.text() {
+        let no_new_line_or_space = text.replace("\n", "").replace(" ", "");
+        if no_new_line_or_space.len() != 0 {
+            return true;
+        }
     }
     for child in node.children() {
         if find_text_node_path(child, path) {
@@ -164,6 +167,7 @@ impl SvgSet {
             &writer.end_document()
         );
         let tree = Tree::from_str(&xml, &self.usvg_options.to_ref()).unwrap();
+        dbg!(&self.id_to_geometry_index, id);
         let geometry_to_update =
             &mut self.geometries[*self.id_to_geometry_index.get(id).unwrap() as usize];
         let transform_id = geometry_to_update
@@ -171,6 +175,7 @@ impl SvgSet {
             .vertices
             .get(0)
             .map_or(1, |v| v.transform_id);
+        dbg!(&transform_id);
         self.geometries[*self.id_to_geometry_index.get(id).unwrap() as usize] =
             Geometry::from_tree(tree, transform_id);
     }

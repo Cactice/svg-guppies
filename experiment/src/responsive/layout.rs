@@ -1,5 +1,4 @@
 use super::constraint::Constraint;
-use super::layout_machine::ConstraintMap;
 use guppies::glam::Mat4;
 use guppies::winit::dpi::PhysicalSize;
 use salvage::usvg::{self};
@@ -21,9 +20,6 @@ impl Layout {
         self.constraint.to_mat4(display, self.bbox, parent_bbox)
     }
     pub fn new(node: &usvg::Node, constraint: Constraint) -> Self {
-        if node.id().contains("dynamic") {
-            dbg!(node.id(), node.calculate_bbox());
-        }
         let bbox_mat4 = bbox_to_mat4(
             node.calculate_bbox()
                 .expect("Elements with #transform should be able to calculate bbox"),
