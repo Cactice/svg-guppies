@@ -21,8 +21,8 @@ pub fn main() {
     );
     let container_name = "ComponentBox #transform #layout".to_owned();
 
-    let mut list_1 = duplicate(&mut layout_machine, container_name.clone(), 1);
-    let mut list_2 = duplicate(&mut layout_machine, container_name, 3);
+    let mut list_1 = duplicate(&mut layout_machine, container_name.clone(), 0);
+    let mut list_2 = duplicate(&mut layout_machine, container_name, 1);
     list_1.update_text("word #dynamicText #transform #layout", "abb");
     list_2.update_text("word #dynamicText #transform #layout", "abbbbbbbabfdkj");
 
@@ -69,7 +69,7 @@ fn duplicate(
         .cloned()
         .expect(&container_name);
     layout.constraint.y = match layout.constraint.y {
-        YConstraint::Top(y) => YConstraint::Top(y + 80.0 * index as f32),
+        YConstraint::Top(y) => YConstraint::Top(y + 70.0 * index as f32),
         y => y,
     };
     layout_machine

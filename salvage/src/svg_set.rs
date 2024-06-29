@@ -167,7 +167,6 @@ impl SvgSet {
             &writer.end_document()
         );
         let tree = Tree::from_str(&xml, &self.usvg_options.to_ref()).unwrap();
-        dbg!(&self.id_to_geometry_index, id);
         let geometry_to_update =
             &mut self.geometries[*self.id_to_geometry_index.get(id).unwrap() as usize];
         let transform_id = geometry_to_update
@@ -175,7 +174,6 @@ impl SvgSet {
             .vertices
             .get(0)
             .map_or(1, |v| v.transform_id);
-        dbg!(&transform_id);
         self.geometries[*self.id_to_geometry_index.get(id).unwrap() as usize] =
             Geometry::from_tree(tree, transform_id);
     }
