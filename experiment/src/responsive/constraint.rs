@@ -2,10 +2,6 @@ use super::common_constraint::CommonConstraint;
 use guppies::glam::{Mat4, Vec3};
 use serde::{Deserialize, Serialize};
 
-pub fn get_normalize_scale(display: Mat4) -> Mat4 {
-    display.inverse()
-}
-
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum XConstraint {
     Left(f32),

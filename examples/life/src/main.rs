@@ -85,6 +85,7 @@ pub fn main() {
             };
         },
         None,
+        None,
     );
     let mut life_game = LifeGame {
         position_to_coordinates,

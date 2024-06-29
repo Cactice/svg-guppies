@@ -3,7 +3,6 @@ mod setup;
 pub use bytemuck;
 use bytemuck::{Pod, Zeroable};
 pub use glam;
-use log::info;
 use primitives::{Triangles, Vertex};
 use setup::{Redraw, RedrawMachine};
 use std::array;
@@ -12,12 +11,11 @@ use std::sync::Arc;
 use std::time::Instant;
 pub use wgpu;
 pub use winit;
-use winit::dpi::PhysicalSize;
 use winit::event_loop::EventLoopWindowTarget;
-use winit::window::{self, Window, WindowBuilder, WindowId};
+use winit::window::{Window, WindowBuilder, WindowId};
 use winit::{
     event::{Event, WindowEvent},
-    event_loop::{ControlFlow, EventLoop},
+    event_loop::EventLoop,
 };
 
 fn init_window(event_loop: &EventLoopWindowTarget<()>) -> winit::window::Window {
@@ -164,18 +162,18 @@ pub fn render_loop<const COUNT: usize, Vert>(
                         window = Some(new_window);
 
                         // Below is necessary when running on mobile...
-                        // if let Some(gpu_redraw) = gpu_redraw.as_mut() {
-                        //     render_loop_fn.iter_mut().for_each(|func| {
-                        //         let size = window.as_ref().unwrap().inner_size();
-                        //         func(
-                        //             &Event::WindowEvent {
-                        //                 window_id: unsafe { WindowId::dummy() },
-                        //                 event: WindowEvent::Resized(size),
-                        //             },
-                        //             gpu_redraw,
-                        //         );
-                        //     });
-                        // }
+                        if let Some(gpu_redraw) = gpu_redraw.as_mut() {
+                            render_loop_fn.iter_mut().for_each(|func| {
+                                let size = window.as_ref().unwrap().inner_size();
+                                func(
+                                    &Event::WindowEvent {
+                                        window_id: unsafe { WindowId::dummy() },
+                                        event: WindowEvent::Resized(size),
+                                    },
+                                    gpu_redraw,
+                                );
+                            });
+                        }
                     }
                     _ => (),
                 },

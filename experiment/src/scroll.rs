@@ -24,9 +24,8 @@ impl ScrollState {
     pub fn new_from_svg_set(svg_set: &SvgSet) -> Self {
         // Below scale should get overridden by guppies' redraw event forced on init
         let scale: Mat4 = get_scale(PhysicalSize::<u32>::new(100, 100));
-        let translate = Mat4::from_translation([-1., 1.0, 0.0].into());
         Self {
-            transform: translate * scale,
+            transform: scale,
             display_image_size: svg_set.bbox.size,
             ..Default::default()
         }

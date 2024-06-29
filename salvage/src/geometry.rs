@@ -7,15 +7,15 @@ pub struct Geometry {
     pub triangles: Triangles,
     pub id: String,
 }
-impl From<Tree> for Geometry {
-    fn from(tree: Tree) -> Self {
+impl Geometry {
+    pub fn from_tree(tree: Tree, transform_id: u32) -> Self {
         let geometry = tree
             .root()
             .descendants()
             .into_iter()
             .filter_map(|node| {
                 if let usvg::NodeKind::Path(ref p) = *node.borrow() {
-                    Some(Geometry::new(p, 1))
+                    Some(Geometry::new(p, transform_id))
                 } else {
                     None
                 }
@@ -23,8 +23,6 @@ impl From<Tree> for Geometry {
             .fold(Geometry::default(), |acc, curr| acc.extend(&curr));
         geometry
     }
-}
-impl Geometry {
     pub fn extend(mut self, other: &Self) -> Self {
         let v_len = self.triangles.vertices.len() as u32;
         let other_indices_with_offset: Indices =

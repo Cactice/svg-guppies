@@ -13,8 +13,9 @@ pub fn main() {
     let svg_set = use_svg(
         include_str!("../MenuBar.svg").to_string(),
         |node, mut _pass_down| {
-            layout_machine.add_node(&node, &mut _pass_down);
+            layout_machine.add_node(&node, &mut _pass_down, None);
         },
+        None,
         None,
     );
 

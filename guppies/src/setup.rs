@@ -7,10 +7,9 @@ use core::fmt::Debug;
 use glam::Mat4;
 use std::{borrow::Cow, sync::Arc};
 use wgpu::{
-    util::{make_spirv, DeviceExt},
-    BindGroup, Buffer, CommandEncoder, Device, Extent3d, PipelineCompilationOptions,
-    PipelineLayout, RenderPipeline, Surface, SurfaceConfiguration, SurfaceTexture, Texture,
-    TextureFormat, TextureView,
+    util::DeviceExt, BindGroup, Buffer, CommandEncoder, Device, Extent3d, PipelineLayout,
+    RenderPipeline, Surface, SurfaceConfiguration, SurfaceTexture, Texture, TextureFormat,
+    TextureView,
 };
 use winit::{dpi::PhysicalSize, window::Window};
 
