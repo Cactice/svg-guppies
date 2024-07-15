@@ -6,12 +6,11 @@ use salvage::{
     usvg::{self, Node, NodeExt},
 };
 
-use crate::responsive::layout::Layout;
 #[derive(Clone, Debug)]
 pub struct PassDown {
     pub transform_id: u32,
     pub is_include: bool,
-    pub parent_layouts: Vec<Layout>,
+    pub parent: Option<String>,
 }
 
 impl Default for PassDown {
@@ -19,7 +18,7 @@ impl Default for PassDown {
         Self {
             transform_id: 1,
             is_include: true,
-            parent_layouts: [].to_vec(),
+            parent: None,
         }
     }
 }
@@ -67,7 +66,7 @@ pub fn get_default_init_callback(
         let PassDown {
             transform_id: parent_transform_id,
             is_include: parent_is_include,
-            parent_layouts,
+            parent,
         } = pass_down;
         let id = node.id();
         let default_matches = defaults.matches(&id);
@@ -77,13 +76,24 @@ pub fn get_default_init_callback(
             true => true,
             false => include_matched,
         };
-        let transform_id = match default_matches.matched(transform_regex_pattern.index) {
-            true => {
-                transform_count += 1;
-                transform_count
-            }
-            false => parent_transform_id,
-        };
+        if !is_include {
+            return (
+                None,
+                PassDown {
+                    transform_id: parent_transform_id,
+                    is_include,
+                    parent,
+                },
+            );
+        }
+        let transform_id =
+            match default_matches.matched(transform_regex_pattern.index) && is_include {
+                true => {
+                    transform_count += 1;
+                    transform_count
+                }
+                false => parent_transform_id,
+            };
         let geometry = match is_include {
             true => match *node.borrow() {
                 usvg::NodeKind::Path(ref p) => Some(Geometry::new(p, transform_id)),
@@ -97,7 +107,7 @@ pub fn get_default_init_callback(
             PassDown {
                 transform_id,
                 is_include,
-                parent_layouts,
+                parent,
             },
         )
     }

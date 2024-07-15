@@ -1,5 +1,7 @@
+use experiment::responsive::constraint::YConstraint;
 use experiment::responsive::layout_machine::ConstraintMap;
 use experiment::serde_json;
+use experiment::uses::use_duplicate;
 use experiment::{responsive::layout_machine::LayoutMachine, uses::use_svg};
 use guppies::bytemuck::cast_slice;
 use guppies::{GpuRedraw, Guppy};
@@ -13,28 +15,44 @@ pub fn main() {
     let svg_set = use_svg(
         include_str!("../V2.svg").to_string(),
         |node, mut pass_down| {
-            layout_machine.add_node(&node, &mut pass_down);
+            layout_machine.add_node(&node, &mut pass_down, None);
         },
         None,
+        None,
     );
+    let container_name = "ComponentBox #transform #layout".to_owned();
 
-    let list = use_svg(
-        include_str!("../V2.svg").to_string(),
-        |node, mut pass_down| {
-            layout_machine.add_node(&node, &mut pass_down);
-        },
-        Some("ListItem".to_string()),
+    let component_name = "ListItem #transform #layout #component".to_string();
+    let xml = &include_str!("../V2.svg");
+    let mut list_1 = use_duplicate(
+        xml.to_string(),
+        &mut layout_machine,
+        component_name.clone(),
+        container_name.clone(),
+        0,
+        70.0,
     );
+    let mut list_2 = use_duplicate(
+        xml.to_string(),
+        &mut layout_machine,
+        component_name,
+        container_name.clone(),
+        1,
+        70.0,
+    );
+    list_1.update_text("word #dynamicText #transform #layout", "abb");
+    list_2.update_text("word #dynamicText #transform #layout", "abbbbbbbabfdkj");
 
     let mut guppy = Guppy::new([GpuRedraw::default()]);
 
     guppy.register(move |event, gpu_redraws| {
         layout_machine.event_handler(event);
-        gpu_redraws[0].update_texture([cast_slice(&layout_machine.transforms[..])].concat());
+        gpu_redraws[0].update_texture(cast_slice(&layout_machine.transforms.clone()).to_vec());
         gpu_redraws[0].update_triangles(
-            svg_set
+            list_1
                 .get_combined_geometries()
-                .extend(&list.get_combined_geometries())
+                .extend(&list_2.get_combined_geometries())
+                .extend(&svg_set.get_combined_geometries())
                 .triangles,
             0,
         );
