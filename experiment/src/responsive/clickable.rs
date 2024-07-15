@@ -14,11 +14,11 @@ impl ClickableBbox {
             ClickableBbox::Layout(id) => layout_machine.get_bbox_for(id.to_string()).unwrap(),
             ClickableBbox::Bbox(bbox) => *bbox,
         };
-        let click = Mat4::from_scale([1., -1., 1.].into())
+        let click = bbox.inverse()
+            * Mat4::from_scale([1., -1., 1.].into())
             * Mat4::from_translation([-1.0, -1., 0.].into())
             * layout_machine.display_mat4.inverse()
             * click;
-        let click = bbox.inverse() * click;
         if click.x.abs() < 1. && click.y.abs() < 1. {
             return true;
         }

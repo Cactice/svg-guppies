@@ -62,22 +62,22 @@ impl<'a> RedrawMachine<'a> {
             surface_format,
             config,
         } = self;
-        let msaa_texture = device
-            .create_texture(&wgpu::TextureDescriptor {
-                label: Some("Multisampled frame descriptor"),
-                size: wgpu::Extent3d {
-                    width: config.width,
-                    height: config.height,
-                    depth_or_array_layers: 1,
-                },
-                mip_level_count: 1,
-                sample_count: SAMPLE_COUNT,
-                dimension: wgpu::TextureDimension::D2,
-                format: config.format,
-                usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-                view_formats: Default::default(),
-            })
-            .create_view(&wgpu::TextureViewDescriptor::default());
+        let msaa_texture = device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("Multisampled frame descriptor"),
+            size: wgpu::Extent3d {
+                width: config.width,
+                height: config.height,
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: SAMPLE_COUNT,
+            dimension: wgpu::TextureDimension::D2,
+            format: config.format,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC,
+            view_formats: Default::default(),
+        });
+        let x = msaa_texture.as_image_copy();
+        let msaa_texture = msaa_texture.create_view(&wgpu::TextureViewDescriptor::default());
         redraws
             .iter()
             .zip(gpu_redraws.iter_mut())
