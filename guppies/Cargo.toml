@@ -20,3 +20,4 @@ wgpu = { version = "0.20.0", features = ["webgl", "spirv"] }
 web-sys = "0.3.69"
 console_error_panic_hook = "0.1.7"
 console_log = { version = "1.0" }
+wasm-bindgen-futures = "0.4"

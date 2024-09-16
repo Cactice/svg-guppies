@@ -1,6 +1,8 @@
 use super::clickable::Clickable;
 use super::clickable::ClickableBbox;
+use super::constraint;
 use super::constraint::Constraint;
+use super::layout;
 use super::layout::bbox_to_mat4;
 use super::layout::size_to_mat4;
 use super::layout::Layout;
@@ -20,6 +22,7 @@ use regex::Regex;
 use salvage::usvg::Node;
 use salvage::usvg::NodeExt;
 use std::collections::HashMap;
+use std::vec;
 
 pub type ConstraintMap = HashMap<String, Constraint>;
 
@@ -28,24 +31,21 @@ pub struct LayoutMachine {
     pub id_to_layout: HashMap<String, Layout>,
     pub layouts: Vec<String>,
     pub clickables: Vec<Clickable>,
-    pub svg_mat4: Mat4,
     pub display_mat4: Mat4,
     pub scroll_state: ScrollState,
     pub transforms: Vec<Mat4>,
-    pub id_to_transform_index: HashMap<String, usize>,
     pub constraint_map: ConstraintMap,
 }
 
 impl LayoutMachine {
-    pub fn event_handler(&mut self, event: &Event<()>) {
+    pub fn event_handler(&mut self, event: &Event<()>) -> Vec<String> {
         self.scroll_state.event_handler(event);
-        if let guppies::winit::event::Event::WindowEvent { event, .. } = event {
-            match event {
+        match event {
+            guppies::winit::event::Event::WindowEvent { event, .. } => match event {
                 WindowEvent::Resized(p) => {
                     self.resize(p);
-                    let mut transforms = vec![Mat4::IDENTITY, Mat4::IDENTITY];
-                    transforms.append(&mut self.get_transforms());
-                    self.transforms = transforms;
+                    self.update_transforms();
+                    vec![]
                 }
 
                 WindowEvent::MouseInput {
@@ -53,11 +53,20 @@ impl LayoutMachine {
                     ..
                 } => {
                     let clicked = self.click_detection();
-                    dbg!(&clicked);
+                    clicked
                 }
-                _ => {}
-            }
+                _ => {
+                    vec![]
+                }
+            },
+            _ => vec![],
         }
+    }
+
+    fn update_transforms(&mut self) {
+        let mut transforms = vec![Mat4::IDENTITY, Mat4::IDENTITY];
+        transforms.append(&mut self.get_transforms());
+        self.transforms = transforms;
     }
     pub fn resize(&mut self, p: &PhysicalSize<u32>) {
         self.display_mat4 = Mat4::from_scale([0.5, 0.5, 1.].into()) * size_to_mat4(*p);
@@ -127,6 +136,14 @@ impl LayoutMachine {
             })
             .collect::<Vec<String>>();
         clicked_ids
+    }
+    pub fn update_layout(&mut self) {
+        self.constraint_map.iter().for_each(|(id, constraint)| {
+            if let Some(layout) = self.id_to_layout.get_mut(id) {
+                layout.constraint = *constraint
+            }
+        });
+        self.update_transforms();
     }
     pub fn add_node(&mut self, node: &Node, pass_down: &mut PassDown, id_suffix: Option<&str>) {
         if !pass_down.is_include {

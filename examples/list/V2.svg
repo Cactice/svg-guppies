@@ -1,121 +1,101 @@
-<svg width="706" height="617" viewBox="0 0 706 617" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <g id="V2" filter="url(#filter0_d_3195_858)">
-    <g clip-path="url(#clip0_3195_858)">
-      <rect x="4" width="698" height="609" fill="#F9F8F4" />
-      <g id="Left #transform #layout">
-        <g id="ComponentBox #transform #layout">
-          <g id="ListItem #transform #layout #component">
-            <rect width="398" height="72.8955" transform="translate(4 223.209)" fill="#F9F8F4" />
-            <g id="Rectangle">
-              <mask id="path-3-inside-1_3195_858" fill="white">
-                <path d="M4 223.209H402V296.105H4V223.209Z" />
-              </mask>
-              <path d="M4 225.209H402V221.209H4V225.209ZM402 294.105H4V298.105H402V294.105Z" fill="#17395C"
-                mask="url(#path-3-inside-1_3195_858)" />
-            </g>
-            <text id="word #dynamicText #transform #layout" fill="#17395C" xml:space="preserve" style="white-space: pre"
-              font-family="Alata" font-size="32" letter-spacing="1.25px">
-              <tspan x="31.0747" y="272.329">dup</tspan>
-            </text>
-            <g id="Icon Group  #transform #layout">
-              <path id="Vector 10" d="M327.5 253.209H385" stroke="#17395C" stroke-width="3" />
-              <path id="Vector 11"
-                d="M328.5 253.209C357 253.209 357.5 253.709 358 265.209C358 275.209 376.333 276.042 385.5 275.209"
-                stroke="#17395C" stroke-width="3" />
-            </g>
-          </g>
-        </g>
-        <g id="MenuBar2 #transform #layout">
-          <rect width="398" height="52.209" transform="translate(4 171)" fill="#F9F8F4" />
-          <g id="Rectangle ">
-            <mask id="path-8-inside-2_3195_858" fill="white">
-              <path d="M4 171H402V223.209H4V171Z" />
-            </mask>
-            <path d="M4 173H402V169H4V173ZM402 221.209H4V225.209H402V221.209Z" fill="#17395C"
-              mask="url(#path-8-inside-2_3195_858)" />
-          </g>
-          <path id="Vector #transform  #layout"
-            d="M386.417 185H367.042C366.15 185 365.453 185.447 364.988 186.124L358 196.5L364.988 206.863C365.453 207.54 366.15 208 367.042 208H386.417C387.837 208 389 206.85 389 205.444V187.556C389 186.15 387.837 185 386.417 185ZM386.417 205.444H367.132L361.1 196.5L367.119 187.556H386.417V205.444ZM371.446 202.889L376.083 198.302L380.72 202.889C381.996 202.702 382.421 202.323 382.542 201.087L377.905 196.5L382.542 191.913C382.191 190.808 381.794 190.432 380.72 190.111L376.083 194.698L371.446 190.111C370.378 190.323 369.959 190.701 369.625 191.913L374.262 196.5L369.625 201.087C369.906 202.242 370.248 202.635 371.446 202.889Z"
-            fill="#17395C" />
-          <text id="[ ]  #transform  #layout" fill="#17395C" xml:space="preserve" style="white-space: pre"
-            font-family="Alata" font-size="16" letter-spacing="1.25px">
-            <tspan x="12.4453" y="204.157">[ ]</tspan>
-          </text>
-        </g>
-      </g>
-      <g id="VerticalMenuBar #transform #layout">
-        <rect x="402" y="609.094" width="451.094" height="52" transform="rotate(-90 402 609.094)" fill="#F9F8F4" />
-        <g id="VerticalGrab #transform #layout #clickable">
-          <circle id="Ellipse 4" cx="421.5" cy="398.594" r="4.5" transform="rotate(-90 421.5 398.594)" fill="#17395C" />
-          <circle id="Ellipse 5" cx="421.5" cy="383.594" r="4.5" transform="rotate(-90 421.5 383.594)" fill="#17395C" />
-          <circle id="Ellipse 6" cx="421.5" cy="368.594" r="4.5" transform="rotate(-90 421.5 368.594)" fill="#17395C" />
-          <circle id="Ellipse 7" cx="436.5" cy="368.594" r="4.5" transform="rotate(-90 436.5 368.594)" fill="#17395C" />
-          <circle id="Ellipse 8" cx="436.5" cy="383.594" r="4.5" transform="rotate(-90 436.5 383.594)" fill="#17395C" />
-          <circle id="Ellipse 9" cx="436.5" cy="398.594" r="4.5" transform="rotate(-90 436.5 398.594)" fill="#17395C" />
-        </g>
-        <g id="Rectangle_2">
-          <mask id="path-19-inside-3_3195_858" fill="white">
-            <path d="M402 609.094L402 158H454L454 609.094H402Z" />
-          </mask>
-          <path d="M406 609.094L406 158H398L398 609.094H406ZM450 158L450 609.094H458L458 158H450Z" fill="#17395C"
-            mask="url(#path-19-inside-3_3195_858)" />
-        </g>
-      </g>
-      <g id="MenuBar #transform #layout">
-        <rect width="698" height="53.242" transform="translate(4 118)" fill="#F9F8F4" />
-        <g id="Menu #transform #clickable #layout">
-          <g id="Group">
-            <path id="Vector" d="M18 135H47.02" stroke="#17395C" stroke-width="4.14571" stroke-linecap="round"
-              stroke-linejoin="round" />
-            <path id="Vector_2" d="M18 145.364H47.02" stroke="#17395C" stroke-width="4.14571" stroke-linecap="round"
-              stroke-linejoin="round" />
-            <path id="Vector_3" d="M18 155.729H47.02" stroke="#17395C" stroke-width="4.14571" stroke-linecap="round"
-              stroke-linejoin="round" />
-          </g>
-        </g>
-        <g id="Undo #transform #clickable #layout">
-          <g id="Group_2">
-            <path id="Vector_4"
-              d="M654.75 139H677.5C681.366 139 684.5 142.134 684.5 146C684.5 149.866 681.366 153 677.5 153H668.75"
-              stroke="#17395C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
-            <path id="Vector_5" d="M660 132L653 139L660 146" stroke="#17395C" stroke-width="4" stroke-linecap="round"
-              stroke-linejoin="round" />
-          </g>
-        </g>
-        <g id="Grab #transform #clickable #layout">
-          <circle id="Ellipse 4_2" cx="337.5" cy="138.5" r="4.5" fill="#17395C" />
-          <circle id="Ellipse 5_2" cx="352.5" cy="138.5" r="4.5" fill="#17395C" />
-          <circle id="Ellipse 6_2" cx="367.5" cy="138.5" r="4.5" fill="#17395C" />
-          <circle id="Ellipse 7_2" cx="367.5" cy="153.5" r="4.5" fill="#17395C" />
-          <circle id="Ellipse 8_2" cx="352.5" cy="153.5" r="4.5" fill="#17395C" />
-          <circle id="Ellipse 9_2" cx="337.5" cy="153.5" r="4.5" fill="#17395C" />
-        </g>
-        <g id="Rectangle_3">
-          <mask id="path-32-inside-4_3195_858" fill="white">
-            <path d="M4 118H702V171.242H4V118Z" />
-          </mask>
-          <path d="M4 122H702V114H4V122ZM702 167.242H4V175.242H702V167.242Z" fill="#17395C"
-            mask="url(#path-32-inside-4_3195_858)" />
-        </g>
-      </g>
-    </g>
-    <rect x="4.5" y="0.5" width="697" height="608" stroke="black" />
-  </g>
-  <defs>
-    <filter id="filter0_d_3195_858" x="0" y="0" width="706" height="617" filterUnits="userSpaceOnUse"
-      color-interpolation-filters="sRGB">
-      <feFlood flood-opacity="0" result="BackgroundImageFix" />
-      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
-        result="hardAlpha" />
-      <feOffset dy="4" />
-      <feGaussianBlur stdDeviation="2" />
-      <feComposite in2="hardAlpha" operator="out" />
-      <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
-      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_3195_858" />
-      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_3195_858" result="shape" />
-    </filter>
-    <clipPath id="clip0_3195_858">
-      <rect x="4" width="698" height="609" fill="white" />
-    </clipPath>
-  </defs>
+<svg width="718" height="791" viewBox="0 0 718 791" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="V2" filter="url(#filter0_d_3195_858)">
+<g clip-path="url(#clip0_3195_858)">
+<rect x="4" width="710" height="783" fill="#F9F8F4"/>
+<g id="Left #transform #layout">
+<rect id="Rectangle 11" x="7" y="171" width="407" height="612" fill="white"/>
+<g id="ComponentBox #transform #layout">
+<g id="ListItem #transform #layout #component">
+<rect width="410" height="72.8955" transform="translate(4 223.209)" fill="#F9F8F4"/>
+<g id="Rectangle">
+<mask id="path-4-inside-1_3195_858" fill="white">
+<path d="M4 223.209H414V296.105H4V223.209Z"/>
+</mask>
+<path d="M4 225.209H414V221.209H4V225.209ZM414 294.105H4V298.105H414V294.105Z" fill="#17395C" mask="url(#path-4-inside-1_3195_858)"/>
+</g>
+<text id="word #dynamicText #transform #layout" fill="#17395C" xml:space="preserve" style="white-space: pre" font-family="Alata" font-size="32" letter-spacing="1.25px"><tspan x="31.0747" y="272.329">dup</tspan></text>
+<g id="Icon Group  #transform #layout">
+<path id="Vector 10" d="M339.5 253.209H397" stroke="#17395C" stroke-width="3"/>
+<path id="Vector 11" d="M340.5 253.209C369 253.209 369.5 253.709 370 265.209C370 275.209 388.333 276.042 397.5 275.209" stroke="#17395C" stroke-width="3"/>
+</g>
+</g>
+</g>
+<g id="MenuBar2 #transform #layout">
+<rect width="410" height="52.209" transform="translate(4 171)" fill="#F9F8F4"/>
+<g id="Rectangle ">
+<mask id="path-9-inside-2_3195_858" fill="white">
+<path d="M4 171H414V223.209H4V171Z"/>
+</mask>
+<path d="M4 173H414V169H4V173ZM414 221.209H4V225.209H414V221.209Z" fill="#17395C" mask="url(#path-9-inside-2_3195_858)"/>
+</g>
+<path id="Vector #transform  #layout" d="M398.417 185H379.042C378.15 185 377.453 185.447 376.988 186.124L370 196.5L376.988 206.863C377.453 207.54 378.15 208 379.042 208H398.417C399.837 208 401 206.85 401 205.444V187.556C401 186.15 399.837 185 398.417 185ZM398.417 205.444H379.132L373.1 196.5L379.119 187.556H398.417V205.444ZM383.446 202.889L388.083 198.302L392.72 202.889C393.996 202.702 394.421 202.323 394.542 201.087L389.905 196.5L394.542 191.913C394.191 190.808 393.794 190.432 392.72 190.111L388.083 194.698L383.446 190.111C382.378 190.323 381.959 190.701 381.625 191.913L386.262 196.5L381.625 201.087C381.906 202.242 382.248 202.635 383.446 202.889Z" fill="#17395C"/>
+<text id="[ ]  #transform  #layout" fill="#17395C" xml:space="preserve" style="white-space: pre" font-family="Alata" font-size="16" letter-spacing="1.25px"><tspan x="12.4453" y="204.157">[ ]</tspan></text>
+</g>
+</g>
+<g id="VerticalMenuBar #transform #layout">
+<rect x="414" y="783.094" width="625.094" height="52" transform="rotate(-90 414 783.094)" fill="#F9F8F4"/>
+<g id="VerticalGrab #transform #layout #clickable">
+<circle id="Ellipse 4" cx="433.5" cy="485.594" r="4.5" transform="rotate(-90 433.5 485.594)" fill="#17395C"/>
+<circle id="Ellipse 5" cx="433.5" cy="470.594" r="4.5" transform="rotate(-90 433.5 470.594)" fill="#17395C"/>
+<circle id="Ellipse 6" cx="433.5" cy="455.594" r="4.5" transform="rotate(-90 433.5 455.594)" fill="#17395C"/>
+<circle id="Ellipse 7" cx="448.5" cy="455.594" r="4.5" transform="rotate(-90 448.5 455.594)" fill="#17395C"/>
+<circle id="Ellipse 8" cx="448.5" cy="470.594" r="4.5" transform="rotate(-90 448.5 470.594)" fill="#17395C"/>
+<circle id="Ellipse 9" cx="448.5" cy="485.594" r="4.5" transform="rotate(-90 448.5 485.594)" fill="#17395C"/>
+</g>
+<g id="Rectangle_2">
+<mask id="path-20-inside-3_3195_858" fill="white">
+<path d="M414 783.094L414 158H466L466 783.094H414Z"/>
+</mask>
+<path d="M418 783.094L418 158H410L410 783.094H418ZM462 158L462 783.094H470L470 158H462Z" fill="#17395C" mask="url(#path-20-inside-3_3195_858)"/>
+</g>
+</g>
+<g id="MenuBar #transform #layout">
+<rect width="710" height="53.242" transform="translate(4 118)" fill="#F9F8F4"/>
+<g id="Menu #transform #clickable #layout">
+<g id="Group">
+<path id="Vector" d="M18 135H47.02" stroke="#17395C" stroke-width="4.14571" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_2" d="M18 145.364H47.02" stroke="#17395C" stroke-width="4.14571" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_3" d="M18 155.729H47.02" stroke="#17395C" stroke-width="4.14571" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</g>
+<g id="Undo #transform #clickable #layout">
+<g id="Group_2">
+<path id="Vector_4" d="M666.75 139H689.5C693.366 139 696.5 142.134 696.5 146C696.5 149.866 693.366 153 689.5 153H680.75" stroke="#17395C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_5" d="M672 132L665 139L672 146" stroke="#17395C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</g>
+<g id="Grab #transform #clickable #layout">
+<circle id="Ellipse 4_2" cx="343.5" cy="138.5" r="4.5" fill="#17395C"/>
+<circle id="Ellipse 5_2" cx="358.5" cy="138.5" r="4.5" fill="#17395C"/>
+<circle id="Ellipse 6_2" cx="373.5" cy="138.5" r="4.5" fill="#17395C"/>
+<circle id="Ellipse 7_2" cx="373.5" cy="153.5" r="4.5" fill="#17395C"/>
+<circle id="Ellipse 8_2" cx="358.5" cy="153.5" r="4.5" fill="#17395C"/>
+<circle id="Ellipse 9_2" cx="343.5" cy="153.5" r="4.5" fill="#17395C"/>
+</g>
+<g id="Rectangle_3">
+<mask id="path-33-inside-4_3195_858" fill="white">
+<path d="M4 118H714V171.242H4V118Z"/>
+</mask>
+<path d="M4 122H714V114H4V122ZM714 167.242H4V175.242H714V167.242Z" fill="#17395C" mask="url(#path-33-inside-4_3195_858)"/>
+</g>
+</g>
+<rect id="WhiteBox" x="5.01721" y="1" width="708.983" height="117" fill="white"/>
+</g>
+<rect x="4.5" y="0.5" width="709" height="782" stroke="black"/>
+</g>
+<defs>
+<filter id="filter0_d_3195_858" x="0" y="0" width="718" height="791" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="4"/>
+<feGaussianBlur stdDeviation="2"/>
+<feComposite in2="hardAlpha" operator="out"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_3195_858"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_3195_858" result="shape"/>
+</filter>
+<clipPath id="clip0_3195_858">
+<rect x="4" width="710" height="783" fill="white"/>
+</clipPath>
+</defs>
 </svg>

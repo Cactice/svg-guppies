@@ -1,6 +1,7 @@
 [app]
 name = "life"
 stylized-name = "Life"
+identifier = "com.github.noreply.users.life"
 domain = "users.noreply.github.com"
 template-pack = "wgpu"
 

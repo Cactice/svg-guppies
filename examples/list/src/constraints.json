@@ -138,7 +138,7 @@
       "Top": 52.208984375
     }
   },
-  "ListItem #transform #layout #component": {
+  "ListItem #transform #layout #component #clickable": {
     "x": {
       "LeftAndRight": {
         "left": 0,
