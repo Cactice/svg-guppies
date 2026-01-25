@@ -8,7 +8,7 @@ use guppies::{
 use salvage::svg_set::SvgSet;
 const UNMOVED_RADIUS: f32 = 40.;
 pub fn get_scale(size: PhysicalSize<u32>) -> Mat4 {
-    Mat4::from_scale([4.0 / size.width as f32, -4.0 / size.height as f32, 1.0].into())
+    Mat4::from_scale([2.0 / size.width as f32, -2.0 / size.height as f32, 1.0].into())
 }
 
 #[derive(Default, Debug, Clone)]
@@ -18,15 +18,18 @@ pub struct ScrollState {
     pub mouse_position: Vec2,
     pub mouse_down: Option<Vec2>,
     pub display_image_size: Vec2,
+    pub window_size: PhysicalSize<u32>,
 }
 
 impl ScrollState {
     pub fn new_from_svg_set(svg_set: &SvgSet) -> Self {
         // Below scale should get overridden by guppies' redraw event forced on init
-        let scale: Mat4 = get_scale(PhysicalSize::<u32>::new(100, 100));
+        let size = PhysicalSize::<u32>::new(100, 100);
+        let scale: Mat4 = get_scale(size);
         Self {
             transform: scale,
             display_image_size: svg_set.bbox.size,
+            window_size: size,
             ..Default::default()
         }
     }
@@ -35,6 +38,7 @@ impl ScrollState {
             let scroll_state = self;
             match event {
                 WindowEvent::Resized(p) => {
+                    scroll_state.window_size = *p;
                     let (_scale, rot, trans) =
                         scroll_state.transform.to_scale_rotation_translation();
                     let scale = get_scale(*p).to_scale_rotation_translation().0;
@@ -45,8 +49,15 @@ impl ScrollState {
                     let new_position = Vec2::new(position.x as f32, position.y as f32);
                     if scroll_state.mouse_down.is_some() {
                         let motion = new_position - scroll_state.mouse_position;
-                        scroll_state.transform *=
-                            Mat4::from_translation(Vec3::from((motion.x, motion.y, 0_f32)))
+                        let screen_scale = get_scale(scroll_state.window_size);
+                        let projected_motion =
+                            screen_scale.transform_vector3(Vec3::new(motion.x, motion.y, 0.0));
+                        let world_motion = scroll_state
+                            .transform
+                            .inverse()
+                            .transform_vector3(projected_motion);
+
+                        scroll_state.transform *= Mat4::from_translation(world_motion);
                     }
                     scroll_state.mouse_position = new_position
                 }
@@ -93,10 +104,17 @@ impl ScrollState {
                                     ) * scroll_state.transform;
                                 }
                             } else {
-                                // pan
+                                // pan by touch - reuse the logic from CursorMoved if possible, but for now just fix it similarly or duplicate
                                 let motion = new_position - old_position;
-                                scroll_state.transform *=
-                                    Mat4::from_translation(Vec3::from((motion.x, motion.y, 0_f32)))
+                                let screen_scale = get_scale(scroll_state.window_size);
+                                let projected_motion = screen_scale
+                                    .transform_vector3(Vec3::new(motion.x, motion.y, 0.0));
+                                let world_motion = scroll_state
+                                    .transform
+                                    .inverse()
+                                    .transform_vector3(projected_motion);
+
+                                scroll_state.transform *= Mat4::from_translation(world_motion);
                             }
                             this_finger.1 = new_position;
                         }
@@ -146,10 +164,10 @@ impl ScrollState {
                     delta: MouseScrollDelta::PixelDelta(p),
                     ..
                 } => {
-                    let delta_y = (1. / (p.y as f32)) * 0.5;
                     if p.y != 0. {
+                        let scale_factor = 1.002_f32.powf(p.y as f32);
                         scroll_state.transform =
-                            Mat4::from_scale([1. + delta_y, 1. + delta_y, 1_f32].into())
+                            Mat4::from_scale([scale_factor, scale_factor, 1_f32].into())
                                 * scroll_state.transform;
                     }
                 }

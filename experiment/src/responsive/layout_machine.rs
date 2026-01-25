@@ -1,8 +1,6 @@
 use super::clickable::Clickable;
 use super::clickable::ClickableBbox;
-use super::constraint;
 use super::constraint::Constraint;
-use super::layout;
 use super::layout::bbox_to_mat4;
 use super::layout::size_to_mat4;
 use super::layout::Layout;
@@ -17,6 +15,7 @@ use guppies::glam::Vec4;
 use guppies::winit::dpi::PhysicalSize;
 use guppies::winit::event::ElementState;
 use guppies::winit::event::Event;
+use guppies::winit::event::TouchPhase;
 use guppies::winit::event::WindowEvent;
 use regex::Regex;
 use salvage::usvg::Node;
@@ -38,7 +37,7 @@ pub struct LayoutMachine {
 }
 
 impl LayoutMachine {
-    pub fn event_handler(&mut self, event: &Event<()>) -> Vec<String> {
+    pub fn event_handler(&mut self, event: &Event<()>) -> Vec<(String, Vec4)> {
         self.scroll_state.event_handler(event);
         match event {
             guppies::winit::event::Event::WindowEvent { event, .. } => match event {
@@ -48,12 +47,26 @@ impl LayoutMachine {
                     vec![]
                 }
 
+                WindowEvent::Touch(touch) => match touch.phase {
+                    TouchPhase::Moved => self.click_detection(),
+                    TouchPhase::Started => self.click_detection(),
+                    _ => [].to_vec(),
+                },
                 WindowEvent::MouseInput {
                     state: ElementState::Pressed,
                     ..
                 } => {
                     let clicked = self.click_detection();
                     clicked
+                }
+                WindowEvent::CursorMoved {
+                    device_id,
+                    position,
+                } => {
+                    if let Some(x) = (self.scroll_state.mouse_down) {
+                        return self.click_detection();
+                    }
+                    vec![]
                 }
                 _ => {
                     vec![]
@@ -122,19 +135,21 @@ impl LayoutMachine {
         )
     }
 
-    pub fn click_detection(&self) -> Vec<String> {
+    pub fn click_detection(&self) -> Vec<(String, Vec4)> {
         let click = Vec4::from((self.scroll_state.mouse_position, 1., 1.));
         let clicked_ids = self
             .clickables
             .iter()
             .filter_map(|clickable| {
-                if clickable.bbox.click_detection(click, &self) {
-                    Some(clickable.id.clone())
+                let click_point = clickable.bbox.get_click_point(click, &self);
+                let clicked = click_point.x.abs() < 1. && click_point.y.abs() < 1.;
+                if clicked {
+                    Some((clickable.id.clone(), click_point))
                 } else {
                     None
                 }
             })
-            .collect::<Vec<String>>();
+            .collect::<Vec<_>>();
         clicked_ids
     }
     pub fn update_layout(&mut self) {

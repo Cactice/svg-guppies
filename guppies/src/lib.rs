@@ -9,11 +9,11 @@ use setup::{Redraw, RedrawMachine};
 use std::array;
 use std::fmt::Debug;
 use std::sync::Arc;
-use std::time::Instant;
+
 pub use wgpu;
 pub use winit;
-use winit::event_loop::EventLoopWindowTarget;
-use winit::window::{Window, WindowBuilder, WindowId};
+use winit::event_loop::ActiveEventLoop;
+use winit::window::{Window, WindowId};
 use winit::{
     event::{Event, WindowEvent},
     event_loop::EventLoop,
@@ -25,11 +25,9 @@ pub fn exec_futures<T: std::future::Future<Output = ()> + 'static>(future: T) {
     #[cfg(target_arch = "wasm32")]
     wasm_bindgen_futures::spawn_local(future);
 }
-fn init_window(event_loop: &EventLoopWindowTarget<()>) -> winit::window::Window {
-    let window = WindowBuilder::new()
-        .with_title("SVG-GUI")
-        .build(&event_loop)
-        .unwrap();
+fn init_window(event_loop: &ActiveEventLoop) -> winit::window::Window {
+    let attributes = Window::default_attributes().with_title("SVG-GUI");
+    let window = event_loop.create_window(attributes).unwrap();
     #[cfg(target_arch = "wasm32")]
     {
         std::panic::set_hook(Box::new(console_error_panic_hook::hook));
@@ -104,103 +102,143 @@ impl<const COUNT: usize, Vert: Pod + Zeroable + Debug + Clone + Default> Guppy<C
     }
 }
 
+use winit::application::ApplicationHandler;
+
+pub struct GuppyApp<const COUNT: usize, Vert>
+where
+    Vert: Pod + Zeroable + Debug + Clone + Default,
+{
+    redraw_machine: Option<RedrawMachine<'static>>,
+    window: Option<Arc<Window>>,
+    gpu_redraw: Option<[GpuRedraw<Vert>; COUNT]>,
+    redraws: Option<[Redraw; COUNT]>,
+    functions: Vec<Box<dyn FnMut(&Event<()>, &mut [GpuRedraw<Vert>; COUNT])>>,
+}
+
+impl<const COUNT: usize, Vert> ApplicationHandler for GuppyApp<COUNT, Vert>
+where
+    Vert: Pod + Zeroable + Debug + Clone + Default,
+{
+    fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+        if self.window.is_none() {
+            let win = init_window(event_loop);
+            let win = Arc::new(win);
+            self.window = Some(win.clone());
+
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                // Unsafe hack to satisfy RedrawMachine<'static>
+                // We ensure 'win' lives as long as 'redraw_machine' because they are both in GuppyApp
+                // and 'redraw_machine' is dropped before 'window' (field order matters in Rust drop,
+                // but we can also manually drop if needed, though simpler here since we leak slightly or trust the struct)
+                // Actually to make it truly 'static, we might need to leak the window or use unsafe change of lifetime.
+                let _win_ref: &'static Window = unsafe { std::mem::transmute(win.as_ref()) };
+
+                // We reconstruct RedrawMachine to take a static reference if possible,
+                // but RedrawMachine::new takes Arc<Window>.
+                // RedrawMachine definition: pub struct RedrawMachine<'a> { surface: Surface<'a> ... }
+                // setup::new takes (window: Arc<Window>) and does create_surface(window).
+                // To get Surface<'static>, we generally need the target to be static.
+
+                // Let's rely on the fact that we can cast the lifetime of RedrawMachine if we are careful.
+                let machine = pollster::block_on(RedrawMachine::new(win.clone()));
+                self.redraw_machine = Some(unsafe { std::mem::transmute(machine) });
+                let machine_ref = self.redraw_machine.as_ref().unwrap();
+                self.redraws = Some(array::from_fn(|_| Redraw::new(machine_ref)));
+                self.gpu_redraw = Some([(); COUNT].map(|_| GpuRedraw::default()));
+
+                // Initial resize trigger
+                let size = win.inner_size();
+                let synthetic_event = Event::WindowEvent {
+                    window_id: WindowId::dummy(),
+                    event: WindowEvent::Resized(size),
+                };
+                self.functions.iter_mut().for_each(|func| {
+                    func(&synthetic_event, self.gpu_redraw.as_mut().unwrap());
+                });
+            }
+        }
+    }
+
+    fn window_event(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        window_id: WindowId,
+        event: WindowEvent,
+    ) {
+        // Reconstruct the Event::WindowEvent for user callbacks
+        // Note: We can only provide a reference to our synthetic event.
+        let synthetic_event = Event::WindowEvent {
+            window_id,
+            event: event.clone(),
+        };
+
+        if let (Some(ref mut gpu_redraw), Some(ref mut machine)) =
+            (self.gpu_redraw.as_mut(), self.redraw_machine.as_mut())
+        {
+            self.functions.iter_mut().for_each(|func| {
+                func(&synthetic_event, gpu_redraw);
+            });
+
+            if let Some(ref mut redraws) = self.redraws {
+                redraws
+                    .iter_mut()
+                    .zip(gpu_redraw.iter_mut())
+                    .for_each(|(redraw, new_redraw)| {
+                        if let Some(shader) = new_redraw.shader.take() {
+                            redraw.update_shader(&shader, machine);
+                        }
+                    });
+            }
+        }
+
+        match event {
+            WindowEvent::CloseRequested => {
+                event_loop.exit();
+            }
+            WindowEvent::Resized(p) => {
+                if let Some(machine) = self.redraw_machine.as_mut() {
+                    machine.resize(p);
+                }
+            }
+            WindowEvent::RedrawRequested => {
+                if let (Some(gpu_redraw), Some(redraws), Some(machine), Some(window)) = (
+                    self.gpu_redraw.as_mut(),
+                    self.redraws.as_mut(),
+                    self.redraw_machine.as_mut(),
+                    self.window.as_ref(),
+                ) {
+                    let mut frame = machine.get_frame();
+                    machine.redraw(gpu_redraw, redraws, &mut frame);
+                    machine.submit(frame);
+                    window.request_redraw();
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn about_to_wait(&mut self, _event_loop: &ActiveEventLoop) {
+        if let Some(window) = self.window.as_ref() {
+            window.request_redraw();
+        }
+    }
+}
+
 pub async fn render_loop<const COUNT: usize, Vert>(
-    mut render_loop_fn: Vec<Box<dyn FnMut(&Event<()>, &mut [GpuRedraw<Vert>; COUNT])>>,
+    render_loop_fn: Vec<Box<dyn FnMut(&Event<()>, &mut [GpuRedraw<Vert>; COUNT])>>,
 ) where
     Vert: Pod + Zeroable + Debug + Clone + Default,
 {
     let event_loop = EventLoop::new().unwrap();
-    let window = Arc::new(init_window(&event_loop));
-    let mut redraw_machine = RedrawMachine::new(window.clone()).await;
 
-    // Type definition is required for android build
-    let mut gpu_redraw: Option<[GpuRedraw<Vert>; COUNT]> = None;
-    let mut redraws: Option<[Redraw; COUNT]> = None;
-    #[cfg(not(target_arch = "wasm32"))]
-    let mut last_frame_inst = Instant::now();
-    #[cfg(not(target_arch = "wasm32"))]
-    let (mut frame_count, mut accum_time) = (0, 0.0);
-    let _ = event_loop.run(move |event, event_loop| {
-        // FIXME: why do some OS not redraw automatically without explicit call
-        #[cfg(any(target_os = "ios", target_os = "android"))]
-        window.request_redraw();
-        if let (Some(ref mut gpu_redraw), Some(redraws)) = (gpu_redraw.as_mut(), redraws.as_mut()) {
-            render_loop_fn.iter_mut().for_each(|func| {
-                func(&event, gpu_redraw);
-            });
-            redraws
-                .iter_mut()
-                .zip(gpu_redraw.iter_mut())
-                .for_each(|(redraw, new_redraw)| {
-                    if let Some(shader) = new_redraw.shader.take() {
-                        redraw.update_shader(&shader, &redraw_machine);
-                    }
-                });
-        }
-        match event {
-            #[cfg(target_os = "android")]
-            Event::Resumed => {
-                init_window(event_loop);
-            }
-            #[cfg(not(target_os = "android"))]
-            Event::NewEvents(start_cause) => match start_cause {
-                winit::event::StartCause::Init => {
-                    redraws = Some(array::from_fn(|i| {
-                        Redraw::new(&redraw_machine, &Default::default(), &Default::default(), i)
-                    }));
-                    gpu_redraw = Some([(); COUNT].map(|_| GpuRedraw::default()));
+    let mut app = GuppyApp {
+        window: None,
+        redraw_machine: None,
+        gpu_redraw: None,
+        redraws: None,
+        functions: render_loop_fn,
+    };
 
-                    // Below is necessary when running on mobile...
-                    if let Some(gpu_redraw) = gpu_redraw.as_mut() {
-                        render_loop_fn.iter_mut().for_each(|func| {
-                            let size = window.as_ref().inner_size();
-                            func(
-                                &Event::WindowEvent {
-                                    window_id: unsafe { WindowId::dummy() },
-                                    event: WindowEvent::Resized(size),
-                                },
-                                gpu_redraw,
-                            );
-                        });
-                    }
-                }
-                _ => (),
-            },
-            Event::WindowEvent {
-                event: window_event,
-                ..
-            } => match window_event {
-                WindowEvent::CloseRequested => {
-                    event_loop.exit();
-                }
-                WindowEvent::Resized(p) => redraw_machine.resize(p),
-                WindowEvent::RedrawRequested => {
-                    if let (Some(gpu_redraw), Some(redraws)) =
-                        (gpu_redraw.as_mut(), redraws.as_mut())
-                    {
-                        let mut frame = redraw_machine.get_frame();
-                        redraw_machine.redraw(gpu_redraw, redraws, &mut frame);
-                        redraw_machine.submit(frame);
-                        window.request_redraw();
-                        #[cfg(not(target_arch = "wasm32"))]
-                        {
-                            accum_time += last_frame_inst.elapsed().as_secs_f32();
-                            last_frame_inst = Instant::now();
-                            frame_count += 1;
-                            if frame_count == 100 {
-                                // println!(
-                                //     "Avg frame time {}ms",
-                                //     accum_time * 1000.0 / frame_count as f32
-                                // );
-                                accum_time = 0.0;
-                                frame_count = 0;
-                            }
-                        }
-                    }
-                }
-                _ => {}
-            },
-            _ => {}
-        }
-    });
+    let _ = event_loop.run_app(&mut app);
 }

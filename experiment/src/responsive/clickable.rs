@@ -9,7 +9,7 @@ pub enum ClickableBbox {
 }
 
 impl ClickableBbox {
-    pub fn click_detection(&self, click: Vec4, layout_machine: &LayoutMachine) -> bool {
+    pub fn get_click_point(&self, click: Vec4, layout_machine: &LayoutMachine) -> Vec4 {
         let bbox = match self {
             ClickableBbox::Layout(id) => layout_machine.get_bbox_for(id.to_string()).unwrap(),
             ClickableBbox::Bbox(bbox) => *bbox,
@@ -19,10 +19,7 @@ impl ClickableBbox {
             * Mat4::from_translation([-1.0, -1., 0.].into())
             * layout_machine.display_mat4.inverse()
             * click;
-        if click.x.abs() < 1. && click.y.abs() < 1. {
-            return true;
-        }
-        false
+        click
     }
 }
 

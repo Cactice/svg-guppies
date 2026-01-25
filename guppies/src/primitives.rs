@@ -45,6 +45,15 @@ pub struct Vertex {
     pub transform_id: u32,
     pub color: [f32; 4],
 }
+impl From<&Vec2> for Vertex {
+    fn from(v: &Vec2) -> Self {
+        Self {
+            position: [(v.x) as f32, (v.y) as f32, 0.0],
+            color: [0., 1., 1., 0.5],
+            transform_id: 0,
+        }
+    }
+}
 impl From<&DVec2> for Vertex {
     fn from(v: &DVec2) -> Self {
         Self {

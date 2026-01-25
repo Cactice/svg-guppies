@@ -1,11 +1,7 @@
-use crate::{
-    primitives::{Indices, Vertex, Vertices},
-    GpuRedraw,
-};
+use crate::{primitives::Vertex, GpuRedraw};
 use bytemuck::{Pod, Zeroable};
 use core::fmt::Debug;
 use glam::Mat4;
-use log::{info, Level};
 use std::{borrow::Cow, sync::Arc};
 use wgpu::{
     util::DeviceExt, BindGroup, Buffer, CommandEncoder, Device, Extent3d, PipelineLayout,
@@ -26,8 +22,6 @@ pub struct Redraw {
     pub render_pipeline: RenderPipeline,
     pub bind_group: BindGroup,
     pub uniform_buffer: Buffer,
-    pub vertex_buffer: Buffer,
-    pub index_buffer: Buffer,
     pub transform_texture: Texture,
     pub pipeline_layout: PipelineLayout,
 }
@@ -53,14 +47,14 @@ impl<'a> RedrawMachine<'a> {
     ) {
         let Reframe {
             view,
-            frame,
+            frame: _frame,
             encoder,
         } = reframe;
         let RedrawMachine {
             queue,
             device,
-            surface,
-            surface_format,
+            surface: _surface,
+            surface_format: _surface_format,
             config,
         } = self;
         let msaa_texture = device
@@ -119,6 +113,7 @@ impl<'a> RedrawMachine<'a> {
                                 load: load_color,
                                 store: wgpu::StoreOp::Store,
                             },
+                            depth_slice: None,
                         })],
                         depth_stencil_attachment: None,
                         ..Default::default()
@@ -139,7 +134,7 @@ impl<'a> RedrawMachine<'a> {
                 queue.write_texture(
                     transform_texture.as_image_copy(),
                     &gpu_redraw.texture,
-                    wgpu::ImageDataLayout::default(),
+                    wgpu::TexelCopyBufferLayout::default(),
                     TRANSFORM_TEXTURE_SIZE,
                 );
             });
@@ -191,16 +186,20 @@ impl<'a> RedrawMachine<'a> {
         let surface_format = surface_capabilities.formats.first().unwrap().clone();
         // Create the logical device and command queue
         let (device, queue) = adapter
-            .request_device(
-                &wgpu::DeviceDescriptor {
-                    label: Some("SVG-GUI DeviceDescriptor"),
-                    required_features: wgpu::Features::empty(),
-                    // Make sure we use the texture resolution limits from the adapter, so we can support images the size of the surface.
-                    required_limits: wgpu::Limits::downlevel_webgl2_defaults()
-                        .using_resolution(adapter.limits()),
-                },
-                None,
-            )
+            .request_device(&wgpu::DeviceDescriptor {
+                label: Some("SVG-GUI DeviceDescriptor"),
+                required_features: wgpu::Features::empty(),
+                // Make sure we use the texture resolution limits from the adapter, so we can support images the size of the surface.
+                required_limits: wgpu::Limits::downlevel_webgl2_defaults()
+                    .using_resolution(adapter.limits()),
+                memory_hints: wgpu::MemoryHints::default(),
+                // MemoryHints and Limits are fine. Trace is tricky.
+                // Search result said wgpu::Trace::Off but non_exhaustive.
+                // If Off is not exported, we have a problem.
+                // Let's assume wgpu::Trace is available.
+                trace: wgpu::Trace::Off,
+                experimental_features: wgpu::ExperimentalFeatures::default(),
+            })
             .await
             .expect("Failed to create device");
 
@@ -324,7 +323,7 @@ impl Redraw {
             vertex: wgpu::VertexState {
                 compilation_options:Default::default(),
                 module: &default_shader,
-                entry_point: "vs_main",
+                entry_point: Some("vs_main"),
                 buffers: &[wgpu::VertexBufferLayout {
                     array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
                     step_mode: wgpu::VertexStepMode::Vertex,
@@ -334,7 +333,7 @@ impl Redraw {
             fragment: Some(wgpu::FragmentState {
                 compilation_options:Default::default(),
                 module: &custom_shader,
-                entry_point: "fs_main",
+                entry_point: Some("fs_main"),
                 targets: &[Some(wgpu::ColorTargetState {
                     format: *surface_format,
                     blend: Some(wgpu::BlendState::ALPHA_BLENDING),
@@ -347,23 +346,19 @@ impl Redraw {
                 count: SAMPLE_COUNT,
             ..Default::default()
             },
-            multiview: None,
+            cache: None,
+            multiview_mask: None,
         });
         self.render_pipeline = render_pipeline;
     }
 
-    pub fn new(
-        redraw_machine: &RedrawMachine,
-        vertices: &Vertices,
-        indices: &Indices,
-        index: usize,
-    ) -> Self {
+    pub fn new(redraw_machine: &RedrawMachine) -> Self {
         let RedrawMachine {
-            queue,
             device,
             surface,
             config,
             surface_format,
+            ..
         } = redraw_machine;
         // Load the shaders from disk
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
@@ -389,7 +384,7 @@ impl Redraw {
         vertex: wgpu::VertexState {
             compilation_options:Default::default(),
             module: &shader,
-            entry_point: "vs_main",
+            entry_point: Some("vs_main"),
             buffers: &[wgpu::VertexBufferLayout {
                 array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
                 step_mode: wgpu::VertexStepMode::Vertex,
@@ -399,7 +394,7 @@ impl Redraw {
         fragment: Some(wgpu::FragmentState {
             compilation_options:Default::default(),
             module: &shader,
-            entry_point: "fs_main",
+            entry_point: Some("fs_main"),
             targets: &[Some(wgpu::ColorTargetState {
                 format: *surface_format,
                 blend: Some(wgpu::BlendState::PREMULTIPLIED_ALPHA_BLENDING),
@@ -412,27 +407,17 @@ impl Redraw {
             count: SAMPLE_COUNT,
             ..Default::default()
         },
-        multiview: None,
+        cache: None,
+        multiview_mask: None,
     });
 
         surface.configure(&device, &config);
-        let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Index Buffer"),
-            contents: bytemuck::cast_slice(indices),
-            usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
-        });
+        surface.configure(&device, &config);
 
-        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("SVG-GUI Vertex Buffer"),
-            contents: (bytemuck::cast_slice(vertices)),
-            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
-        });
         Redraw {
             render_pipeline,
             bind_group: uniform_bind_group,
             uniform_buffer,
-            vertex_buffer,
-            index_buffer,
             transform: Mat4::IDENTITY,
             transform_texture,
             pipeline_layout,
